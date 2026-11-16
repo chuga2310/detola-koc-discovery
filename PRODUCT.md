@@ -25,7 +25,7 @@ Mọi đề xuất đều trích bằng chứng: mỗi lý do gắn với một 
 ## Operating Context
 
 - Luồng làm việc: mở danh sách chiến dịch → tạo brief (form nhanh, hoặc mô tả trong chat để AI hỏi thêm kèm lựa chọn) → xác nhận brief, có thể bật dữ liệu chuyên sâu (trả phí) → theo dõi 8 bước nghiên cứu → đọc KOC đã xếp hạng, điểm, lý do, rủi ro và bằng chứng video → so với danh sách dự phòng → tạm dừng / chạy tiếp khi cần.
-- Một chiến dịch chạy lạnh mất ~2–3 phút; người dùng xem tiến độ rồi đọc kỹ kết quả.
+- Một chiến dịch chạy lần đầu (chưa có cache AI, chưa có dữ liệu Kalodata lưu sẵn) mất ~2–3 phút; người dùng xem tiến độ rồi đọc kỹ kết quả.
 - Chi phí là mối quan tâm hàng đầu: token AI (USD) và credit Kalodata (1 credit ≈ $0.1) hiển thị theo từng bước và từng endpoint; dữ liệu Kalodata đã trả tiền được lưu lại và dùng lại.
 - Nội dung bằng tiếng Việt (chữ trên UI, lý do của AI); định danh kỹ thuật (tên stage, tên model, evidence id) giữ tiếng Anh.
 

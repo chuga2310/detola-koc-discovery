@@ -25,7 +25,7 @@ Every recommendation is evidence-cited: each reason links to a specific metric, 
 ## Operating Context
 
 - Workflow: open the campaign list → create a brief (quick form, or describe it in a chat where the AI asks follow-up questions with options) → confirm the brief, optionally enable paid deep data → watch the 8 research steps progress → read the ranked KOCs, their scores, reasons, risks and video evidence → compare alternates → pause/resume when needed.
-- Runs take ~2–3 minutes cold; users watch progress, then read results in depth.
+- A first run (no AI cache, no stored Kalodata data) takes ~2–3 minutes; users watch progress, then read results in depth.
 - Cost is a first-class concern: AI tokens (USD) and Kalodata credits (1 credit ≈ $0.1) are shown per step and per endpoint; Kalodata data already paid for is stored and reused.
 - Content is Vietnamese (UI copy, AI reasons); technical identifiers (stage names, model names, evidence ids) stay in English.
 

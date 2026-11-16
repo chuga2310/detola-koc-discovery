@@ -12,11 +12,13 @@ Finds TikTok KOCs that fit a campaign brief, for example **5 KOCs for a sunscree
 
 | Benchmark (real run, N = 5) | |
 |---|---|
-| One cold run | **≈ $1.33** = AI $0.39 + 9.4 Kalodata credits (≈ $0.94); the 2 new sources add ≈ 0.7 credits |
+| One first run (no AI cache, no stored Kalodata data) | **≈ $1.34** = AI $0.40 + 9.4 Kalodata credits (≈ $0.94) |
+| AI cost per creator | whole funnel **$0.040** (screen $0.0002 + video $0.021 + final $0.019); stopped after screening $0.0002; ≈ $0.081 AI per picked KOC |
+| Deep data turned on | +5 credits (≈ $0.50), AI almost unchanged ($0.4059); total ≈ $1.75 |
 | Re-run / later campaign meeting the same creators | **$0**: every AI and Kalodata call reuses stored data |
-| Time | ~110 s with stored data; ~2.5–3 min fully cold |
+| Time | ~134 s processing with part of the data stored; ~2.5–3 min for a full first run |
 | Recovery | Hard kill during video review → resume → **0 calls paid twice** |
-| vs. naive (strong model reviews videos for the whole pool) | AI $12.08 → $0.39, **~97% cheaper** |
+| vs. naive (strong model reviews videos for the whole pool) | AI $12.08 → $0.40, **~97% cheaper** |
 
 ---
 
@@ -108,7 +110,7 @@ The UI follows DETOLA's design system (detola.vn), documented in [DESIGN.en.md](
 - **The AI does not watch real video yet:** it receives 6 still frames + the transcript instead, so motion, pacing and audio are lost. A model that reads video natively would improve this a lot; only the video step's input would change.
 - **Each creator's second video is cover-only** (TikTok blocks free video download; MP4 for both costs 0.5 credits more per creator).
 - **Booking cost is an estimate** by follower tier, not a real quote.
-- **AI output is not fully deterministic:** creators with close scores can swap ranks between two cold runs.
+- **AI output is not fully deterministic:** creators with close scores can swap ranks between two runs from scratch (no AI cache).
 - The worker runs inside the Next.js process; production should split it out. The UI has no login yet.
 
 ## 6. Roadmap

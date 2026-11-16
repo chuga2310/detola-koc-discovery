@@ -73,30 +73,32 @@ Chi tiết và sơ đồ (mermaid) ở [ARCHITECTURE.md](ARCHITECTURE.md). Tóm 
 
 ## 4. Benchmark Results
 
-Số liệu từ lần chạy thật `ac0209d1` ngày **2026-11-16**, brief kem chống nắng, N = 5. Báo cáo đầy đủ ở [BENCHMARK.md](BENCHMARK.md), số liệu thô ở [results.json](../benchmark/results.json).
+Số liệu từ lần chạy thật `8ee88197` ngày **2026-11-17**, brief kem chống nắng, N = 5, đủ 5 nguồn Kalodata. Báo cáo đầy đủ ở [BENCHMARK.md](BENCHMARK.md), số liệu thô ở [results.json](../benchmark/results.json).
+
+"Lần chạy đầu" trong báo cáo này nghĩa là chưa có cache AI và chưa có dữ liệu Kalodata lưu sẵn, nên phải trả đủ tiền AI và credit. Chạy lại cùng brief thì dùng lại cả hai.
 
 ### 4.1 Kết quả 5 KOC
 
-Chi phí booking ước tính **29.000.000 ₫ / 30.000.000 ₫**, optimizer DP.
+Chi phí booking ước tính **19.000.000 ₫ / 30.000.000 ₫**, optimizer DP: chọn tổ hợp có tổng điểm cao nhất, không cố tiêu hết ngân sách.
 
 | # | Creator | Followers | Chi phí ước tính | Final | AI fit | Data | Video | Verdict |
 |---|---|---|---|---|---|---|---|---|
-| 1 | [@luumaianh_](https://www.tiktok.com/@luumaianh_) | 183.300 | 7.000.000 | 58.5 | 62 | 50.3 | 62.5 | good |
-| 2 | [@sayhiinb](https://www.tiktok.com/@sayhiinb) | 210.800 | 7.000.000 | 56.6 | 58 | 53.3 | 47.5 | weak |
-| 3 | [@binnoo0](https://www.tiktok.com/@binnoo0) | 105.000 | 7.000.000 | 53.3 | 50 | 61 | 46.8 | weak |
-| 4 | [@lethiloan2001](https://www.tiktok.com/@lethiloan2001) | 76.300 | 4.000.000 | 53.1 | 51 | 58 | 47.4 | weak |
-| 5 | [@bachluulinh](https://www.tiktok.com/@bachluulinh) | 75.800 | 4.000.000 | 52.4 | 55 | 46.5 | 67.5 | weak |
+| 1 | [@ngoc.matcha.review](https://www.tiktok.com/@ngoc.matcha.review) | 145.700 | 7.000.000 | 60.4 | 62 | 56.7 | 39.5 | good |
+| 2 | [@bachluulinh](https://www.tiktok.com/@bachluulinh) | 75.800 | 4.000.000 | 53.6 | 60 | 38.6 | 65 | good |
+| 3 | [@rin.review22](https://www.tiktok.com/@rin.review22) | 13.500 | 2.000.000 | 52.6 | 51 | 56.2 | 39.5 | weak |
+| 4 | [@phuongmet57](https://www.tiktok.com/@phuongmet57) | 14.900 | 2.000.000 | 52.5 | 49 | 60.7 | 27.2 | weak |
+| 5 | [@changaffiliate](https://www.tiktok.com/@changaffiliate) | 85.100 | 4.000.000 | 51.4 | 48 | 59.3 | 39.5 | weak |
 
-Hệ thống nói thẳng khi kết quả chưa mạnh: 4/5 KOC ở mức "weak". Lý do được ghi rõ: điểm khớp khán giả bị giới hạn vì API không có nhân khẩu học follower, và trong ngân sách 30 triệu ít creator vừa chuyên kem chống nắng vừa có reach tự nhiên tốt.
+Hệ thống nói thẳng khi kết quả chưa mạnh: 3/5 KOC ở mức "weak". Reach rẻ và bán tốt nhưng chủ yếu là kênh chốt deal, ít thoa thật lên da; điểm khớp khán giả bị giới hạn vì API không có nhân khẩu học follower.
 
 ### 4.2 Bằng chứng
 
-Mỗi KOC có 3–4 lý do và 2–3 rủi ro, mỗi ý kèm evidence id truy được. Ví dụ với #1 @luumaianh_:
+Mỗi KOC có 3–4 lý do và 2–3 rủi ro, mỗi ý kèm evidence id truy được. Ví dụ với #1 @ngoc.matcha.review:
 
-- ✅ Engagement rate 9.4% (top 16% pool) — `c18.m2`.
-- ✅ Đã quay sản phẩm có chỉ số chống nắng, overlay "SPF 50+ PA ++++" ở khung hình 4, giây 34.2 — `c18.v1.o2`.
-- ⚠️ Ngách chính là son môi, chỉ 1/10 video có keyword chống nắng — `c18.t1`, `c18.m5`.
-- ⚠️ Chưa có nhân khẩu học, độ khớp "nữ 18–30" chỉ suy từ nội dung — `c18.a1`.
+- ✅ GPM video 246k VND / 1.000 view, top 5% pool — `c4.m7`.
+- ✅ 28.9M view tự nhiên / 30 ngày (đã trừ view quảng cáo), 83k view kỳ vọng mỗi 1 triệu VND — `c4.m1`, `c4.m4`.
+- ⚠️ Đang bán kem chống nắng Beplain, có thể xung đột với đối thủ — `c4.m10`, `c4.t2`.
+- ⚠️ Chỉ show bao bì, nêu thành phần nhưng không thoa lên da — `c4.v1.o4`.
 
 Danh sách đầy đủ cho cả 5 KOC ở [BENCHMARK.md §1](BENCHMARK.md#1-kết-quả-5-koc).
 
@@ -104,25 +106,51 @@ Danh sách đầy đủ cho cả 5 KOC ở [BENCHMARK.md §1](BENCHMARK.md#1-k�
 
 | | Số liệu |
 |---|---|
-| AI | 13 call, 42.959 input + 40.243 cache read + 26.565 output token, 20 ảnh → **$0.39** |
-| Kalodata (chạy lạnh) | **9.4 credit ≈ $0.94** |
-| **Tổng 1 lần chạy lạnh** | **≈ $1.33** |
-| Thời gian xử lý | **109.1 s** active (dữ liệu Kalodata đã lưu, AI chạy lạnh); chạy lạnh hoàn toàn ~2.5–3 phút |
+| AI | 13 call, 48.639 input + 34.857 cache read + 25.209 output token, 20 ảnh → **$0.40** |
+| Kalodata cho lần chạy đầu | **9.4 credit ≈ $0.94** (lần đo này chỉ trả 3.1 credit, phần còn lại dùng dữ liệu đã lưu) |
+| **Tổng 1 lần chạy đầu** | **≈ $1.34** |
+| Thời gian xử lý | **133.6 s** active (một phần dữ liệu Kalodata đã lưu); chạy lần đầu hoàn toàn ~2.5–3 phút |
 | Chạy lại cùng brief | 13/13 call AI dùng lại cache, **$0**, cùng kết quả |
 | Phục hồi | Kill cứng ở bước xem video sau 5 call AI đã trả tiền → chạy tiếp ở process mới → **0 call trả tiền hai lần** |
-| So với cách ngây thơ | Model mạnh xem video cả pool: AI **$12.08** → **$0.39** (~97% rẻ hơn) |
+| So với cách ngây thơ | Model mạnh xem video cả pool: AI **$12.08** → **$0.40** (~97% rẻ hơn) |
 
-Chi phí AI theo bước: text screen $0.0034 · video $0.2004 · chấm cuối $0.1866. Phễu: pool 234 → enrich 20 → đọc nội dung 18 → xem video 10 → chấm cuối 10 → chọn 5.
+Chi phí AI theo bước: đọc nội dung $0.0034 · xem video $0.2119 · chấm cuối $0.1894. Phễu: pool 224 → qua lọc số liệu 213 → lấy chi tiết 20 → đọc nội dung 20 → xem video 10 → chấm cuối 10 → chọn 5.
+
+### 4.4 Chi phí AI theo từng creator
+
+Xem video là 1 call riêng cho mỗi creator nên tính nguyên call; đọc nội dung và chấm cuối là 1 call cho tối đa 10 creator nên chia đều chi phí call cho số creator trong batch.
+
+| Creator đi tới bước | Số người | Đọc nội dung (Haiku) | Xem video (Sonnet) | Chấm cuối (Opus) | AI / người | Kalodata / người |
+|---|---|---|---|---|---|---|
+| Đi hết phễu (5 được chọn + 5 không chọn) | 10 | $0.0002 | $0.0187–0.0302 (TB $0.0212) | $0.0189 | **$0.0403** (≈ $0.11 cả Kalodata) | 0.7 credit |
+| Dừng sau bước đọc nội dung | 10 | $0.0002 | – | – | **$0.0002** | 0.2 credit |
+
+Call xem video đầu tiên (@bachluulinh, $0.0302) đắt hơn vì ghi prompt cache; các call sau đọc lại cache nên ~$0.02. Mỗi KOC được chọn gánh luôn phần của người bị loại: AI $0.4046 / 5 = **$0.081 / KOC**, cộng Kalodata lần chạy đầu ≈ **$0.27 / KOC**. Bảng từng người ở [BENCHMARK.md §2](BENCHMARK.md#2-token--chi-phí--thời-gian-run-8ee88197).
+
+### 4.5 Case bật dữ liệu chuyên sâu Kalodata
+
+Cùng brief, bật cả 3 phần trả phí trên form (run `293f2b65`, xoá cache AI trước khi chạy):
+
+| | Mặc định | Bật chuyên sâu |
+|---|---|---|
+| AI (13 call) | $0.4046 | $0.4059 |
+| AI / người đi hết phễu | $0.0403 | $0.0404 |
+| Kalodata trả trong run | 3.1 credit | 5.0 credit (doanh thu theo ngành 2.0 + chi tiết video 2.0 + sản phẩm đang bán 1.0, đúng ước tính) |
+| Kalodata / người đi hết phễu | 0.7 credit | 1.1 credit |
+| Tổng 1 lần chạy đầu | ≈ $1.34 | ≈ $1.75 |
+| 5 KOC | – | 4/5 giữ nguyên; @luumaianh_ thay @bachluulinh; #1 fit 62 → 66; booking 22 / 30 triệu |
+
+Dữ liệu chuyên sâu gần như không đổi chi phí AI; chi phí thêm là credit Kalodata.
 
 **Dự phóng quy mô** (từ chi phí đơn vị đo được):
 
 | KOC cần tìm | AI | AI với Batch API | Kalodata | Tổng ≈ |
 |---|---|---|---|---|
-| 5 | $0.39 | $0.20 | 9.4 credit | $1.33 |
-| 50 | $3.91 | $1.95 | 94 credit | $13.31 |
-| 500 | $39.07 | $19.54 | 940 credit | $133.07 |
+| 5 | $0.40 | $0.20 | 9.4 credit | $1.34 |
+| 50 | $4.05 | $2.02 | 94 credit | $13.45 |
+| 500 | $40.46 | $20.23 | 940 credit | $134.46 |
 
-**Lưu ý về thời điểm đo.** Benchmark chạy ngày 2026-11-16 với 3 nguồn Kalodata, trước các thay đổi sau đó: thêm 2 nguồn (`proven`, `rising`), chuyển sang MongoDB, thêm tín hiệu từ dữ liệu đã trả tiền và dữ liệu chuyên sâu. Từ 2026-11-16, Kalodata từ chối API key ("The key is not allowed", kể cả endpoint miễn phí), nên chưa đo lại được. Ước tính 2 nguồn mới tốn thêm ~0.7 credit mỗi lần chạy lạnh. Khi key hoạt động lại, chạy `npm run benchmark -- --fresh` để đo lại; dữ liệu đã lưu được dùng lại nên chỉ tốn credit cho phần mới.
+**Thời điểm đo.** Đo lại ngày 2026-11-17 với key Kalodata mới, sau các thay đổi: thêm 2 nguồn (`proven`, `rising`), chuyển sang MongoDB, tín hiệu từ dữ liệu đã trả tiền và dữ liệu chuyên sâu. Chạy lại bằng `npm run benchmark -- --fresh` (thêm `--no-deep` để bỏ case dữ liệu chuyên sâu); dữ liệu Kalodata đã lưu được dùng lại nên chỉ tốn credit cho phần mới.
 
 ## 5. README
 

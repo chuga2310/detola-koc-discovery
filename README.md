@@ -12,11 +12,13 @@ Tìm KOC TikTok phù hợp cho một brief chiến dịch, ví dụ **5 KOC cho 
 
 | Kết quả benchmark (chạy thật, N = 5) | |
 |---|---|
-| Chi phí 1 lần chạy lạnh | **≈ $1.33** = AI $0.39 + Kalodata 9.4 credit (≈ $0.94); thêm 2 nguồn mới ≈ +0.7 credit |
+| Chi phí 1 lần chạy đầu (chưa có cache AI, chưa có dữ liệu Kalodata lưu sẵn) | **≈ $1.34** = AI $0.40 + Kalodata 9.4 credit (≈ $0.94) |
+| Chi phí AI mỗi creator | đi hết phễu **$0.040** (đọc $0.0002 + xem video $0.021 + chấm cuối $0.019); dừng sau bước đọc nội dung $0.0002; mỗi KOC được chọn ≈ $0.081 AI |
+| Bật dữ liệu chuyên sâu | +5 credit (≈ $0.50), AI gần như không đổi ($0.4059); tổng ≈ $1.75 |
 | Chạy lại / chiến dịch gặp lại creator | **$0**: mọi lần gọi AI và Kalodata đều dùng lại dữ liệu đã lưu |
-| Thời gian | ~110 giây khi dữ liệu đã có; ~2.5–3 phút khi chạy lạnh hoàn toàn |
+| Thời gian | ~134 giây xử lý khi một phần dữ liệu đã có; ~2.5–3 phút khi chạy lần đầu hoàn toàn |
 | Phục hồi | Kill cứng giữa bước xem video → chạy tiếp → **0 lần gọi bị trả tiền 2 lần** |
-| So với cách naive (AI xem video cả pool bằng model mạnh) | AI $12.08 → $0.39, **giảm ~97%** |
+| So với cách naive (AI xem video cả pool bằng model mạnh) | AI $12.08 → $0.40, **giảm ~97%** |
 
 ---
 
@@ -108,7 +110,7 @@ Giao diện theo design system của DETOLA (detola.vn), mô tả ở [DESIGN.md
 - **AI chưa xem video thật:** model nhận 6 khung hình tĩnh + lời thoại thay cho video, nên mất chuyển động, nhịp dựng, âm thanh. Một model đọc video gốc tốt sẽ cải thiện rất nhiều; chỉ cần thay đầu vào của bước xem video.
 - **Video thứ 2 mỗi creator chỉ có ảnh bìa** (TikTok chặn tải video miễn phí; lấy MP4 cho cả 2 tốn thêm 0.5 credit / người).
 - **Chi phí booking là ước tính** theo tier follower, chưa có báo giá thật.
-- **Kết quả AI không hoàn toàn tất định:** creator điểm sát nhau có thể đổi thứ hạng giữa 2 lần chạy lạnh.
+- **Kết quả AI không hoàn toàn tất định:** creator điểm sát nhau có thể đổi thứ hạng giữa 2 lần chạy từ đầu (chưa có cache AI).
 - Worker chạy trong process Next.js; production nên tách worker. Chưa có đăng nhập cho giao diện.
 
 ## 6. Hướng mở rộng

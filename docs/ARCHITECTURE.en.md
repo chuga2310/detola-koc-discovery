@@ -57,7 +57,7 @@ flowchart TD
     CLI["CLI: npm run discover / benchmark"] --> Pipeline
 ```
 
-Demo brief (N = 5): pool 234 → prefilter keeps 20 → enrich 20 → text AI 18 (**2 calls**) → video AI 10 (**10 calls**) → final 10 (**1 call**) → select 5. Total **13 AI calls + ~9.4 credits** (measured before the 2 new sources were added; these 2 sources add ~0.7 credit), about **$1.33 / cold run**, 0 for a repeated run.
+Demo brief (N = 5, measured 2026-11-17): pool 224 → prefilter keeps 20 → enrich 20 → text AI 20 (**2 calls**) → video AI 10 (**10 calls**) → final 10 (**1 call**) → select 5. Total **13 AI calls + 9.4 credits**, about **$1.34 for a first run** (no AI cache, no stored data), 0 for a repeated run.
 
 ## 2. Key decisions
 
@@ -65,12 +65,12 @@ Demo brief (N = 5): pool 234 → prefilter keeps 20 → enrich 20 → text AI 18
 
 | Stage | Cost / creator | Creators (N=5) | Why it sits at this position |
 |---|---|---|---|
-| source | ~0.002 credit | 234 | The rank API is billed per 100-row page → a large pool is almost free |
-| prefilter | 0 | 234 | Followers, category, views, GMV, video/live ratio and cost are **numbers**; no AI needed |
+| source | ~0.002 credit | 224 | The rank API is billed per 100-row page → a large pool is almost free |
+| prefilter | 0 | 224 → 213 pass hard filters | Followers, category, views, GMV, video/live ratio and cost are **numbers**; no AI needed |
 | enrich | 0.2 credit | 20 | Detail + video list are fetched only for candidates worth a closer look (lazy enrichment) |
-| text_screen | ~$0.0002 (Haiku, batched) | 18 | Reads caption / bio / sales mix to understand niche and risk |
-| media_prep + video_analysis | 0.5 credit + ~$0.02 | 10 | Most expensive → shortlist only |
-| final_rank | ~$0.018 (Opus, compact text) | 10 | Best reasoning, but the input is already compressed into evidence lines |
+| text_screen | ~$0.0002 (Haiku, batched) | 20 | Reads caption / bio / sales mix to understand niche and risk |
+| media_prep + video_analysis | 0.5 credit + ~$0.021 | 10 | Most expensive → shortlist only |
+| final_rank | ~$0.019 (Opus, compact text) | 10 | Best reasoning, but the input is already compressed into evidence lines |
 
 Funnel sizes are defined in `funnelFor()` (`src/lib/config.ts`) and scale with N.
 
@@ -88,7 +88,7 @@ Each source runs independently: if one source fails (API, parameters), only a wa
 
 ### 2.3 Lazy enrichment
 
-Calling detail + videos for the whole pool of 234 creators costs ~47 credits. Calling them only for the 20 creators that pass prefilter costs 4 credits (**~90% less**). After enrichment, the metric score is **recomputed** on the full data (real engagement from videos, keywords in captions, ad-view ratio, number of products/shops being promoted) and the hard filters are applied again.
+Calling detail + videos for the whole pool of 224 creators costs ~45 credits. Calling them only for the 20 creators that pass prefilter costs 4 credits (**~90% less**). After enrichment, the metric score is **recomputed** on the full data (real engagement from videos, keywords in captions, ad-view ratio, number of products/shops being promoted) and the hard filters are applied again.
 
 ### 2.4 Model tiering
 
@@ -182,7 +182,7 @@ The `creator/detail` and `video/rank` responses contain many fields that used to
 | **AI-generated videos** (`ai_video`), debut date | `video/rank` | Added to the content-reading card and to evidence m8. |
 | **Contact channels** (`creator_contact_*`) | `creator/detail` | Only the channel NAME is stored (Email, Zalo…) so the marketer knows how to book; contact values are not stored. |
 
-Signals from `creator/detail` exist only after the enrich step (~20 creators), so they feed into the post-enrich re-score, the content-reading step and the final scoring, not into the coarse filter over 234 creators (missing = neutral). New weights: `videoFocus` 0.10 → 0.05, plus `momentum` 0.05.
+Signals from `creator/detail` exist only after the enrich step (~20 creators), so they feed into the post-enrich re-score, the content-reading step and the final scoring, not into the coarse filter over ~224 creators (missing = neutral). New weights: `videoFocus` 0.10 → 0.05, plus `momentum` 0.05.
 
 ### 2.13 Conversational brief intake: code decides, AI only interprets language
 
@@ -221,9 +221,9 @@ Kalodata data that has been paid for with credits is **real app data**, not a te
 
 | N | Pool | Enrich + text AI | Video AI | AI | Kalodata | Total ≈ |
 |---|---|---|---|---|---|---|
-| 5 | 100/source | 20 | 10 | $0.39 | 9.4 cr | $1.33 |
-| 50 | 1 000/source | 200 | 100 | $3.9 | 94 cr | $13.3 |
-| 500 | 10 000/source | 2 000 | 1 000 | $39 | 940 cr | $133 |
+| 5 | 100/source | 20 | 10 | $0.40 | 9.4 cr | $1.34 |
+| 50 | 1 000/source | 200 | 100 | $4.0 | 94 cr | $13.4 |
+| 500 | 10 000/source | 2 000 | 1 000 | $40 | 940 cr | $134 |
 
 At large scale, **data cost (video URL at 0.5 credit) exceeds AI cost**. Mitigations already prepared:
 

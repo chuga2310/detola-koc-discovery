@@ -73,56 +73,84 @@ Details and diagrams (mermaid) in [ARCHITECTURE.en.md](ARCHITECTURE.en.md). Summ
 
 ## 4. Benchmark Results
 
-Numbers from real run `ac0209d1` on **2026-11-16**, sunscreen brief, N = 5. Full report (Vietnamese) in [BENCHMARK.md](BENCHMARK.md), raw numbers in [results.json](../benchmark/results.json).
+Numbers from the real run `8ee88197` on **2026-11-17**, sunscreen brief, N = 5, all 5 Kalodata sources. Full report in [BENCHMARK.md](BENCHMARK.md) (Vietnamese), raw numbers in [results.json](../benchmark/results.json).
+
+A "first run" here means no AI cache and no stored Kalodata data, so every AI call and credit is paid. Re-running the same brief reuses both.
 
 ### 4.1 The 5 KOCs
 
-Estimated booking cost **29,000,000 ₫ / 30,000,000 ₫**, DP optimizer.
+Estimated booking cost **19,000,000 ₫ / 30,000,000 ₫**, DP optimizer: it picks the set with the highest total score and does not try to spend the whole budget.
 
 | # | Creator | Followers | Est. cost | Final | AI fit | Data | Video | Verdict |
 |---|---|---|---|---|---|---|---|---|
-| 1 | [@luumaianh_](https://www.tiktok.com/@luumaianh_) | 183,300 | 7,000,000 | 58.5 | 62 | 50.3 | 62.5 | good |
-| 2 | [@sayhiinb](https://www.tiktok.com/@sayhiinb) | 210,800 | 7,000,000 | 56.6 | 58 | 53.3 | 47.5 | weak |
-| 3 | [@binnoo0](https://www.tiktok.com/@binnoo0) | 105,000 | 7,000,000 | 53.3 | 50 | 61 | 46.8 | weak |
-| 4 | [@lethiloan2001](https://www.tiktok.com/@lethiloan2001) | 76,300 | 4,000,000 | 53.1 | 51 | 58 | 47.4 | weak |
-| 5 | [@bachluulinh](https://www.tiktok.com/@bachluulinh) | 75,800 | 4,000,000 | 52.4 | 55 | 46.5 | 67.5 | weak |
+| 1 | [@ngoc.matcha.review](https://www.tiktok.com/@ngoc.matcha.review) | 145,700 | 7,000,000 | 60.4 | 62 | 56.7 | 39.5 | good |
+| 2 | [@bachluulinh](https://www.tiktok.com/@bachluulinh) | 75,800 | 4,000,000 | 53.6 | 60 | 38.6 | 65 | good |
+| 3 | [@rin.review22](https://www.tiktok.com/@rin.review22) | 13,500 | 2,000,000 | 52.6 | 51 | 56.2 | 39.5 | weak |
+| 4 | [@phuongmet57](https://www.tiktok.com/@phuongmet57) | 14,900 | 2,000,000 | 52.5 | 49 | 60.7 | 27.2 | weak |
+| 5 | [@changaffiliate](https://www.tiktok.com/@changaffiliate) | 85,100 | 4,000,000 | 51.4 | 48 | 59.3 | 39.5 | weak |
 
-The system says plainly when results are not strong: 4 of the 5 KOCs are "weak". The reasons are stated: the audience-fit score is capped because the API has no follower demographics, and within a 30M budget few creators both specialise in sunscreen and have good organic reach.
+The system says plainly when results are not strong: 3 of 5 are "weak". They have cheap reach and sell well but are mostly deal channels that rarely apply the product on skin; audience match is capped because the API has no follower demographics.
 
 ### 4.2 Evidence
 
-Each KOC has 3–4 reasons and 2–3 risks, each with traceable evidence ids. For example, #1 @luumaianh_:
+Each KOC has 3–4 reasons and 2–3 risks, each with a traceable evidence id. For #1 @ngoc.matcha.review:
 
-- ✅ Engagement rate 9.4% (top 16% of the pool) — `c18.m2`.
-- ✅ Has filmed a product with an SPF rating, with an "SPF 50+ PA ++++" overlay in frame 4 at 34.2 s — `c18.v1.o2`.
-- ⚠️ Main niche is lipstick; only 1 of 10 recent videos has a sunscreen keyword — `c18.t1`, `c18.m5`.
-- ⚠️ No demographics; the "female 18–30" fit is inferred from content only — `c18.a1`.
+- ✅ Video GPM 246k VND per 1,000 views, top 5% of the pool — `c4.m7`.
+- ✅ 28.9M organic views in 30 days (ad views removed), 83k expected views per 1M VND — `c4.m1`, `c4.m4`.
+- ⚠️ Currently sells a Beplain sunscreen, a possible competitor conflict — `c4.m10`, `c4.t2`.
+- ⚠️ Only shows the packaging and names ingredients; never applies it on skin — `c4.v1.o4`.
 
-The full list for all 5 KOCs is in [BENCHMARK.md §1](BENCHMARK.md#1-kết-quả-5-koc) (Vietnamese, as the AI wrote it).
+Full list for all 5 in [BENCHMARK.md §1](BENCHMARK.md#1-kết-quả-5-koc).
 
 ### 4.3 Tokens, cost, time
 
-| | Result |
+| | Value |
 |---|---|
-| AI | 13 calls, 42,959 input + 40,243 cache-read + 26,565 output tokens, 20 images → **$0.39** |
-| Kalodata (cold) | **9.4 credits ≈ $0.94** |
-| **Total for one cold run** | **≈ $1.33** |
-| Processing time | **109.1 s** active (stored Kalodata data, cold AI); ~2.5–3 min fully cold |
-| Re-run with the same brief | 13/13 AI calls reused from cache, **$0**, same result |
-| Recovery | Hard kill during video review after 5 paid AI calls → resumed in a new process → **0 calls paid twice** |
-| vs. naive approach | Strong model reviewing videos for the whole pool: AI **$12.08** → **$0.39** (~97% cheaper) |
+| AI | 13 calls, 48,639 input + 34,857 cache read + 25,209 output tokens, 20 images → **$0.40** |
+| Kalodata for a first run | **9.4 credits ≈ $0.94** (this measurement paid only 3.1; the rest reused stored data) |
+| **Total for one first run** | **≈ $1.34** |
+| Processing time | **133.6 s** active (part of the Kalodata data already stored); a full first run takes ~2.5–3 min |
+| Re-run of the same brief | 13/13 AI calls served from cache, **$0**, same result |
+| Recovery | Hard kill during video review after 5 paid AI calls → resume in a new process → **0 calls paid twice** |
+| vs. naive | Strong model reviewing videos for the whole pool: AI **$12.08** → **$0.40** (~97% cheaper) |
 
-AI cost by step: text screen $0.0034 · video $0.2004 · final scoring $0.1866. Funnel: pool 234 → enrich 20 → content read 18 → video review 10 → final scoring 10 → selected 5.
+AI cost by step: content screen $0.0034 · video review $0.2119 · final ranking $0.1894. Funnel: pool 224 → pass data filters 213 → detail fetched 20 → content screen 20 → video review 10 → final ranking 10 → pick 5.
 
-**Scale projection** (from the measured unit costs):
+### 4.4 AI cost per creator
+
+Video review is one call per creator, so it counts in full; content screening and final ranking are one call for up to 10 creators, so the call cost is split evenly across the batch.
+
+| Creator reached | Creators | Content screen (Haiku) | Video review (Sonnet) | Final ranking (Opus) | AI per creator | Kalodata per creator |
+|---|---|---|---|---|---|---|
+| Whole funnel (5 picked + 5 not picked) | 10 | $0.0002 | $0.0187–0.0302 (avg $0.0212) | $0.0189 | **$0.0403** (≈ $0.11 with Kalodata) | 0.7 credits |
+| Stopped after content screening | 10 | $0.0002 | – | – | **$0.0002** | 0.2 credits |
+
+The first video call (@bachluulinh, $0.0302) costs more because it writes the prompt cache; later calls read it and cost ~$0.02. Each picked KOC also carries the cost of the creators that were dropped: AI $0.4046 / 5 = **$0.081 per KOC**, or ≈ **$0.27 per KOC** with first-run Kalodata credits. Per-creator table in [BENCHMARK.md §2](BENCHMARK.md#2-token--chi-phí--thời-gian-run-8ee88197).
+
+### 4.5 Case: Kalodata deep data turned on
+
+Same brief with all 3 paid options turned on in the form (run `293f2b65`, AI cache cleared first):
+
+| | Default | Deep data on |
+|---|---|---|
+| AI (13 calls) | $0.4046 | $0.4059 |
+| AI per whole-funnel creator | $0.0403 | $0.0404 |
+| Kalodata paid in the run | 3.1 credits | 5.0 credits (category revenue 2.0 + video detail 2.0 + products sold 1.0, as estimated) |
+| Kalodata per whole-funnel creator | 0.7 credits | 1.1 credits |
+| Total for one first run | ≈ $1.34 | ≈ $1.75 |
+| The 5 KOCs | – | 4 of 5 unchanged; @luumaianh_ replaces @bachluulinh; #1 fit 62 → 66; booking 22 / 30 million |
+
+Deep data barely changes AI cost; the extra cost is Kalodata credits.
+
+**Scale projection** (from measured unit costs):
 
 | KOCs needed | AI | AI with Batch API | Kalodata | Total ≈ |
 |---|---|---|---|---|
-| 5 | $0.39 | $0.20 | 9.4 credits | $1.33 |
-| 50 | $3.91 | $1.95 | 94 credits | $13.31 |
-| 500 | $39.07 | $19.54 | 940 credits | $133.07 |
+| 5 | $0.40 | $0.20 | 9.4 credits | $1.34 |
+| 50 | $4.05 | $2.02 | 94 credits | $13.45 |
+| 500 | $40.46 | $20.23 | 940 credits | $134.46 |
 
-**Note on when this was measured.** The benchmark ran on 2026-11-16 with 3 Kalodata sources, before the later changes: 2 more sources (`proven`, `rising`), the move to MongoDB, signals from already-paid data, and paid deep data. Since 2026-11-16 Kalodata rejects the API key ("The key is not allowed", even on the free endpoint), so it has not been re-measured. The 2 new sources are estimated at ~0.7 extra credits per cold run. Once the key works again, run `npm run benchmark -- --fresh` to re-measure; stored data is reused, so only the new parts cost credits.
+**When this was measured.** Re-measured on 2026-11-17 with a new Kalodata key, after the later changes: 2 more sources (`proven`, `rising`), the move to MongoDB, signals from already-paid data, and paid deep data. Re-run with `npm run benchmark -- --fresh` (add `--no-deep` to skip the deep-data case); stored Kalodata data is reused, so only new parts cost credits.
 
 ## 5. README
 

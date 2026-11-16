@@ -57,7 +57,7 @@ flowchart TD
     CLI["CLI: npm run discover / benchmark"] --> Pipeline
 ```
 
-Brief demo (N = 5): pool 234 → prefilter giữ 20 → enrich 20 → text AI 18 (**2 call**) → video AI 10 (**10 call**) → final 10 (**1 call**) → chọn 5. Tổng **13 call AI + ~9.4 credit** (đo trước khi thêm 2 nguồn mới; 2 nguồn này cộng ~0.7 credit), khoảng **$1.33 / run lạnh**, 0 cho run lặp lại.
+Brief demo (N = 5, đo 2026-11-17): pool 224 → prefilter giữ 20 → enrich 20 → text AI 20 (**2 call**) → video AI 10 (**10 call**) → final 10 (**1 call**) → chọn 5. Tổng **13 call AI + 9.4 credit**, khoảng **$1.34 cho lần chạy đầu** (chưa có cache AI, chưa có dữ liệu lưu), 0 cho lần chạy lặp lại.
 
 ## 2. Các quyết định chính
 
@@ -65,12 +65,12 @@ Brief demo (N = 5): pool 234 → prefilter giữ 20 → enrich 20 → text AI 18
 
 | Stage | Chi phí / creator | Số creator (N=5) | Vì sao ở vị trí này |
 |---|---|---|---|
-| source | ~0.002 credit | 234 | Rank API tính theo trang 100 dòng → pool lớn gần như miễn phí |
-| prefilter | 0 | 234 | Follower, ngành hàng, view, GMV, tỷ lệ video/live, chi phí là **số**, không cần AI |
+| source | ~0.002 credit | 224 | Rank API tính theo trang 100 dòng → pool lớn gần như miễn phí |
+| prefilter | 0 | 224 → 213 qua lọc cứng | Follower, ngành hàng, view, GMV, tỷ lệ video/live, chi phí là **số**, không cần AI |
 | enrich | 0.2 credit | 20 | Detail + danh sách video chỉ lấy cho ứng viên đáng xem (lazy enrichment) |
-| text_screen | ~$0.0002 (Haiku, batch) | 18 | Đọc caption / bio / cơ cấu bán hàng để hiểu ngách và rủi ro |
-| media_prep + video_analysis | 0.5 credit + ~$0.02 | 10 | Đắt nhất → chỉ cho shortlist |
-| final_rank | ~$0.018 (Opus, text gọn) | 10 | Suy luận tốt nhất nhưng input đã nén thành evidence lines |
+| text_screen | ~$0.0002 (Haiku, batch) | 20 | Đọc caption / bio / cơ cấu bán hàng để hiểu ngách và rủi ro |
+| media_prep + video_analysis | 0.5 credit + ~$0.021 | 10 | Đắt nhất → chỉ cho shortlist |
+| final_rank | ~$0.019 (Opus, text gọn) | 10 | Suy luận tốt nhất nhưng input đã nén thành evidence lines |
 
 Kích thước funnel ở `funnelFor()` (`src/lib/config.ts`), scale theo N.
 
@@ -88,7 +88,7 @@ Mỗi nguồn chạy độc lập: 1 nguồn lỗi (API, tham số) chỉ ghi c�
 
 ### 2.3 Lazy enrichment
 
-Gọi detail + video cho cả pool 234 creator tốn ~47 credit. Chỉ gọi cho 20 creator qua prefilter thì tốn 4 credit (**giảm ~90%**). Sau khi enrich, điểm số liệu được **chấm lại** trên dữ liệu đầy đủ (engagement thật từ video, keyword trong caption, tỷ lệ view quảng cáo, số sản phẩm/shop đang quảng bá) và áp lại hard filter.
+Gọi detail + video cho cả pool 224 creator tốn ~45 credit. Chỉ gọi cho 20 creator qua prefilter thì tốn 4 credit (**giảm ~90%**). Sau khi enrich, điểm số liệu được **chấm lại** trên dữ liệu đầy đủ (engagement thật từ video, keyword trong caption, tỷ lệ view quảng cáo, số sản phẩm/shop đang quảng bá) và áp lại hard filter.
 
 ### 2.4 Model tiering
 
@@ -180,7 +180,7 @@ Response của `creator/detail` và `video/rank` có nhiều trường trước 
 | **Video AI tạo** (`ai_video`), ngày debut | `video/rank` | Đưa vào thẻ đọc nội dung và bằng chứng m8. |
 | **Kênh liên hệ** (`creator_contact_*`) | `creator/detail` | Chỉ lưu TÊN kênh (Email, Zalo…) để marketer biết đường booking; không lưu giá trị liên hệ. |
 
-Các tín hiệu từ `creator/detail` chỉ có sau bước enrich (~20 người), nên chúng vào điểm chấm lại sau enrich, bước đọc nội dung và chấm điểm cuối, không vào lọc thô 234 người (thiếu = trung tính). Trọng số mới: `videoFocus` 0.10 → 0.05, thêm `momentum` 0.05.
+Các tín hiệu từ `creator/detail` chỉ có sau bước enrich (~20 người), nên chúng vào điểm chấm lại sau enrich, bước đọc nội dung và chấm điểm cuối, không vào lọc thô ~224 người (thiếu = trung tính). Trọng số mới: `videoFocus` 0.10 → 0.05, thêm `momentum` 0.05.
 
 ### 2.13 Lập brief bằng hội thoại: code quyết định, AI chỉ hiểu chữ
 
@@ -219,9 +219,9 @@ Dữ liệu Kalodata đã trả credit là **dữ liệu thật của app**, kh�
 
 | N | Pool | Enrich + text AI | Video AI | AI | Kalodata | Tổng ≈ |
 |---|---|---|---|---|---|---|
-| 5 | 100/nguồn | 20 | 10 | $0.39 | 9.4 cr | $1.33 |
-| 50 | 1 000/nguồn | 200 | 100 | $3.9 | 94 cr | $13.3 |
-| 500 | 10 000/nguồn | 2 000 | 1 000 | $39 | 940 cr | $133 |
+| 5 | 100/nguồn | 20 | 10 | $0.40 | 9.4 cr | $1.34 |
+| 50 | 1 000/nguồn | 200 | 100 | $4.0 | 94 cr | $13.4 |
+| 500 | 10 000/nguồn | 2 000 | 1 000 | $40 | 940 cr | $134 |
 
 Ở quy mô lớn, **chi phí dữ liệu (video URL 0.5 credit) vượt chi phí AI**. Hướng xử lý đã chuẩn bị sẵn:
 
