@@ -67,7 +67,7 @@ Trên giao diện: bấm **Tạm dừng** khi chiến dịch đang chạy, rồi
 | `/new` **Brief mới** | **Form** điền nhanh bằng chip (ngân sách chọn tiền tệ + mức có sẵn hoặc tự nhập). **Ô chat**: kể bằng lời, AI hỏi thêm từng câu kèm lựa chọn. Đủ thông tin → thẻ brief để xác nhận, tuỳ chọn bật **dữ liệu chuyên sâu (trả phí)** → **Bắt đầu tìm creator** |
 | `/runs/:id` **Chiến dịch** | Brief đã chốt và hội thoại → **8 bước nghiên cứu** (mở từng bước để xem chi tiết) → KOC đề xuất kèm bằng chứng bấm được. Chi phí và nhật ký nằm trong mục thu gọn |
 
-Giao diện theo design system của DETOLA (detola.vn), mô tả ở [DESIGN.md](DESIGN.md).
+Giao diện theo design system của DETOLA (detola.vn), mô tả ở [DESIGN.md](DESIGN.md); hồ sơ sản phẩm (người dùng, nguyên tắc) ở [PRODUCT.md](PRODUCT.md).
 
 ## 3. Pipeline
 
@@ -125,7 +125,9 @@ Giao diện theo design system của DETOLA (detola.vn), mô tả ở [DESIGN.md
 ```
 briefs/                 brief mẫu (đề bài kem chống nắng)
 data/fixtures/          dữ liệu mẫu cho chế độ offline
-docs/                   ARCHITECTURE, FEATURES (vi + en), BENCHMARK
+docs/                   ARCHITECTURE, FEATURES (vi + en), BENCHMARK (tự sinh, tiếng Việt)
+PRODUCT.md, DESIGN.md   hồ sơ sản phẩm + design system (vi; bản .en.md tiếng Anh), dùng cho công cụ thiết kế
+AGENTS.md               hướng dẫn cho AI coding agent, do `next dev` tự sinh
 benchmark/results.json  số liệu thô của benchmark
 scripts/                discover (CLI), benchmark, gen-fixtures, migrate-sqlite
 src/lib/                lõi hệ thống (xem docs/ARCHITECTURE.md §5)

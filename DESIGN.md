@@ -197,172 +197,174 @@ components:
     size: "36px"
 ---
 
+> Bản tiếng Anh: [DESIGN.en.md](DESIGN.en.md). Tiêu đề mục giữ tiếng Anh vì công cụ thiết kế (impeccable) đọc file theo các mục này.
+
 # Design System: KOC Discovery
 
 ## Overview
 
 **Creative North Star: "The DETOLA Desk"**
 
-KOC Discovery wears the DETOLA brand (detola.vn) as a working tool rather than a marketing page. A warm cream ground holds white, softly rounded cards; navy carries every word and every dark block; one DETOLA orange marks the thing you press next; teal says "done" or "good". Inside that warm shell the content stays dense and exact: tabular figures, hairline navy rules, verdicts spelled out in words, evidence one click away.
+KOC Discovery mang thương hiệu DETOLA (detola.vn) như một công cụ làm việc chứ không phải một trang marketing. Nền cream ấm giữ các card trắng bo góc mềm; navy mang mọi chữ và mọi khối tối; một màu cam DETOLA đánh dấu thứ bạn sẽ bấm tiếp theo; teal nói "xong" hoặc "tốt". Bên trong lớp vỏ ấm đó, nội dung vẫn dày và chính xác: số dạng tabular, đường kẻ navy mảnh, kết luận được viết thành chữ, bằng chứng chỉ cách một cú click.
 
-The system is light-only and calm. Hierarchy comes from Be Vietnam Pro's weight and tight negative tracking, the navy-over-grey two-tone headline, and the step from cream to white, never from colour floods or heavy shadow. Orange is scarce on purpose; navy blocks (the user's chat bubbles, the dark button, the identity mark) give the page its weight. The DETOLA logo and mascot illustrations are not used; the header carries its own small navy-and-orange mark.
+Hệ thống chỉ có light mode và điềm tĩnh. Thứ bậc đến từ độ đậm và tracking âm chặt của Be Vietnam Pro, headline hai tông navy trên xám, và bước chuyển từ cream sang trắng, không bao giờ từ những mảng màu tràn hay shadow nặng. Cam được dùng hiếm một cách có chủ đích; các khối navy (chat bubble của người dùng, dark button, identity mark) tạo sức nặng cho trang. Logo và minh hoạ mascot của DETOLA không được dùng; header có mark nhỏ navy và cam của riêng nó.
 
 **Key Characteristics:**
-- Cream ground, white cards, hairline navy-10% borders, one very soft shadow.
-- Navy ink for text and dark blocks; orange only for the primary action, the AI avatar, the active rank and evidence keys.
-- Teal for completed steps and positive verdicts; amber and brick only for states that need attention.
-- Soft corners (12px controls, 16px chat and step panels, 20px cards) and pills for everything that is a tag or a choice.
-- Every status and verdict carries a word, never colour alone.
+- Nền cream, card trắng, border hairline navy 10%, một shadow rất mềm.
+- Mực navy cho chữ và khối tối; cam chỉ dành cho primary action, AI avatar, rank đang active và evidence key.
+- Teal cho các bước đã hoàn tất và kết luận tích cực; amber và brick chỉ cho những trạng thái cần chú ý.
+- Góc mềm (12px cho control, 16px cho chat và step panel, 20px cho card) và pill cho mọi thứ là tag hoặc lựa chọn.
+- Mọi trạng thái và kết luận đều kèm một chữ, không bao giờ chỉ dựa vào màu.
 
 ## Colors
 
-A warm brand palette: cream and white neutrals, DETOLA navy, one orange accent, teal for good news, and muted amber/brick for warnings.
+Một bảng màu thương hiệu ấm: các màu trung tính cream và trắng, navy DETOLA, một màu cam nhấn, teal cho tin tốt, và amber/brick dịu cho cảnh báo.
 
 ### Primary
-- **DETOLA Orange** (action): fill of the primary button ("Tạo brief mới", "Gửi brief"), the AI avatar, the composer send button, the kicker dot, the running-step dot and the composer's attention sweep. Text on it is always navy.
-- **Pressed Orange** (action-hover): primary button hover.
-- **Peach Wash** (action-tint): selected chip fill, selected ranking row, running status pill, text selection.
-- **Burnt Orange Text** (action-text): orange used as text or line on light grounds, for evidence key pills (`m2`, `v1.o2`), the active rank numeral "01", "Hồ sơ TikTok" links, inline secondary actions ("Điền brief mẫu của đề bài"), the caret, focus outlines and focused field borders.
+- **DETOLA Orange** (action): fill của primary button ("Tạo brief mới", "Gửi brief"), AI avatar, nút gửi của composer, chấm kicker, chấm của bước đang chạy và vệt quét gây chú ý của composer. Chữ trên nền này luôn là navy.
+- **Pressed Orange** (action-hover): hover của primary button.
+- **Peach Wash** (action-tint): fill của chip được chọn, hàng ranking được chọn, status pill đang chạy, vùng chọn văn bản.
+- **Burnt Orange Text** (action-text): cam dùng làm chữ hoặc đường kẻ trên nền sáng, cho evidence key pill (`m2`, `v1.o2`), số rank active "01", link "Hồ sơ TikTok", các action phụ inline ("Điền brief mẫu của đề bài"), caret, focus outline và border của field đang focus.
 
 ### Secondary
-- **Deep Teal** (good): positive text ("Hoàn tất", "Phù hợp"), and the solid fill of the strongest verdict "Rất hợp" with white text.
-- **DETOLA Teal** (good-fill): completed step nodes with a white check, good-state dots and bars.
-- **Teal Mist** (good-tint): background of good badges and the "Đủ thông tin" ready-brief badge.
+- **Deep Teal** (good): chữ tích cực ("Hoàn tất", "Phù hợp"), và fill đặc của kết luận mạnh nhất "Rất hợp" với chữ trắng.
+- **DETOLA Teal** (good-fill): node của bước đã hoàn tất với dấu check trắng, chấm và thanh ở trạng thái tốt.
+- **Teal Mist** (good-tint): nền của badge tốt và badge "Đủ thông tin" của brief đã sẵn sàng.
 
 ### Tertiary
-- **Amber Ink / Amber Wash** (caution, caution-tint): "Cân nhắc" verdicts, "Tạm dừng" status, the mock-provider notice.
-- **Brick Red / Brick Wash** (risk, risk-tint): "Loại" verdicts, "Lỗi" status, the minus marks on "Lưu ý" risks.
+- **Amber Ink / Amber Wash** (caution, caution-tint): kết luận "Cân nhắc", trạng thái "Tạm dừng", thông báo mock provider.
+- **Brick Red / Brick Wash** (risk, risk-tint): kết luận "Loại", trạng thái "Lỗi", dấu trừ ở các rủi ro "Lưu ý".
 
 ### Neutral
-- **DETOLA Cream** (ground): page background and the translucent sticky header.
-- **Card White** (surface): cards, fields, chips, buttons.
-- **Inner Panel** (surface-2) and **Sunken Oat** (sunken): nested blocks inside cards (score grid, queued status pill, brief summary chips).
-- **DETOLA Navy** (ink): all primary text, the selected segmented option, the selected chip outline.
-- **Slate Secondary** (ink-2): secondary text and captions; about 5.7:1 on cream.
-- **Slate Caption** (ink-3): placeholders, disabled controls, minor captions; about 5:1 on white.
-- **Two-Tone Grey** (ink-mute): only the second line of a two-tone headline ("Mỗi brief là một lần tìm KOC.", "Điền nhanh, hoặc kể cho AI."). About 3.2:1 on cream, so it is legal only at large display sizes.
-- **Hairline / Strong Hairline** (rule, rule-strong): card borders and dividers at navy 10%; control borders at navy 22%.
-- **Navy Block** (shell) with **On-Navy White** and **On-Navy Mist**: the user's chat bubbles, the dark button ("Brief mới" in the header), the composer hint bubble, the identity mark.
+- **DETOLA Cream** (ground): nền trang và sticky header trong mờ.
+- **Card White** (surface): card, field, chip, button.
+- **Inner Panel** (surface-2) và **Sunken Oat** (sunken): các khối lồng bên trong card (score grid, status pill đang chờ, chip tóm tắt brief).
+- **DETOLA Navy** (ink): toàn bộ chữ chính, lựa chọn segmented đang chọn, outline của chip được chọn.
+- **Slate Secondary** (ink-2): chữ phụ và caption; khoảng 5.7:1 trên cream.
+- **Slate Caption** (ink-3): placeholder, control bị disabled, caption nhỏ; khoảng 5:1 trên trắng.
+- **Two-Tone Grey** (ink-mute): chỉ dùng cho dòng thứ hai của headline hai tông ("Mỗi brief là một lần tìm KOC.", "Điền nhanh, hoặc kể cho AI."). Khoảng 3.2:1 trên cream, nên chỉ hợp lệ ở cỡ display lớn.
+- **Hairline / Strong Hairline** (rule, rule-strong): border card và divider ở navy 10%; border của control ở navy 22%.
+- **Navy Block** (shell) cùng **On-Navy White** và **On-Navy Mist**: chat bubble của người dùng, dark button ("Brief mới" trên header), hint bubble của composer, identity mark.
 
 ### Named Rules
-**The One Orange Rule.** Orange as a fill appears only on the primary button, the AI avatar, the send button and small status dots. Anywhere orange must be read as text or line on a light ground, use Burnt Orange Text (about 4.9:1 on cream, 5.4:1 on white), never the raw brand orange.
+**The One Orange Rule.** Cam dạng fill chỉ xuất hiện trên primary button, AI avatar, nút gửi và các chấm trạng thái nhỏ. Ở bất cứ đâu cam phải được đọc như chữ hoặc đường kẻ trên nền sáng, dùng Burnt Orange Text (khoảng 4.9:1 trên cream, 5.4:1 trên trắng), không bao giờ dùng màu cam thương hiệu gốc.
 
-**The Navy-On-Orange Rule.** Text on an orange fill is navy (about 5.2:1), never white.
+**The Navy-On-Orange Rule.** Chữ trên fill cam là navy (khoảng 5.2:1), không bao giờ là trắng.
 
-**The Word-With-Colour Rule.** Teal, amber and brick always ride with a word ("Rất hợp", "Phù hợp", "Cân nhắc", "Loại", "Hoàn tất", "Đang chạy", "Tạm dừng", "Lỗi").
+**The Word-With-Colour Rule.** Teal, amber và brick luôn đi kèm một chữ ("Rất hợp", "Phù hợp", "Cân nhắc", "Loại", "Hoàn tất", "Đang chạy", "Tạm dừng", "Lỗi").
 
 ## Typography
 
-**Display Font:** Be Vietnam Pro (with system-ui, sans-serif)
-**Body Font:** Be Vietnam Pro, loaded at 400, 500, 600 and 700 with Latin and Vietnamese subsets.
+**Display Font:** Be Vietnam Pro (với system-ui, sans-serif)
+**Body Font:** Be Vietnam Pro, tải ở 400, 500, 600 và 700 với subset Latin và Vietnamese.
 
-**Character:** One humanist sans with full Vietnamese diacritics. Headings are semibold with tight negative tracking, which gives the brand's compact, confident voice; body text stays at regular weight with generous line height.
+**Character:** Một font sans humanist duy nhất với đầy đủ dấu tiếng Việt. Heading dùng semibold với tracking âm chặt, tạo nên giọng gọn và tự tin của thương hiệu; body text giữ độ đậm regular với line height rộng rãi.
 
 ### Hierarchy
-- **Display** (600, 40px, 1.12, -0.045em): page titles from the `sm` breakpoint up, and the selected KOC handle on desktop. Written as a two-tone pair: a navy statement and a grey second line.
-- **Display mobile** (600, 32px, 1.15): the same page titles below `sm`.
-- **Handle mobile** (600, 30px): the KOC handle in the review card on phones, wrapping anywhere so long handles never overflow.
-- **Title** (600, 24px, 1.2, -0.025em): card and section titles ("5 KOC đề xuất", "Điền nhanh", "Brief", "Ưu", "Lưu ý"), rank numerals and score figures.
-- **Stepper value** (600, 20px, tabular): the number inside the KOC count stepper.
-- **Score mobile** (600, 19px, tabular): score cells in the review's two-row score grid on phones.
-- **Figure / wordmark** (600 to 700, 17px, -0.02 to -0.03em): the header's "KOC Discovery" wordmark (700) and the header ledger figures for cost and time (600, tabular).
-- **Body** (400, 15px, 1.55): reading text, field values, chat messages; long prose capped near 70ch.
-- **Label** (600, 14px, 1.2): button and chip text.
-- **Meta** (400, 13px, 1.45): table headers, captions, helper lines, segmented options (600).
-- **Badge** (600, 12px, line-height 1): verdict and status pills, evidence key pills.
-- **Kicker** (600, 11px, 0.12em, uppercase): the small orange-dot label above a page title.
+- **Display** (600, 40px, 1.12, -0.045em): tiêu đề trang từ breakpoint `sm` trở lên, và handle của KOC đang chọn trên desktop. Viết thành cặp hai tông: một câu khẳng định navy và một dòng thứ hai màu xám.
+- **Display mobile** (600, 32px, 1.15): cùng các tiêu đề trang đó dưới `sm`.
+- **Handle mobile** (600, 30px): handle của KOC trong review card trên điện thoại, xuống dòng ở bất cứ đâu để handle dài không bao giờ tràn.
+- **Title** (600, 24px, 1.2, -0.025em): tiêu đề card và section ("5 KOC đề xuất", "Điền nhanh", "Brief", "Ưu", "Lưu ý"), số rank và số điểm.
+- **Stepper value** (600, 20px, tabular): con số bên trong stepper số lượng KOC.
+- **Score mobile** (600, 19px, tabular): các ô điểm trong score grid hai hàng của phần review trên điện thoại.
+- **Figure / wordmark** (600 đến 700, 17px, -0.02 đến -0.03em): wordmark "KOC Discovery" trên header (700) và các số ledger trên header cho chi phí và thời gian (600, tabular).
+- **Body** (400, 15px, 1.55): chữ để đọc, giá trị field, tin nhắn chat; đoạn văn dài giới hạn khoảng 70ch.
+- **Label** (600, 14px, 1.2): chữ của button và chip.
+- **Meta** (400, 13px, 1.45): header của bảng, caption, dòng hướng dẫn, các lựa chọn segmented (600).
+- **Badge** (600, 12px, line-height 1): pill kết luận và trạng thái, evidence key pill.
+- **Kicker** (600, 11px, 0.12em, uppercase): nhãn nhỏ có chấm cam phía trên tiêu đề trang.
 
-The four tokenised steps (display 40, title 24, body 15, meta 13) are the scale. The other sizes above are deliberate off-ramps, each bound to one component; they are part of the system, not drift, and new sizes beyond them are.
+Bốn bậc đã token hoá (display 40, title 24, body 15, meta 13) là thang chữ. Các cỡ khác ở trên là những lối rẽ có chủ đích, mỗi cỡ gắn với một component; chúng là một phần của hệ thống, không phải drift, còn các cỡ mới ngoài chúng thì là drift.
 
 ### Named Rules
-**The Tabular Figures Rule.** Every number that can be compared (followers, cost, scores, ledger figures, budget input) uses tabular figures and sits right-aligned in its column.
+**The Tabular Figures Rule.** Mọi con số có thể so sánh (follower, chi phí, điểm, số ledger, ô nhập ngân sách) đều dùng tabular figures và căn phải trong cột của nó.
 
-**The Two-Tone Headline Rule.** A page title is a navy line followed by a grey line in ink-mute, both at display size. The grey line never shrinks below 30px, because ink-mute only passes contrast as large text.
+**The Two-Tone Headline Rule.** Tiêu đề trang là một dòng navy theo sau bởi một dòng xám ink-mute, cả hai ở cỡ display. Dòng xám không bao giờ nhỏ hơn 30px, vì ink-mute chỉ đạt contrast khi là large text.
 
 ## Layout
 
-A centred 1200px container with 20px side gutters on phones and 40px from `md`. Pages open with a header block (kicker, two-tone title, a short meta line and the primary action, which right-aligns on wide screens), then content in cards.
+Một container 1200px căn giữa với gutter hai bên 20px trên điện thoại và 40px từ `md`. Các trang mở đầu bằng một header block (kicker, tiêu đề hai tông, một dòng meta ngắn và primary action, căn phải trên màn hình rộng), sau đó là nội dung trong các card.
 
-- Home: one card holding the campaign table (20px inline padding on phones, 28px from `sm`).
-- New brief: a form card stacked over a sticky chat composer; once chatting, a 300px right aside ("Brief đang có") appears from `lg`.
-- Run: an assistant line and a brief card in a narrow reading column, a hairline divider, then ranking (left card) and the selected KOC review (right card) side by side on desktop, stacked on phones. Cost tables and the technical log sit in a collapsed disclosure at the bottom.
+- Home: một card chứa bảng chiến dịch (padding ngang 20px trên điện thoại, 28px từ `sm`).
+- New brief: một form card xếp chồng trên một chat composer dạng sticky; khi đã bắt đầu chat, một aside bên phải rộng 300px ("Brief đang có") xuất hiện từ `lg`.
+- Run: một dòng của assistant và một brief card trong cột đọc hẹp, một divider hairline, sau đó là ranking (card trái) và review của KOC đang chọn (card phải) nằm cạnh nhau trên desktop, xếp chồng trên điện thoại. Các bảng chi phí và log kỹ thuật nằm trong một disclosure thu gọn ở cuối.
 
-Spacing runs in a 4px-based rhythm: 6 and 8px inside controls and pills, 12px between related items, 20px card padding, 40px between header block and content. The sticky composer reserves 11rem of scroll padding so focused fields are never hidden behind it.
+Khoảng cách theo nhịp gốc 4px: 6 và 8px bên trong control và pill, 12px giữa các mục liên quan, 20px padding card, 40px giữa header block và nội dung. Composer dạng sticky giữ 11rem scroll padding để field đang focus không bao giờ bị che phía sau nó.
 
 ## Elevation & Depth
 
-Depth is mostly tonal: cream ground, white cards, sunken or inner-panel blocks inside cards. A single, very diffuse shadow lifts cards and the latest chat card off the cream.
+Chiều sâu chủ yếu đến từ tông màu: nền cream, card trắng, các khối sunken hoặc inner-panel bên trong card. Một shadow duy nhất, rất khuếch tán, nâng card và chat card mới nhất khỏi nền cream.
 
 ### Shadow Vocabulary
-- **Soft lift** (`box-shadow: 0 20px 55px rgb(28 48 72 / 0.045), 0 2px 6px rgb(28 48 72 / 0.03)`): cards, the ready-brief card, the open step panel.
-- **Focus halo** (`box-shadow: 0 0 0 3px rgb(255 121 77 / 0.22)`): focused fields, paired with a Burnt Orange border.
+- **Soft lift** (`box-shadow: 0 20px 55px rgb(28 48 72 / 0.045), 0 2px 6px rgb(28 48 72 / 0.03)`): card, ready-brief card, step panel đang mở.
+- **Focus halo** (`box-shadow: 0 0 0 3px rgb(255 121 77 / 0.22)`): field đang focus, đi cùng border Burnt Orange.
 
 ### Named Rules
-**The One Shadow Rule.** There is one shadow, and it is barely there. No hard offset shadows, no stacked elevation levels; hierarchy comes from cream versus white.
+**The One Shadow Rule.** Chỉ có một shadow, và nó gần như không thấy. Không có shadow lệch cứng, không có các tầng elevation chồng nhau; thứ bậc đến từ cream so với trắng.
 
 ## Shapes
 
-Soft, friendly corners in four steps: 12px for controls (buttons, fields, stepper, composer, mock notice), 16px for conversational and step panels (chat cards, user bubbles with a tighter 6px top-right tail corner, the open step panel), 20px for page cards, and full pills for chips, badges, status tags, the segmented control and avatars. The identity mark is a 32px navy square at 10px. Borders are always 1px hairlines in navy at 10% or 22%.
+Góc mềm, thân thiện theo bốn bậc: 12px cho control (button, field, stepper, composer, mock notice), 16px cho panel hội thoại và step panel (chat card, user bubble với góc đuôi trên bên phải chặt hơn 6px, step panel đang mở), 20px cho page card, và pill tròn hoàn toàn cho chip, badge, status tag, segmented control và avatar. Identity mark là một hình vuông navy 32px bo 10px. Border luôn là hairline 1px màu navy ở 10% hoặc 22%.
 
 ## Components
 
 ### Buttons
-- **Shape:** gently rounded (12px), at least 40px tall, 14px semibold label, optional 16px icon with 8px gap.
-- **Primary:** DETOLA Orange fill, navy text; hover deepens to Pressed Orange. One per view.
-- **Dark:** navy fill, white text, hover `#26405e`. Used for "Brief mới" in the header, echoing DETOLA's "Trao đổi với DETOLA".
-- **Secondary:** white fill, navy text, strong hairline border that turns navy on hover.
-- **Press / Focus / Disabled:** 1px downward nudge on press; 2px Burnt Orange outline at 2px offset on focus; 50% opacity when disabled.
+- **Shape:** bo nhẹ (12px), cao ít nhất 40px, label semibold 14px, icon 16px tuỳ chọn với khoảng cách 8px.
+- **Primary:** fill DETOLA Orange, chữ navy; hover đậm lên thành Pressed Orange. Mỗi view một cái.
+- **Dark:** fill navy, chữ trắng, hover `#26405e`. Dùng cho "Brief mới" trên header, gợi lại nút "Trao đổi với DETOLA" của DETOLA.
+- **Secondary:** fill trắng, chữ navy, border strong hairline chuyển sang navy khi hover.
+- **Press / Focus / Disabled:** dịch xuống 1px khi nhấn; outline Burnt Orange 2px với offset 2px khi focus; opacity 50% khi disabled.
 
 ### Chips
-- **Style:** white pills with a strong hairline border, 38px tall, 14px text.
-- **State:** selected chips switch to Peach Wash with a 2px navy outline (border plus inset ring), semibold text and a Burnt Orange check. Single-choice groups behave as radios, multi-choice as checkboxes. Disabled unselected chips fade to transparent with caption-grey text.
-- **Segmented control:** a white pill track with 3px padding; the active option is a navy pill with white text ("₫ VND" / "$ USD").
+- **Style:** pill trắng với border strong hairline, cao 38px, chữ 14px.
+- **State:** chip được chọn chuyển sang Peach Wash với outline navy 2px (border cộng inset ring), chữ semibold và dấu check Burnt Orange. Nhóm chọn một hoạt động như radio, nhóm chọn nhiều như checkbox. Chip disabled chưa được chọn mờ thành trong suốt với chữ xám caption.
+- **Segmented control:** một track pill trắng với padding 3px; lựa chọn đang active là pill navy với chữ trắng ("₫ VND" / "$ USD").
 
 ### Cards / Containers
-- **Corner Style:** 20px for page cards, 16px for chat and step panels.
-- **Background:** white on cream; nested blocks in Inner Panel or Sunken Oat.
-- **Shadow Strategy:** Soft lift only.
-- **Border:** 1px navy 10%; the latest chat card uses the strong hairline, older ones fade to 70% opacity.
-- **Internal Padding:** 20px, widening to 28px on page cards from `sm`.
+- **Corner Style:** 20px cho page card, 16px cho chat và step panel.
+- **Background:** trắng trên cream; các khối lồng dùng Inner Panel hoặc Sunken Oat.
+- **Shadow Strategy:** chỉ dùng Soft lift.
+- **Border:** 1px navy 10%; chat card mới nhất dùng strong hairline, các card cũ hơn mờ xuống opacity 70%.
+- **Internal Padding:** 20px, nới ra 28px trên page card từ `sm`.
 
 ### Inputs / Fields
-- **Style:** white, strong hairline border, 12px radius, 10px by 14px padding, 15px text, caption-grey placeholder; border darkens to caption grey on hover.
-- **Focus:** Burnt Orange border plus the orange focus halo; composite fields (the money field with its "₫" prefix) take the halo on the wrapper.
-- **Money field:** the value is set at title size, semibold, tabular, with the formatted amount ("30.000.000") and a hint line beneath ("khoảng 6 triệu cho mỗi KOC").
-- **Stepper:** "− n +" in a 44px-tall rounded box, 44px square buttons that tint cream on hover, the value at 20px semibold.
+- **Style:** trắng, border strong hairline, radius 12px, padding 10px x 14px, chữ 15px, placeholder xám caption; border đậm lên thành xám caption khi hover.
+- **Focus:** border Burnt Orange cộng focus halo cam; field ghép (money field với tiền tố "₫") nhận halo trên wrapper.
+- **Money field:** giá trị đặt ở cỡ title, semibold, tabular, với số tiền đã định dạng ("30.000.000") và một dòng gợi ý bên dưới ("khoảng 6 triệu cho mỗi KOC").
+- **Stepper:** "− n +" trong một hộp bo góc cao 44px, button vuông 44px chuyển tint cream khi hover, giá trị ở 20px semibold.
 
 ### Navigation
-- **Header:** light and sticky, translucent cream with backdrop blur and a bottom hairline, at least 68px tall. Left: the 32px navy mark with an orange dot and the 17px bold "KOC Discovery" wordmark, then context (breadcrumb "Chiến dịch › Kem chống nắng" and a status pill) after a hairline divider on desktop. Right: ledger figures ("≈ $0.00", "chi phí · 0 giây") and one action.
-- **Disclosures:** text rows with a drawn chevron that rotates 90° when open ("Xem 8 bước đã làm", "Dự phòng (5)", "Toàn bộ bằng chứng (19)").
+- **Header:** sáng và sticky, cream trong mờ với backdrop blur và hairline ở cạnh dưới, cao ít nhất 68px. Bên trái: mark navy 32px với chấm cam và wordmark "KOC Discovery" bold 17px, sau đó là ngữ cảnh (breadcrumb "Chiến dịch › Kem chống nắng" và một status pill) sau một divider hairline trên desktop. Bên phải: các số ledger ("≈ $0.00", "chi phí · 0 giây") và một action.
+- **Disclosures:** các hàng chữ với chevron vẽ tay xoay 90° khi mở ("Xem 8 bước đã làm", "Dự phòng (5)", "Toàn bộ bằng chứng (19)").
 
 ### Verdict Badges and Status Tags
-Pills with a small dot and a word, 12px semibold. Verdicts: "Rất hợp" solid Deep Teal with white text; "Phù hợp" Teal Mist; "Cân nhắc" Amber Wash; "Loại" Brick Wash; a large variant at body size heads the KOC review. Statuses: "Hoàn tất" teal, "Đang chạy" Peach Wash with a pulsing orange dot, "Chờ chạy" sunken grey, "Tạm dừng" amber, "Lỗi" brick. A screen-reader prefix "Đánh giá:" precedes each verdict word.
+Pill với một chấm nhỏ và một chữ, semibold 12px. Kết luận: "Rất hợp" đặc Deep Teal với chữ trắng; "Phù hợp" Teal Mist; "Cân nhắc" Amber Wash; "Loại" Brick Wash; một biến thể lớn ở cỡ body đứng đầu phần review KOC. Trạng thái: "Hoàn tất" teal, "Đang chạy" Peach Wash với chấm cam nhấp nháy, "Chờ chạy" xám sunken, "Tạm dừng" amber, "Lỗi" brick. Một tiền tố cho screen reader "Đánh giá:" đứng trước mỗi chữ kết luận.
 
 ### Chat
-- **AI:** a 36px orange circle avatar with a navy lens glyph, messages on the cream ground, a three-dot typing indicator.
-- **User:** right-aligned navy bubbles with white text and a white avatar with a navy figure.
-- **Composer:** a white 12px box with an orange send button; until it is focused or used, an orange arc sweeps around its border (3.6s loop), with a navy hint bubble above it ("Chưa biết bắt đầu từ đâu?"). Reduced motion shows a static orange border.
-- **Ready brief card:** a 16px card titled "Brief" with a Teal Mist "Đủ thông tin" badge and the primary action "Bắt đầu tìm creator".
+- **AI:** avatar hình tròn cam 36px với glyph ống kính navy, tin nhắn nằm trên nền cream, typing indicator ba chấm.
+- **User:** bubble navy căn phải với chữ trắng và avatar trắng có hình người navy.
+- **Composer:** một hộp trắng bo 12px với nút gửi cam; cho đến khi được focus hoặc được dùng, một cung cam quét quanh border của nó (vòng lặp 3.6s), với một hint bubble navy phía trên ("Chưa biết bắt đầu từ đâu?"). Reduced motion hiển thị border cam tĩnh.
+- **Ready brief card:** một card 16px có tiêu đề "Brief" với badge Teal Mist "Đủ thông tin" và primary action "Bắt đầu tìm creator".
 
 ### Step Process
-A vertical rail of 28px circular nodes: completed steps are DETOLA Teal with a white check, the running step is a white node with an orange pulsing dot inside an orange ring, pending steps show a two-digit number ("01" to "08") in a hairline circle. The open step expands into a 16px panel that rises in.
+Một rail dọc gồm các node tròn 28px: bước đã hoàn tất là DETOLA Teal với dấu check trắng, bước đang chạy là node trắng với chấm cam nhấp nháy bên trong một vòng cam, bước đang chờ hiển thị số hai chữ số ("01" đến "08") trong một vòng tròn hairline. Bước đang mở bung ra thành một panel 16px trồi lên.
 
 ### Ranking and KOC Review
-The ranking is a table inside a card: two-digit rank numerals at title size (Burnt Orange on the selected row, which is tinted Peach Wash), handle and name, tabular follower and cost columns, a verdict badge, and the score at title size with "AI 62" beneath. The review card leads with the handle at display size, a large verdict badge, a five-cell score grid (Tổng, AI chấm, Số liệu, Nội dung, Video) that becomes two rows on phones, a video frame strip with timestamps and frame ids, then "Ưu" (teal plus marks) and "Lưu ý" (brick minus marks) columns. Each claim ends in Burnt Orange outlined evidence-key pills; pressing one reveals that evidence with a short blur-in (280ms).
+Ranking là một bảng bên trong card: số rank hai chữ số ở cỡ title (Burnt Orange ở hàng được chọn, hàng này được tint Peach Wash), handle và tên, các cột follower và chi phí dạng tabular, một verdict badge, và điểm ở cỡ title với "AI 62" bên dưới. Review card mở đầu bằng handle ở cỡ display, một verdict badge lớn, một score grid năm ô (Tổng, AI chấm, Số liệu, Nội dung, Video) chuyển thành hai hàng trên điện thoại, một dải frame video với timestamp và frame id, sau đó là các cột "Ưu" (dấu cộng teal) và "Lưu ý" (dấu trừ brick). Mỗi nhận định kết thúc bằng các evidence-key pill viền Burnt Orange; nhấn vào một pill sẽ hiện bằng chứng đó với hiệu ứng blur-in ngắn (280ms).
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** put text on cream or white and blocks of weight in navy; reserve orange fills for the one primary action per view, the AI avatar and status dots.
-- **Do** use Burnt Orange Text whenever orange must be read as text, line or focus indicator.
-- **Do** pair every verdict and status colour with its word.
-- **Do** keep numbers tabular and right-aligned.
-- **Do** use the documented off-ramp sizes (11, 12, 14, 17, 19, 20, 30 and 32px) only in the components they belong to.
-- **Do** honour `prefers-reduced-motion`: the composer sweep becomes a static border and all transitions collapse.
+- **Do** đặt chữ trên cream hoặc trắng và các khối có sức nặng bằng navy; dành fill cam cho một primary action duy nhất mỗi view, AI avatar và các chấm trạng thái.
+- **Do** dùng Burnt Orange Text bất cứ khi nào cam phải được đọc như chữ, đường kẻ hoặc focus indicator.
+- **Do** ghép mỗi màu kết luận và trạng thái với chữ của nó.
+- **Do** giữ số ở dạng tabular và căn phải.
+- **Do** chỉ dùng các cỡ lối rẽ đã ghi lại (11, 12, 14, 17, 19, 20, 30 và 32px) trong đúng component của chúng.
+- **Do** tôn trọng `prefers-reduced-motion`: vệt quét của composer thành border tĩnh và mọi transition đều được rút gọn.
 
 ### Don't:
-- **Don't** put white text on DETOLA orange, or set body text in raw orange.
-- **Don't** use ink-mute for anything below 30px or for information the reader needs; it is the headline's second voice only.
-- **Don't** copy DETOLA's logo or mascot illustrations; use the product's own navy mark.
-- **Don't** add a second shadow, hard offset shadows, gradients or dark neon surfaces.
-- **Don't** use more than one kicker per page, and only above the page title.
+- **Don't** đặt chữ trắng trên cam DETOLA, hay để body text bằng màu cam gốc.
+- **Don't** dùng ink-mute cho bất cứ thứ gì dưới 30px hoặc cho thông tin người đọc cần; nó chỉ là giọng thứ hai của headline.
+- **Don't** sao chép logo hay minh hoạ mascot của DETOLA; dùng mark navy riêng của sản phẩm.
+- **Don't** thêm shadow thứ hai, shadow lệch cứng, gradient hay bề mặt neon tối.
+- **Don't** dùng nhiều hơn một kicker mỗi trang, và chỉ đặt phía trên tiêu đề trang.
