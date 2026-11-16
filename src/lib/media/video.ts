@@ -15,6 +15,11 @@
  * so với ~9.6k token nếu gửi 6 frame full-res riêng lẻ => tiết kiệm ~90% token hình ảnh.
  *
  * Mọi thứ cache trên đĩa theo video id (meta.json) -> idempotent, chạy lại không tải / trả phí lại.
+ *
+ * GHI CHÚ: cắt 6 frame tĩnh là cách TẠM vì model hiện chỉ đọc ảnh, không đọc video. Nó mất chuyển động
+ * (thoa / tán / miết texture), nhịp dựng, âm thanh và mọi thứ giữa 2 frame. Nếu có model đọc video gốc tốt,
+ * phân tích sẽ cải thiện rất nhiều: khi đó chỉ cần gửi MP4 thay cho contact sheet ở stage video_analysis,
+ * schema output + cache + các stage sau giữ nguyên.
  */
 import { execFile } from "node:child_process";
 import fs from "node:fs";

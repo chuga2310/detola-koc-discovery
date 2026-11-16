@@ -109,6 +109,7 @@ Prompt `video_analysis` **không chứa brief**. Output là "hồ sơ nội dung
 - `video/url` là API async: lỗi `1054 "Video is being fetched"` không bị tính credit → client chờ 5s rồi gọi lại.
 - 6 frame tại mốc cố định (~1s cho hook, rồi 20/40/60/80/95%) → resize 240×426 → **contact sheet 3×2 (720×852)**. Token ảnh Claude ≈ (w×h)/750 ≈ **~820 token / video**, so với ~9.6k nếu gửi 6 frame full-res → **giảm ~90%**. Video gốc bị xoá sau khi cắt frame, chỉ giữ sheet ~60KB.
 - 2 video của 1 creator gộp **1 call** → system prompt chỉ tính 1 lần.
+- **Giới hạn chính của cách làm này**: model hiện đọc ảnh, không đọc video, nên 6 khung hình tĩnh là cách thay thế. Nó bỏ qua chuyển động (thoa, tán, miết texture), nhịp dựng, âm thanh và chi tiết giữa các khung. **Một model đọc video gốc tốt sẽ cải thiện phân tích rất nhiều.** Khi có, chỉ cần thay input của stage `video_analysis` (MP4 thay contact sheet); schema output, cache và các stage sau giữ nguyên.
 
 ### 2.7 Batching, prompt caching (có priming), input gọn
 

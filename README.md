@@ -100,6 +100,7 @@ Brief (`briefs/sunscreen.json`) gồm: sản phẩm, ngành, keyword, khán gi�
 - **Dữ liệu thiên về TikTok Shop**: Kalodata theo dõi creator có bán hàng, nên nhiều ứng viên là affiliate. Pipeline giảm thiên lệch bằng 3 nguồn + chia suất, nhưng KOC thuần review không bán qua TikTok Shop có thể không có trong dữ liệu.
 - **Chi phí booking là ước tính** theo tier follower (`DEFAULT_RATE_CARD`), chưa có báo giá thật.
 - **Video**: tải video miễn phí từ TikTok hiện bị chặn (chỉ lấy được audio), nên video chính dùng Kalodata (0.5 credit), video phụ chỉ có thumbnail + transcript. 6 frame / video có thể bỏ sót chi tiết giữa các frame.
+- **AI chưa "xem" video thật**: Claude hiện nhận ảnh, chưa nhận video, nên hệ thống cắt 6 khung hình tĩnh + lời thoại thay cho video. Cách này mất chuyển động (thao tác thoa, độ tán, texture khi miết), nhịp dựng, âm thanh/nhạc, biểu cảm và mọi thứ xảy ra giữa 2 khung. **Nếu có model đọc được video gốc tốt, chất lượng phân tích video sẽ cải thiện rất nhiều** (xem §5).
 - **Kết quả AI không hoàn toàn tất định**: 2 lần chạy lạnh có thể đổi thứ hạng ở các creator điểm sát nhau. Run lặp lại thì cố định nhờ cache.
 - **Rubric và trọng số** đặt theo kinh nghiệm, chưa hiệu chỉnh bằng dữ liệu hiệu quả chiến dịch thật.
 - Worker chạy trong process Next.js (fire-and-forget): đủ cho demo, production nên tách worker. Chưa có auth cho UI.
@@ -112,6 +113,7 @@ Brief (`briefs/sunscreen.json`) gồm: sản phẩm, ngành, keyword, khán gi�
 - Bổ sung nguồn có nhân khẩu học follower (Kalodata gói cao hơn hoặc TikTok Creator Marketplace) → thay suy luận bằng số liệu.
 - **Feedback loop**: lưu kết quả thật sau campaign (view, GMV, CPM) để học lại trọng số và rubric.
 - **Lookalike search**: embedding hồ sơ nội dung video (đã cache) để tìm creator giống những KOC từng hiệu quả.
+- **Model đọc video gốc thay cho 6 khung hình**: đây là nâng cấp chất lượng lớn nhất còn lại. Kiến trúc đã sẵn cho việc thay: `video_analysis` là 1 stage độc lập, output theo schema cố định, kết quả không phụ thuộc campaign và được cache. Chỉ cần đổi phần input (gửi MP4 thay cho contact sheet) và provider; các stage sau không đổi. Cần đo lại chi phí token/video và so chất lượng trên cùng tập creator trước khi chuyển.
 
 ## 6. Cấu trúc thư mục
 
