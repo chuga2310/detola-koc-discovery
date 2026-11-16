@@ -1,11 +1,11 @@
 /** Query đọc trạng thái run cho API / UI / CLI / benchmark (read-only) */
-import { db, parseJson } from "./db";
-import type { Report } from "./pipeline/stages/select";
+import type { ChatMessage } from "./brief/slots";
 import { getConfig } from "./config";
+import { aiCallsCol, dataCallsCol, eventsCol, runsCol, runStagesCol, tasksCol, type RunDoc } from "./db";
+import type { Report } from "./pipeline/stages/select";
+import { runSteps } from "./steps";
 import type { CampaignBrief, RunStatus } from "./types";
 import { STAGES } from "./types";
-import type { ChatMessage } from "./brief/slots";
-import { runSteps } from "./steps";
 
 export interface StageUsage {
   stage: string;
@@ -20,18 +20,36 @@ export interface StageUsage {
   latencyMs: number;
 }
 
-export function runUsage(runId: string) {
-  const rows = db()
-    .prepare(
-      `SELECT stage, COUNT(*) calls, SUM(cache_hit) cacheHits, SUM(input_tokens) inputTokens, SUM(output_tokens) outputTokens,
-              SUM(cache_read_tokens) cacheReadTokens, SUM(cache_write_tokens) cacheWriteTokens, SUM(images) images,
-              SUM(cost_usd) costUsd, SUM(latency_ms) latencyMs
-       FROM ai_calls WHERE run_id = ? GROUP BY stage`,
-    )
-    .all(runId) as StageUsage[];
-  const models = db()
-    .prepare("SELECT stage, model, COUNT(*) n FROM ai_calls WHERE run_id = ? AND cache_hit = 0 GROUP BY stage, model")
-    .all(runId) as { stage: string; model: string; n: number }[];
+export async function runUsage(runId: string) {
+  const ai = await aiCallsCol();
+  const rows = await ai
+    .aggregate<StageUsage>([
+      { $match: { runId } },
+      {
+        $group: {
+          _id: "$stage",
+          calls: { $sum: 1 },
+          cacheHits: { $sum: { $cond: ["$cacheHit", 1, 0] } },
+          inputTokens: { $sum: "$inputTokens" },
+          outputTokens: { $sum: "$outputTokens" },
+          cacheReadTokens: { $sum: "$cacheReadTokens" },
+          cacheWriteTokens: { $sum: "$cacheWriteTokens" },
+          images: { $sum: "$images" },
+          costUsd: { $sum: "$costUsd" },
+          latencyMs: { $sum: "$latencyMs" },
+        },
+      },
+      { $set: { stage: "$_id" } },
+      { $unset: "_id" },
+    ])
+    .toArray();
+  const models = await ai
+    .aggregate<{ stage: string; model: string; n: number }>([
+      { $match: { runId, cacheHit: false } },
+      { $group: { _id: { stage: "$stage", model: "$model" }, n: { $sum: 1 } } },
+      { $project: { _id: 0, stage: "$_id.stage", model: "$_id.model", n: 1 } },
+    ])
+    .toArray();
   // brief_intake = các lượt AI hỏi brief trước khi chạy (gắn vào chiến dịch lúc tạo)
   const byStage = ["brief_intake", ...STAGES].map((s) => rows.find((r) => r.stage === s)).filter(Boolean) as StageUsage[];
   const total = byStage.reduce(
@@ -48,12 +66,22 @@ export function runUsage(runId: string) {
     }),
     { calls: 0, cacheHits: 0, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, images: 0, costUsd: 0, latencyMs: 0 },
   );
-  const data = db()
-    .prepare(
-      `SELECT endpoint, COUNT(*) calls, SUM(cache_hit) cacheHits, SUM(credits) credits, SUM(credits_avoided) avoided
-       FROM data_calls WHERE run_id = ? GROUP BY endpoint ORDER BY credits + avoided DESC`,
-    )
-    .all(runId) as { endpoint: string; calls: number; cacheHits: number; credits: number; avoided: number }[];
+  const data = await (await dataCallsCol())
+    .aggregate<{ endpoint: string; calls: number; cacheHits: number; credits: number; avoided: number }>([
+      { $match: { runId } },
+      {
+        $group: {
+          _id: "$endpoint",
+          calls: { $sum: 1 },
+          cacheHits: { $sum: { $cond: ["$cacheHit", 1, 0] } },
+          credits: { $sum: "$credits" },
+          avoided: { $sum: "$creditsAvoided" },
+        },
+      },
+      { $project: { _id: 0, endpoint: "$_id", calls: 1, cacheHits: 1, credits: 1, avoided: 1 } },
+      { $sort: { credits: -1, avoided: -1 } },
+    ])
+    .toArray();
   const credits = data.reduce((s, r) => s + r.credits, 0);
   const avoided = data.reduce((s, r) => s + r.avoided, 0);
   return {
@@ -61,7 +89,7 @@ export function runUsage(runId: string) {
     total,
     models,
     costVnd: Math.round(total.costUsd * getConfig().usdToVnd),
-    /** Chi phí dữ liệu Kalodata: 1 credit ~ 0.1 USD. coldCredits = chi phí nếu không có cache */
+    /** Chi phí dữ liệu Kalodata: 1 credit ~ 0.1 USD. coldCredits = chi phí nếu không dùng lại dữ liệu đã lưu */
     data: { byEndpoint: data, credits, avoided, coldCredits: credits + avoided, approxUsd: credits * 0.1 },
   };
 }
@@ -79,66 +107,57 @@ export interface RunSummary {
   attempts: number;
 }
 
-type RunRow = {
-  id: string;
-  status: RunStatus;
-  current_stage: string | null;
-  brief_json: string;
-  config_json: string;
-  error: string | null;
-  created_at: number;
-  finished_at: number | null;
-  active_ms: number;
-  attempts: number;
-  result_json: string | null;
-  chat_json: string | null;
-};
-
-const toSummary = (r: RunRow): RunSummary => ({
-  id: r.id,
+const toSummary = (r: RunDoc): RunSummary => ({
+  id: r._id,
   status: r.status,
-  currentStage: r.current_stage,
-  brief: JSON.parse(r.brief_json),
-  config: JSON.parse(r.config_json),
-  error: r.error,
-  createdAt: r.created_at,
-  finishedAt: r.finished_at,
-  activeMs: r.active_ms,
+  currentStage: r.currentStage ?? null,
+  brief: r.brief,
+  config: r.config,
+  error: r.error ?? null,
+  createdAt: r.createdAt,
+  finishedAt: r.finishedAt ?? null,
+  activeMs: r.activeMs,
   attempts: r.attempts,
 });
 
-export function listRuns(limit = 30): (RunSummary & { costUsd: number; credits: number })[] {
-  const rows = db().prepare("SELECT * FROM runs ORDER BY created_at DESC LIMIT ?").all(limit) as RunRow[];
-  const cost = db().prepare("SELECT COALESCE(SUM(cost_usd),0) c FROM ai_calls WHERE run_id = ?");
-  const cred = db().prepare("SELECT COALESCE(SUM(credits),0) c FROM data_calls WHERE run_id = ?");
-  return rows.map((r) => ({
-    ...toSummary(r),
-    costUsd: (cost.get(r.id) as { c: number }).c,
-    credits: (cred.get(r.id) as { c: number }).c,
-  }));
+export async function listRuns(limit = 30): Promise<(RunSummary & { costUsd: number; credits: number })[]> {
+  const rows = await (await runsCol()).find({}, { projection: { result: 0, chat: 0 } }).sort({ createdAt: -1 }).limit(limit).toArray();
+  const ids = rows.map((r) => r._id);
+  const cost = await (await aiCallsCol())
+    .aggregate<{ _id: string; c: number }>([{ $match: { runId: { $in: ids } } }, { $group: { _id: "$runId", c: { $sum: "$costUsd" } } }])
+    .toArray();
+  const cred = await (await dataCallsCol())
+    .aggregate<{ _id: string; c: number }>([{ $match: { runId: { $in: ids } } }, { $group: { _id: "$runId", c: { $sum: "$credits" } } }])
+    .toArray();
+  const c1 = new Map(cost.map((x) => [x._id, x.c]));
+  const c2 = new Map(cred.map((x) => [x._id, x.c]));
+  return rows.map((r) => ({ ...toSummary(r), costUsd: c1.get(r._id) ?? 0, credits: c2.get(r._id) ?? 0 }));
 }
 
-export function runDetail(runId: string) {
-  const r = db().prepare("SELECT * FROM runs WHERE id = ?").get(runId) as RunRow | undefined;
+export async function runDetail(runId: string) {
+  const r = await (await runsCol()).findOne({ _id: runId });
   if (!r) return null;
-  const stages = db()
-    .prepare("SELECT stage, status, active_ms, started_at, finished_at FROM run_stages WHERE run_id = ?")
-    .all(runId) as { stage: string; status: string; active_ms: number; started_at: number; finished_at: number | null }[];
-  const tasks = db()
-    .prepare("SELECT stage, status, COUNT(*) n FROM tasks WHERE run_id = ? GROUP BY stage, status")
-    .all(runId) as { stage: string; status: string; n: number }[];
-  const events = db()
-    .prepare("SELECT ts, level, stage, message FROM events WHERE run_id = ? ORDER BY id DESC LIMIT 80")
-    .all(runId) as { ts: number; level: string; stage: string | null; message: string }[];
+  const stages = await (await runStagesCol()).find({ runId }, { projection: { output: 0 } }).toArray();
+  const tasks = await (await tasksCol())
+    .aggregate<{ _id: { stage: string; status: string }; n: number }>([
+      { $match: { runId } },
+      { $group: { _id: { stage: "$stage", status: "$status" }, n: { $sum: 1 } } },
+    ])
+    .toArray();
+  const events = await (await eventsCol())
+    .find({ runId }, { projection: { _id: 0, ts: 1, level: 1, stage: 1, message: 1 } })
+    .sort({ ts: -1, seq: -1 })
+    .limit(80)
+    .toArray();
 
   const stageView = STAGES.map((s) => {
     const st = stages.find((x) => x.stage === s);
-    const t = tasks.filter((x) => x.stage === s);
-    const count = (status: string) => t.find((x) => x.status === status)?.n ?? 0;
+    const t = tasks.filter((x) => x._id.stage === s);
+    const count = (status: string) => t.find((x) => x._id.status === status)?.n ?? 0;
     return {
       stage: s,
       status: st?.status ?? "pending",
-      activeMs: st?.active_ms ?? 0,
+      activeMs: st?.activeMs ?? 0,
       tasks: { total: t.reduce((a, x) => a + x.n, 0), done: count("done"), failed: count("failed"), running: count("running") },
     };
   });
@@ -147,10 +166,10 @@ export function runDetail(runId: string) {
   return {
     run,
     stages: stageView,
-    steps: runSteps(runId, run.status, run.currentStage, stageView),
-    chat: parseJson<ChatMessage[]>(r.chat_json) ?? [],
-    usage: runUsage(runId),
+    steps: await runSteps(runId, run.status, run.currentStage, stageView),
+    chat: (r.chat as ChatMessage[] | null) ?? [],
+    usage: await runUsage(runId),
     events: events.reverse(),
-    report: parseJson<Report>(r.result_json),
+    report: (r.result as Report | undefined) ?? null,
   };
 }

@@ -76,7 +76,6 @@ export function getConfig() {
     usdToVnd: num("USD_VND", 26000),
     paths: {
       root,
-      db: env("DB_PATH", path.join(root, ".data", "koc.db")),
       mediaCache: env("MEDIA_CACHE_DIR", path.join(root, ".data", "media")),
       fixtures: path.join(root, "data", "fixtures"),
     },

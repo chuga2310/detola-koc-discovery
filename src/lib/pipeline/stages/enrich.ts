@@ -30,15 +30,24 @@ export const enrichStage: StageDef<{ creatorId: string }, { ok: true }, EnrichOu
     return keptIds.map((id) => ({ key: id, input: { creatorId: id } }));
   },
   async exec(ctx, input) {
-    const c = loadCreators([input.creatorId]).get(input.creatorId);
+    const c = (await loadCreators([input.creatorId])).get(input.creatorId);
     if (!c) throw new Error("creator not found");
-    const full = await getDataSource(ctx.cfg.dataSource).enrich(c, { brief: ctx.brief, runId: ctx.runId });
-    upsertCreators([full]);
+    const src = getDataSource(ctx.cfg.dataSource);
+    let full = await src.enrich(c, { brief: ctx.brief, runId: ctx.runId });
+    // [Trả phí, phải bật] Doanh thu / GPM chỉ trong ngành của brief. Lỗi -> bỏ qua, không làm hỏng creator.
+    if (ctx.brief.deepData?.categoryRevenue && src.categoryDetail) {
+      try {
+        full = await src.categoryDetail(full, { brief: ctx.brief, runId: ctx.runId });
+      } catch (err) {
+        ctx.log(`@${full.handle}: không lấy được doanh thu theo ngành (${(err as Error).message.slice(0, 120)})`, "warn");
+      }
+    }
+    await upsertCreators([full]);
     return { ok: true };
   },
-  reduce(ctx, outputs, failed) {
+  async reduce(ctx, outputs, failed) {
     const ids = [...outputs.keys()];
-    const creators = [...loadCreators(ids).values()];
+    const creators = [...(await loadCreators(ids)).values()];
     const rows = prefilter(creators, ctx.brief);
     const stillPass = rows.filter((r) => r.passed).length;
     ctx.log(`Enriched ${ids.length} creators (${failed.length} failed); ${stillPass} still pass hard filters with full data`);

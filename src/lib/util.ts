@@ -110,3 +110,13 @@ export function percentileRanks(values: (number | undefined)[]): number[] {
   });
   return out;
 }
+
+/** Che email / số điện thoại / link trong text công khai (bio) trước khi lưu hoặc đưa vào prompt */
+export function redactContact(s: string | undefined): string | undefined {
+  if (!s) return s;
+  return s
+    .replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, "[email]")
+    .replace(/(\+?84|0)[\d .-]{8,12}\d/g, "[phone]")
+    .replace(/https?:\/\/\S+/g, "[link]");
+}
+

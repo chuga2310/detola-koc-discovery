@@ -83,7 +83,7 @@ export const videoAnalysisStage: StageDef<{ creatorId: string }, VideoResult | n
   },
   async exec(ctx, input, key) {
     const media: PreparedMedia[] = ctx.output<MediaPrepOut>("media_prep").byId[input.creatorId] ?? [];
-    const c = loadCreators([input.creatorId]).get(input.creatorId)!;
+    const c = (await loadCreators([input.creatorId])).get(input.creatorId)!;
     const content: ContentPart[] = [];
     const captions: string[] = [];
     media.forEach((m, i) => {

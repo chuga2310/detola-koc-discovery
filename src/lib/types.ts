@@ -38,6 +38,8 @@ export interface CampaignBrief {
   kalodataSkincareCategoryId?: string;
   /** Keyword tìm video theo nội dung để bổ sung pool (vd "chống nắng"); 0.1 credit / keyword */
   contentKeywords?: string[];
+  /** Dữ liệu chuyên sâu (TRẢ PHÍ, phải bật): xem src/lib/brief/paid.ts */
+  deepData?: { categoryRevenue?: boolean; videoDetail?: boolean; competitorProducts?: boolean };
 }
 
 export interface CreatorVideo {
@@ -62,6 +64,17 @@ export interface CreatorVideo {
   isAd?: boolean;
   /** Kalodata gắn cờ video do AI tạo */
   isAiVideo?: boolean;
+  /** Chi tiết video (tính năng trả phí "Chi tiết video") */
+  stats?: {
+    gpm?: number;
+    salesVolume?: number;
+    adsViews?: number;
+    adsRoas?: number;
+    adsPeriodDays?: number;
+    adCpaVnd?: number;
+    durationSec?: number;
+    productCount?: number;
+  };
 }
 
 export interface CreatorRecord {
@@ -99,7 +112,16 @@ export interface CreatorRecord {
     revenueTrend30d?: number[];
     /** % tăng trưởng doanh thu so với kỳ trước (bảng xếp hạng Kalodata) */
     revenueGrowthPct?: number;
+    /** Doanh thu / GPM / số bán CHỈ trong ngành của brief (tính năng trả phí "Doanh thu theo ngành") */
+    categoryRevenueVnd?: number;
+    categoryVideoGpm?: number;
+    categoryItemsSold?: number;
   };
+  /**
+   * Sản phẩm creator đã bán. source "proven" = creator lọt vào danh sách người bán của 1 sản phẩm cùng
+   * loại (nguồn "đã bán sản phẩm cùng loại", miễn phí); "catalog" = top sản phẩm của creator (trả phí).
+   */
+  soldProducts?: { id: string; name: string; seller?: string; category?: string; revenueVnd?: number; source: "proven" | "catalog" }[];
   /** TÊN các kênh liên hệ creator công khai (Email, Zalo...) — không lưu giá trị liên hệ */
   contactChannels?: string[];
   /** Ngày creator xuất hiện lần đầu trên Kalodata (≈ tuổi tài khoản bán hàng) */

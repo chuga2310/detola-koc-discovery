@@ -26,7 +26,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
 import { getConfig } from "../config";
-import { kaloVideoUrl, logAvoidedCredit } from "../sources/kalodataApi";
+import { logAvoidedCredit } from "../sources/kalodataApi";
+import { videoUrl } from "../sources/kaloStore";
 import type { CreatorVideo } from "../types";
 
 const run = promisify(execFile);
@@ -66,7 +67,7 @@ export async function prepareVideo(video: CreatorVideo, opts: PrepareOptions = {
     const cached = JSON.parse(fs.readFileSync(metaPath, "utf8")) as PreparedMedia;
     // Đã có contact sheet đầy đủ, hoặc lần này cũng không được phép trả phí -> dùng lại
     if (cached.kind === "video" || !opts.allowPaid) {
-      if (cached.via === "kalodata") logAvoidedCredit(opts.runId, "/tiktok/video/url", 0.5); // để benchmark thấy chi phí lạnh
+      if (cached.via === "kalodata") await logAvoidedCredit(opts.runId, "/tiktok/video/url", 0.5); // để benchmark thấy chi phí lạnh
       // Đọc lại transcript từ file phụ đề đã lưu (rẻ, 0 mạng): cache cũ có thể giữ bản dịch tiếng Anh
       const transcript = readTranscript(dir) ?? cached.transcript;
       if (transcript !== cached.transcript) {
@@ -113,7 +114,7 @@ export async function prepareVideo(video: CreatorVideo, opts: PrepareOptions = {
   // 3) Trả phí (0.5 credit): link mp4 chính thức từ Kalodata, chỉ khi được phép
   if (!file && opts.allowPaid && process.env.KALODATA_API_KEY) {
     try {
-      const link = await kaloVideoUrl(video.id, opts.runId);
+      const link = await videoUrl(video.id, opts.runId);
       if (link) {
         const res = await fetch(link, { signal: AbortSignal.timeout(120_000) });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -250,8 +251,9 @@ function readTranscript(dir: string): string | null {
   if (!fs.existsSync(dir)) return null;
   const vtt = pickSubtitleFile(fs.readdirSync(dir));
   if (!vtt) return null;
+  // Phụ đề là dữ liệu media lúc chạy (thư mục cache), không phải mã nguồn -> không để bundler trace cả project
   const lines = fs
-    .readFileSync(path.join(dir, vtt), "utf8")
+    .readFileSync(path.join(/*turbopackIgnore: true*/ dir, vtt), "utf8")
     .split(/\r?\n/)
     .filter((l) => l && !l.includes("-->") && !/^WEBVTT|^Kind:|^Language:|^\d+$/.test(l))
     .map((l) => l.replace(/<[^>]+>/g, "").trim())

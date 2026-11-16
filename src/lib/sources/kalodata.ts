@@ -12,7 +12,9 @@
  */
 import type { CampaignBrief, CreatorRecord, CreatorVideo } from "../types";
 import type { DataSource, SourceQuery } from "./index";
-import { kaloRequest } from "./kalodataApi";
+import { logEvent } from "../db";
+import { redactContact } from "../util";
+import { creatorCategoryDetail, detailQuery, rankQuery } from "./kaloStore";
 
 /** Mặc định: Makeup (848648) + Skincare (848776) — category cấp 2 của Kalodata, ngành Beauty & Personal Care */
 const DEFAULT_CATEGORY_IDS = "848648,848776";
@@ -24,13 +26,6 @@ const n = (x: unknown): number | undefined => {
 };
 
 /** Che số điện thoại / email / link trong bio trước khi lưu + đưa vào prompt (dữ liệu cá nhân, không cần cho đánh giá) */
-export function redactContact(s: string | undefined): string | undefined {
-  if (!s) return s;
-  return s
-    .replace(/[\w.+-]+@[\w-]+\.[\w.]+/g, "[email]")
-    .replace(/(\+?84|0)[\d .-]{8,12}\d/g, "[phone]")
-    .replace(/https?:\/\/\S+/g, "[link]");
-}
 
 const HASHTAG_RE = /#[\p{L}\p{N}_]+/gu;
 
@@ -66,23 +61,57 @@ interface DetailData {
   video_gpm?: number;
   unit_price?: number;
   revenue_trend?: number[];
-  creator_contact_email?: string;
-  creator_contact_zalo?: string;
-  creator_contact_facebook?: string;
-  creator_contact_ins?: string;
-  creator_contact_whatsapp?: string;
-  creator_contact_line?: string;
+  /** Tên các kênh liên hệ công khai (kaloStore tách sẵn, không lưu email/số điện thoại) */
+  contact_channels?: string[];
 }
 
-/** Chỉ ghi nhận CÓ kênh liên hệ nào (để marketer biết đường booking), không lưu email/số điện thoại */
-const CONTACT_FIELDS: [keyof DetailData, string][] = [
-  ["creator_contact_email", "Email"],
-  ["creator_contact_zalo", "Zalo"],
-  ["creator_contact_facebook", "Facebook"],
-  ["creator_contact_ins", "Instagram"],
-  ["creator_contact_whatsapp", "WhatsApp"],
-  ["creator_contact_line", "Line"],
-];
+
+
+interface ProductRow {
+  product_id: string | number;
+  product_name?: string;
+  seller_name?: string;
+  revenue?: number;
+  unit_price?: number;
+  pri_category?: unknown;
+  sec_category?: unknown;
+  ter_category?: unknown;
+}
+
+interface VideoDetailData {
+  video_gpm?: number;
+  sales_volumn?: number;
+  ads_views?: number;
+  ads_roas?: number;
+  ads_period?: number;
+  ad_cpa?: number;
+  duration?: number;
+  product_number?: number;
+}
+
+const categoryName = (c: unknown) =>
+  c && typeof c === "object" ? ((c as { category_name?: string }).category_name ?? undefined) : typeof c === "string" ? c : undefined;
+
+type SoldProduct = NonNullable<CreatorRecord["soldProducts"]>[number];
+function mergeProducts(cur: SoldProduct[] | undefined, more: SoldProduct[]): SoldProduct[] {
+  const out = [...(cur ?? [])];
+  for (const p of more) if (!out.some((x) => x.id === p.id)) out.push(p);
+  return out;
+}
+
+const partialCreator = (id: string, handle: string): CreatorRecord => ({
+  id,
+  handle,
+  nickname: handle,
+  followers: 0,
+  region: "VN",
+  source: "kalodata",
+  metrics: {},
+  categories: [],
+  videos: [],
+  enriched: false,
+  partial: true,
+});
 
 interface VideoRow {
   video_id: string;
@@ -178,80 +207,114 @@ export const kalodataSource: DataSource = {
       pool.set(c.id, cur);
       return cur;
     };
-    const rankQueries: { tag: string; body: Record<string, unknown> }[] = [
-      // KOC làm video -> doanh thu từ VIDEO (tổng doanh thu bị seller livestream chiếm)
-      { tag: "commerce", body: { sort_field: { field: "video_revenue", type: "DESC" } } },
-      // ER >= 8% + bán được SKINCARE qua video: creator có sức hút tự nhiên VÀ đúng ngành chăm da
-      {
-        tag: "engagement",
-        body: {
-          sort_field: { field: "video_revenue", type: "DESC" },
-          engagement_rate: "MEDIUM",
-          category_id_list: brief.kalodataSkincareCategoryId ?? SKINCARE_CATEGORY_ID,
-        },
-      },
-    ];
-    const pages = Math.ceil(limit / pageSize); // N lớn -> pool lớn -> nhiều trang (0.1 credit / trang 100 dòng)
-    for (const q of rankQueries) for (let page = 1; page <= pages; page++) {
-      const rows = await kaloRequest<RankRow[]>(
-        "/tiktok/creator/rank",
-        {
-          ...baseParams(),
-          page_size: pageSize,
-          page_number: page,
-          category_id_list: brief.kalodataCategoryIds ?? DEFAULT_CATEGORY_IDS,
-          followers_range: `${range.min}-${range.max}`,
-          creator_type: "INDEPENDENT", // loại tài khoản của shop/brand ngay từ API
-          need_category: 1,
-          need_ter_category: 1,
-          ...q.body, // tham số riêng của từng nguồn (sort, ER, category) ghi đè mặc định
-        },
-        { runId, expectedRows: pageSize },
-      );
-      const list = Array.isArray(rows) ? rows : [];
-      for (const r of list) add(mapRankRow(r), q.tag);
-      if (list.length < pageSize) break;
-    }
-
-    // Nguồn 3 — theo NỘI DUNG: video 30 ngày có title chứa keyword sản phẩm (vd "chống nắng").
-    // 0.1 credit / 100 video. Tìm đúng creator ĐÃ làm nội dung về loại sản phẩm này, thứ mà
-    // xếp hạng doanh thu không thấy được.
-    for (const kw of brief.contentKeywords ?? []) {
-      const vids = await kaloRequest<(VideoRow & { belonged_creator_id: string; belonged_creator_handle?: string })[]>(
-        "/tiktok/video/rank",
-        {
-          ...baseParams(),
-          keyword: kw,
-          followers_range: `${range.min}-${range.max}`,
-          sort_field: { field: "views", type: "DESC" },
-          page_size: 100,
-          page_number: 1,
-        },
-        { runId, expectedRows: 100 },
-      );
-      for (const v of Array.isArray(vids) ? vids : []) {
-        const id = String(v.belonged_creator_id);
-        const handle = String(v.belonged_creator_handle ?? "").replace(/^@/, "");
-        // Creator chỉ xuất hiện qua nội dung: chưa có số liệu list-level -> enrich sẽ bổ sung.
-        // Follower đã được API lọc trong khoảng mục tiêu.
-        const c = add(
-          pool.get(id) ?? { id, handle, nickname: handle, followers: 0, region: "VN", source: "kalodata", metrics: {}, categories: [], videos: [], enriched: false, partial: true },
-          "content",
-        );
-        if (!c.videos.some((x) => x.id === String(v.video_id))) c.videos.push(mapVideo(c.handle || handle, v));
+    const common = {
+      ...baseParams(),
+      category_id_list: brief.kalodataCategoryIds ?? DEFAULT_CATEGORY_IDS,
+      followers_range: `${range.min}-${range.max}`,
+      creator_type: "INDEPENDENT", // loại tài khoản của shop/brand ngay từ API
+      need_category: 1,
+      need_ter_category: 1,
+    };
+    const skincare = brief.kalodataSkincareCategoryId ?? SKINCARE_CATEGORY_ID;
+    const failures: string[] = [];
+    // Mỗi nguồn chạy độc lập: 1 nguồn lỗi (API, tham số) không làm hỏng cả bước
+    const source = async (tag: string, fn: () => Promise<void>) => {
+      try {
+        await fn();
+      } catch (err) {
+        failures.push(`${tag}: ${(err as Error).message.slice(0, 160)}`);
+        if (runId) logEvent(runId, `Nguồn "${tag}" lỗi, bỏ qua: ${(err as Error).message.slice(0, 160)}`, { level: "warn", stage: "source" });
       }
-    }
+    };
+    const pages = Math.ceil(limit / pageSize); // N lớn -> pool lớn -> nhiều trang (0.1 credit / trang 100 dòng)
+    const creatorRank = async (tag: string, body: Record<string, unknown>, size = pageSize, maxPages = pages) => {
+      for (let page = 1; page <= maxPages; page++) {
+        const list = await rankQuery<RankRow>(
+          "/tiktok/creator/rank",
+          { ...common, page_size: size, page_number: page, ...body }, // tham số riêng của nguồn ghi đè mặc định
+          { runId, expectedRows: size },
+        );
+        for (const r of list) add(mapRankRow(r), tag);
+        if (list.length < size) break;
+      }
+    };
+
+    // 1. commerce: doanh thu từ VIDEO (tổng doanh thu bị seller livestream chiếm)
+    await source("commerce", () => creatorRank("commerce", { sort_field: { field: "video_revenue", type: "DESC" } }));
+    // 2. engagement: ER >= 8% + bán được SKINCARE qua video -> sức hút tự nhiên VÀ đúng ngành chăm da
+    await source("engagement", () =>
+      creatorRank("engagement", { sort_field: { field: "video_revenue", type: "DESC" }, engagement_rate: "MEDIUM", category_id_list: skincare }),
+    );
+    // 3. rising: tăng trưởng doanh thu nhanh nhất trong skincare (đặt sàn doanh thu để bỏ tài khoản gốc quá nhỏ)
+    await source("rising", () =>
+      creatorRank(
+        "rising",
+        { sort_field: { field: "revenue_growth_rate", type: "DESC" }, category_id_list: skincare, revenue_range: "10000000-1000000000000" },
+        50,
+        1,
+      ),
+    );
+
+    const keywords = brief.contentKeywords?.length ? brief.contentKeywords : [brief.product.toLowerCase()];
+    // 4. content: video 30 ngày có title chứa keyword sản phẩm -> creator ĐÃ làm đúng loại nội dung.
+    //    Bộ lọc miễn phí: bỏ video AI tạo, bỏ video quá ít view, chỉ video đăng trong 30 ngày.
+    for (const kw of keywords)
+      await source("content", async () => {
+        const vids = await rankQuery<VideoRow & { belonged_creator_id: string; belonged_creator_handle?: string }>(
+          "/tiktok/video/rank",
+          {
+            ...baseParams(),
+            keyword: kw,
+            followers_range: `${range.min}-${range.max}`,
+            is_ai_video: 0,
+            views_range: "5000-1000000000",
+            publish_date_range: "30",
+            sort_field: { field: "views", type: "DESC" },
+            page_size: 100,
+            page_number: 1,
+          },
+          { runId, expectedRows: 100 },
+        );
+        for (const v of vids) {
+          const id = String(v.belonged_creator_id);
+          const handle = String(v.belonged_creator_handle ?? "").replace(/^@/, "");
+          // Creator chỉ xuất hiện qua nội dung: chưa có số liệu list-level -> enrich sẽ bổ sung.
+          const c = add(pool.get(id) ?? partialCreator(id, handle), "content");
+          if (!c.videos.some((x) => x.id === String(v.video_id))) c.videos.push(mapVideo(c.handle || handle, v));
+        }
+      });
+
+    // 5. proven: creator ĐÃ BÁN sản phẩm cùng loại (top sản phẩm theo keyword -> người bán từng sản phẩm).
+    //    Bằng chứng ngách mạnh nhất: không đoán từ caption mà từ đơn hàng thật. ~0.6 credit.
+    await source("proven", async () => {
+      const products = await rankQuery<ProductRow>(
+        "/tiktok/product/rank",
+        { ...baseParams(), keyword: keywords[0], sort_field: { field: "revenue", type: "DESC" }, page_size: 10, page_number: 1 },
+        { runId, expectedRows: 10 },
+      );
+      for (const pr of products.slice(0, 5)) {
+        const sellers = await rankQuery<RankRow>(
+          "/tiktok/creator/rank",
+          { ...common, product_id: String(pr.product_id), sort_field: { field: "video_revenue", type: "DESC" }, page_size: 30, page_number: 1 },
+          { runId, expectedRows: 30 },
+        );
+        for (const r of sellers) {
+          const c = add(mapRankRow(r), "proven");
+          c.soldProducts = mergeProducts(c.soldProducts, [
+            { id: String(pr.product_id), name: String(pr.product_name ?? ""), seller: pr.seller_name, revenueVnd: n(pr.revenue), source: "proven" },
+          ]);
+        }
+      }
+    });
+
+    if (!pool.size) throw new Error(`Không lấy được creator nào từ Kalodata: ${failures.join(" | ") || "0 kết quả"}`);
     return [...pool.values()];
   },
 
   async enrich(c: CreatorRecord, { runId }: { brief: CampaignBrief; runId?: string | null }) {
     if (c.enriched) return c;
-    const detail = await kaloRequest<DetailData>(
-      "/tiktok/creator/detail",
-      { ...baseParams(), creator_id: c.id, need_extra: true },
-      { runId },
-    );
-    const videos = await kaloRequest<VideoRow[]>(
+    const detail = await detailQuery<DetailData>("creator", c.id, { ...baseParams(), creator_id: c.id, need_extra: true }, { runId });
+    const videos = await rankQuery<VideoRow>(
       "/tiktok/video/rank",
       {
         ...baseParams(),
@@ -271,7 +334,7 @@ export const kalodataSource: DataSource = {
       ...c,
       bio: redactContact(detail?.creator_bio),
       creatorStatus: detail?.creator_status,
-      contactChannels: CONTACT_FIELDS.filter(([k]) => typeof detail?.[k] === "string" && (detail[k] as string).trim()).map(([, name]) => name),
+      contactChannels: Array.isArray(detail?.contact_channels) ? detail.contact_channels : c.contactChannels,
       debutDate: (Array.isArray(videos) ? videos : []).find((v) => v.creator_debut)?.creator_debut ?? c.debutDate,
       followers: n(detail?.creator_followers) ?? c.followers,
       metrics: {
@@ -296,6 +359,67 @@ export const kalodataSource: DataSource = {
       videos: vids,
       enriched: true,
       partial: false,
+    };
+  },
+
+  /** [Trả phí] Doanh thu / GPM / số bán chỉ trong ngành của brief: 0.1 credit / creator */
+  async categoryDetail(c: CreatorRecord, { brief, runId }: { brief: CampaignBrief; runId?: string | null }) {
+    const ids = String(brief.kalodataCategoryIds ?? DEFAULT_CATEGORY_IDS)
+      .split(",")
+      .map((x) => x.trim())
+      .filter(Boolean);
+    const d = await creatorCategoryDetail<DetailData>(c.id, ids, { ...baseParams(), need_extra: true }, { runId });
+    if (!d) return c;
+    return {
+      ...c,
+      metrics: { ...c.metrics, categoryRevenueVnd: n(d.revenue), categoryVideoGpm: n(d.video_gpm), categoryItemsSold: n(d.sales_volumn) },
+    };
+  },
+
+  /** [Trả phí] Chi tiết các video được chọn để AI xem: 0.1 credit / video */
+  async videoDetails(c: CreatorRecord, videoIds: string[], { runId }: { brief: CampaignBrief; runId?: string | null }) {
+    const videos = [...c.videos];
+    for (const id of videoIds) {
+      const d = await detailQuery<VideoDetailData>("video", id, { ...baseParams(), video_id: id, need_extra: true }, { runId });
+      const i = videos.findIndex((v) => v.id === id);
+      if (!d || i < 0) continue;
+      videos[i] = {
+        ...videos[i],
+        stats: {
+          gpm: n(d.video_gpm),
+          salesVolume: n(d.sales_volumn),
+          adsViews: n(d.ads_views),
+          adsRoas: n(d.ads_roas),
+          adsPeriodDays: n(d.ads_period),
+          adCpaVnd: n(d.ad_cpa),
+          durationSec: n(d.duration),
+          productCount: n(d.product_number),
+        },
+      };
+    }
+    return { ...c, videos };
+  },
+
+  /** [Trả phí] Top sản phẩm creator đang bán (1 lần xếp hạng sản phẩm theo creator): 0.1 credit / creator */
+  async soldProducts(c: CreatorRecord, { runId }: { brief: CampaignBrief; runId?: string | null }) {
+    const rows = await rankQuery<ProductRow>(
+      "/tiktok/product/rank",
+      { ...baseParams(), creator_id: c.id, sort_field: { field: "revenue", type: "DESC" }, page_size: 10, page_number: 1 },
+      { runId, expectedRows: 10 },
+    );
+    return {
+      ...c,
+      soldProducts: mergeProducts(
+        c.soldProducts,
+        rows.map((r) => ({
+          id: String(r.product_id),
+          name: String(r.product_name ?? ""),
+          seller: r.seller_name,
+          category: categoryName(r.ter_category) ?? categoryName(r.sec_category),
+          revenueVnd: n(r.revenue),
+          source: "catalog" as const,
+        })),
+      ),
     };
   },
 };

@@ -8,6 +8,7 @@
  */
 import fs from "node:fs";
 import { getConfig } from "../src/lib/config";
+import { closeDb } from "../src/lib/db";
 import { createRun, markStaleRuns, runPipeline } from "../src/lib/pipeline/runner";
 import { listRuns, runDetail } from "../src/lib/runs";
 import type { CampaignBrief, StageName } from "../src/lib/types";
@@ -20,8 +21,8 @@ function arg(name: string): string | undefined {
 async function main() {
   const cfg = getConfig();
   if (process.argv.includes("--list")) {
-    markStaleRuns();
-    for (const r of listRuns())
+    await markStaleRuns();
+    for (const r of await listRuns())
       console.log(`${r.id}  ${r.status.padEnd(11)} ${r.currentStage ?? "-"}  AI $${r.costUsd.toFixed(4)}  Kalodata ${r.credits.toFixed(2)}cr  ${new Date(r.createdAt).toISOString()}`);
     return;
   }
@@ -30,9 +31,9 @@ async function main() {
   if (!runId) {
     const briefPath = arg("brief") ?? "briefs/sunscreen.json";
     const brief = JSON.parse(fs.readFileSync(briefPath, "utf8")) as CampaignBrief;
-    runId = createRun(brief);
+    runId = await createRun(brief);
   } else {
-    markStaleRuns();
+    await markStaleRuns();
   }
   console.log(`\nRun ${runId}  provider=${cfg.provider} models=${JSON.stringify(cfg.models)} source=${cfg.dataSource}\n`);
 
@@ -42,7 +43,7 @@ async function main() {
   const t0 = Date.now();
   const status = await runPipeline(runId, { crashAfter });
   const wall = Date.now() - t0;
-  const d = runDetail(runId)!;
+  const d = (await runDetail(runId))!;
 
   console.log(`\nStatus: ${status}   wall (this process): ${(wall / 1000).toFixed(1)}s   active total: ${(d.run.activeMs / 1000).toFixed(1)}s`);
   console.log(`AI: ${d.usage.total.calls} calls (${d.usage.total.cacheHits} cache hits), in ${d.usage.total.inputTokens} / out ${d.usage.total.outputTokens} / cache-read ${d.usage.total.cacheReadTokens} tokens, ${d.usage.total.images} images, $${d.usage.total.costUsd.toFixed(4)} (~${d.usage.costVnd.toLocaleString("vi-VN")} VND)`);
@@ -63,7 +64,9 @@ async function main() {
   }
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+main()
+  .then(() => closeDb())
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });

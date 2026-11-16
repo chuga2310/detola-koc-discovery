@@ -35,6 +35,11 @@ export function Composer({
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
+    // Ô rỗng: về chiều cao mặc định (đo lúc ô chưa có bề rộng sẽ ra số sai, vd khi vừa chuyển sang chế độ chat)
+    if (!text) {
+      el.style.height = "";
+      return;
+    }
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 168)}px`;
   }, [text]);

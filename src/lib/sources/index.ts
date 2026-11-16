@@ -21,6 +21,10 @@ export interface DataSource {
   name: string;
   search(q: SourceQuery): Promise<CreatorRecord[]>;
   enrich(c: CreatorRecord, ctx: { brief: CampaignBrief; runId?: string | null }): Promise<CreatorRecord>;
+  /** Dữ liệu chuyên sâu (trả phí, chỉ chạy khi brief bật). Nguồn không hỗ trợ thì bỏ qua. */
+  categoryDetail?(c: CreatorRecord, ctx: { brief: CampaignBrief; runId?: string | null }): Promise<CreatorRecord>;
+  videoDetails?(c: CreatorRecord, videoIds: string[], ctx: { brief: CampaignBrief; runId?: string | null }): Promise<CreatorRecord>;
+  soldProducts?(c: CreatorRecord, ctx: { brief: CampaignBrief; runId?: string | null }): Promise<CreatorRecord>;
 }
 
 export function getDataSource(name?: string): DataSource {

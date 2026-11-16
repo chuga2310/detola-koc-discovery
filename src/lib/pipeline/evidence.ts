@@ -27,7 +27,7 @@ export function buildEvidence(args: {
   const { ref, creator: c, pre, brief, text, media, video } = args;
   const ev: Evidence[] = [];
   const topPct = (p: number) => `top ${Math.max(1, Math.round((1 - p) * 100))}% pool`;
-  const sig = signalsOf(c);
+  const sig = signalsOf(c, brief.keywords);
 
   ev.push({
     id: `${ref}.m1`,
@@ -76,6 +76,40 @@ export function buildEvidence(args: {
     s.aiVideoCount ? `${s.aiVideoCount} video bị gắn cờ do AI tạo` : null,
   ].filter(Boolean);
   if (mom.length) ev.push({ id: `${ref}.m8`, kind: "metric", text: mom.join("; ") });
+  if (s.categoryRevenueShare !== undefined)
+    ev.push({
+      id: `${ref}.m9`,
+      kind: "metric",
+      text: `${pct(s.categoryRevenueShare)} doanh thu 30 ngày đến từ ngành của brief${s.categoryVideoGpm ? `; GPM video trong ngành ${compactNum(s.categoryVideoGpm)} VND / 1.000 view` : ""}`,
+    });
+  const sold = c.soldProducts ?? [];
+  if (sold.length) {
+    const others = sold.filter((p) => !s.sameCategoryProducts.includes(p.name)).slice(0, 3);
+    ev.push({
+      id: `${ref}.m10`,
+      kind: "metric",
+      text: [
+        s.sameCategoryProducts.length ? `Đã bán sản phẩm cùng loại: ${s.sameCategoryProducts.slice(0, 3).map((x) => truncate(x, 50)).join("; ")}` : "Chưa thấy bán sản phẩm cùng loại",
+        others.length ? `sản phẩm khác đang bán: ${others.map((p) => truncate(p.name, 40) + (p.seller ? ` (${p.seller})` : "")).join("; ")}` : null,
+      ]
+        .filter(Boolean)
+        .join("; "),
+    });
+  }
+  if (s.analyzedVideoStats)
+    ev.push({
+      id: `${ref}.m11`,
+      kind: "metric",
+      text: [
+        `Chi tiết ${s.analyzedVideoStats.withStats} video được AI xem`,
+        s.analyzedVideoStats.gpm !== undefined ? `GPM TB ${compactNum(s.analyzedVideoStats.gpm)} VND/1.000 view` : null,
+        s.analyzedVideoStats.roas ? `ROAS quảng cáo TB ${s.analyzedVideoStats.roas.toFixed(1)}` : null,
+        s.analyzedVideoStats.adDays ? `chạy quảng cáo TB ${s.analyzedVideoStats.adDays.toFixed(0)} ngày` : null,
+        s.analyzedVideoStats.cpa ? `chi phí quảng cáo / đơn TB ${compactNum(s.analyzedVideoStats.cpa)} VND` : null,
+      ]
+        .filter(Boolean)
+        .join("; "),
+    });
   ev.push({
     id: `${ref}.m5`,
     kind: "metric",

@@ -1,18 +1,18 @@
 /**
- * Pipeline runner: chạy các stage theo thứ tự, checkpoint mọi thứ vào SQLite.
+ * Pipeline runner: chạy các stage theo thứ tự, checkpoint mọi thứ vào MongoDB.
  *
  * Reliability được đảm bảo bởi 4 cơ chế:
  *  1. Checkpoint cấp stage (run_stages): stage xong -> lưu output -> lần sau bỏ qua.
  *  2. Checkpoint cấp task (tasks): trong 1 stage, task nào xong thì không chạy lại.
  *     Task đang "running" lúc process chết sẽ được reset về "pending" khi resume.
- *  3. Lease + heartbeat: 1 run chỉ được 1 worker chạy tại 1 thời điểm. Worker chết ->
- *     lease hết hạn (60s) -> worker khác (hoặc lần resume sau) tiếp quản được.
+ *  3. Lease + heartbeat: 1 run chỉ được 1 worker chạy tại 1 thời điểm (findOneAndUpdate có điều
+ *     kiện = atomic). Worker chết -> lease hết hạn (60s) -> worker khác (hoặc lần resume sau) tiếp quản.
  *  4. Idempotent exec + ai_cache: kể cả khi 1 task bị chạy lại (crash ngay sau khi gọi AI
  *     nhưng trước khi ghi DB), kết quả AI đã nằm trong cache -> không trả tiền 2 lần.
  */
 import os from "node:os";
 import { funnelFor, getConfig } from "../config";
-import { db, logEvent, now, parseJson } from "../db";
+import { flushEvents, logEvent, now, runsCol, runStagesCol, tasksCol, type TaskDoc } from "../db";
 import type { CampaignBrief, RunStatus, StageName } from "../types";
 import { STAGES } from "../types";
 import { createLimiter, newId } from "../util";
@@ -30,15 +30,21 @@ export function isRunActiveHere(runId: string) {
   return activeRuns.has(runId);
 }
 
-export function createRun(brief: CampaignBrief, chat?: unknown[]): string {
+export async function createRun(brief: CampaignBrief, chat?: unknown[]): Promise<string> {
   const id = newId();
   const cfg = getConfig();
   const snapshot = { provider: cfg.provider, models: cfg.models, effort: cfg.effort, dataSource: cfg.dataSource, funnel: funnelFor(brief.numKocs) };
-  db()
-    .prepare(
-      `INSERT INTO runs (id, brief_json, config_json, chat_json, status, created_at, updated_at) VALUES (?, ?, ?, ?, 'queued', ?, ?)`,
-    )
-    .run(id, JSON.stringify(brief), JSON.stringify(snapshot), chat?.length ? JSON.stringify(chat) : null, now(), now());
+  await (await runsCol()).insertOne({
+    _id: id,
+    brief,
+    config: snapshot,
+    chat: chat?.length ? chat : null,
+    status: "queued",
+    createdAt: now(),
+    updatedAt: now(),
+    activeMs: 0,
+    attempts: 0,
+  });
   logEvent(id, `Run created (provider=${cfg.provider}, source=${cfg.dataSource})`);
   return id;
 }
@@ -61,25 +67,28 @@ export interface RunOptions {
  */
 export async function runPipeline(runId: string, opts: RunOptions = {}): Promise<RunStatus> {
   const owner = `${os.hostname()}:${process.pid}:${newId().slice(0, 6)}`;
-  if (!acquireLease(runId, owner)) {
+  if (!(await acquireLease(runId, owner))) {
     logEvent(runId, "Another worker holds the lease; skip", { level: "warn" });
     return "running";
   }
 
   const ctrl = new AbortController();
   activeRuns.set(runId, ctrl);
-  const heartbeat = setInterval(() => renewLease(runId, owner), HEARTBEAT_MS);
+  const heartbeat = setInterval(() => void renewLease(runId, owner).catch(() => undefined), HEARTBEAT_MS);
 
-  const row = db().prepare("SELECT brief_json, attempts, status FROM runs WHERE id = ?").get(runId) as {
-    brief_json: string;
-    attempts: number;
-    status: RunStatus;
-  };
-  const brief = JSON.parse(row.brief_json) as CampaignBrief;
+  const runs = await runsCol();
+  const stagesC = await runStagesCol();
+  const tasks = await tasksCol();
+  const row = (await runs.findOne({ _id: runId }, { projection: { brief: 1, attempts: 1, status: 1 } }))!;
+  const brief = row.brief;
   // Run từng failed (ví dụ API down) -> cho các task lỗi thêm lượt retry mới
-  if (row.status === "failed") db().prepare("UPDATE tasks SET attempts = 0 WHERE run_id = ? AND status = 'failed'").run(runId);
-  db().prepare("UPDATE runs SET attempts = attempts + 1, status = 'running', error = NULL, updated_at = ? WHERE id = ?").run(now(), runId);
+  if (row.status === "failed") await tasks.updateMany({ runId, status: "failed" }, { $set: { attempts: 0 } });
+  await runs.updateOne({ _id: runId }, { $inc: { attempts: 1 }, $set: { status: "running", error: null, updatedAt: now() } });
   if (row.attempts > 0) logEvent(runId, `Resuming run (attempt #${row.attempts + 1}) from last checkpoint`);
+
+  // Output các stage đã xong nạp sẵn vào bộ nhớ -> ctx.output() đồng bộ, stage không phải đợi DB
+  const outputs = new Map<string, unknown>();
+  for (const st of await stagesC.find({ runId, status: "done" }).toArray()) outputs.set(st.stage, st.output);
 
   const ctx: StageContext = {
     runId,
@@ -87,11 +96,8 @@ export async function runPipeline(runId: string, opts: RunOptions = {}): Promise
     funnel: funnelFor(brief.numKocs),
     cfg: getConfig(),
     output<T>(stage: StageName): T {
-      const r = db().prepare("SELECT output_json FROM run_stages WHERE run_id = ? AND stage = ? AND status = 'done'").get(runId, stage) as
-        | { output_json: string }
-        | undefined;
-      if (!r) throw new Error(`Stage ${stage} has no output yet`);
-      return JSON.parse(r.output_json) as T;
+      if (!outputs.has(stage)) throw new Error(`Stage ${stage} has no output yet`);
+      return outputs.get(stage) as T;
     },
     log: (message, level = "info") => logEvent(runId, message, { level }),
   };
@@ -101,14 +107,11 @@ export async function runPipeline(runId: string, opts: RunOptions = {}): Promise
     for (const stageName of STAGES) {
       if (ctrl.signal.aborted) break;
       const def = STAGE_DEFS[stageName];
-      const done = db().prepare("SELECT status FROM run_stages WHERE run_id = ? AND stage = ?").get(runId, stageName) as
-        | { status: string }
-        | undefined;
-      if (done?.status === "done") {
+      if (outputs.has(stageName)) {
         logEvent(runId, `Checkpoint hit: stage already done, skipping`, { stage: stageName });
         continue;
       }
-      const finished = await runStage(ctx, def as StageDef, ctrl.signal, opts);
+      const finished = await runStage(ctx, def as StageDef, ctrl.signal, opts, outputs);
       if (!finished) break; // bị stop giữa stage
     }
 
@@ -118,51 +121,65 @@ export async function runPipeline(runId: string, opts: RunOptions = {}): Promise
     } else {
       status = "completed";
       const result = ctx.output<unknown>("select");
-      db().prepare("UPDATE runs SET result_json = ?, finished_at = ? WHERE id = ?").run(JSON.stringify(result), now(), runId);
+      await runs.updateOne({ _id: runId }, { $set: { result, finishedAt: now() } });
       logEvent(runId, "Run completed");
     }
   } catch (err) {
     status = "failed";
     const msg = err instanceof Error ? err.message : String(err);
-    db().prepare("UPDATE runs SET error = ? WHERE id = ?").run(msg, runId);
+    await runs.updateOne({ _id: runId }, { $set: { error: msg } });
     logEvent(runId, `Run failed: ${msg}`, { level: "error" });
   } finally {
     clearInterval(heartbeat);
     activeRuns.delete(runId);
-    db()
-      .prepare("UPDATE runs SET status = ?, lease_owner = NULL, lease_until = NULL, updated_at = ? WHERE id = ?")
-      .run(status, now(), runId);
+    await runs.updateOne({ _id: runId }, { $set: { status, leaseOwner: null, leaseUntil: null, updatedAt: now() } });
+    await flushEvents();
   }
   return status;
 }
 
 /** Trả về true nếu stage hoàn thành, false nếu bị dừng giữa chừng */
-async function runStage(ctx: StageContext, def: StageDef, signal: AbortSignal, opts: RunOptions): Promise<boolean> {
+async function runStage(
+  ctx: StageContext,
+  def: StageDef,
+  signal: AbortSignal,
+  opts: RunOptions,
+  stageOutputs: Map<string, unknown>,
+): Promise<boolean> {
   const { runId } = ctx;
   const stage = def.name;
   const stageStart = now();
-  db().prepare("UPDATE runs SET current_stage = ?, updated_at = ? WHERE id = ?").run(stage, now(), runId);
-  db()
-    .prepare("INSERT OR IGNORE INTO run_stages (run_id, stage, status, started_at) VALUES (?, ?, 'running', ?)")
-    .run(runId, stage, now());
-
-  // 1) Plan: ghi task vào DB (INSERT OR IGNORE -> task đã có từ lần chạy trước giữ nguyên trạng thái)
-  const planned = await def.plan(ctx);
-  const insert = db().prepare(
-    "INSERT OR IGNORE INTO tasks (run_id, stage, task_key, input_json, status, updated_at) VALUES (?, ?, ?, ?, 'pending', ?)",
+  const runs = await runsCol();
+  const stagesC = await runStagesCol();
+  const tasks = await tasksCol();
+  await runs.updateOne({ _id: runId }, { $set: { currentStage: stage, updatedAt: now() } });
+  await stagesC.updateOne(
+    { _id: `${runId}:${stage}` },
+    { $setOnInsert: { runId, stage, status: "running", startedAt: now(), activeMs: 0 } },
+    { upsert: true },
   );
-  db().transaction(() => {
-    for (const t of planned) insert.run(runId, stage, t.key, JSON.stringify(t.input), now());
-  })();
+
+  // 1) Plan: ghi task vào DB ($setOnInsert -> task đã có từ lần chạy trước giữ nguyên trạng thái)
+  const planned = await def.plan(ctx);
+  if (planned.length)
+    await tasks.bulkWrite(
+      planned.map((t, i) => ({
+        updateOne: {
+          filter: { _id: `${runId}:${stage}:${t.key}` },
+          update: { $setOnInsert: { runId, stage, key: t.key, seq: i, input: t.input, status: "pending", attempts: 0, updatedAt: now() } },
+          upsert: true,
+        },
+      })),
+      { ordered: false },
+    );
   // Task "running" từ process đã chết -> trả về pending
-  db().prepare("UPDATE tasks SET status = 'pending' WHERE run_id = ? AND stage = ? AND status = 'running'").run(runId, stage);
+  await tasks.updateMany({ runId, stage, status: "running" }, { $set: { status: "pending" } });
 
   const maxAttempts = ctx.cfg.maxTaskAttempts;
-  const todo = db()
-    .prepare(
-      "SELECT task_key, input_json, attempts FROM tasks WHERE run_id = ? AND stage = ? AND (status = 'pending' OR (status = 'failed' AND attempts < ?)) ORDER BY rowid",
-    )
-    .all(runId, stage, maxAttempts) as { task_key: string; input_json: string; attempts: number }[];
+  const todo = await tasks
+    .find({ runId, stage, $or: [{ status: "pending" }, { status: "failed", attempts: { $lt: maxAttempts } }] })
+    .sort({ seq: 1 })
+    .toArray();
   const doneCount = planned.length - todo.length;
   ctx.log(
     planned.length
@@ -174,29 +191,21 @@ async function runStage(ctx: StageContext, def: StageDef, signal: AbortSignal, o
   const limit = createLimiter(def.concurrency ?? 4);
   let completedThisProcess = 0;
   await Promise.all(
-    todo.map((t) =>
+    todo.map((t: TaskDoc) =>
       limit(async () => {
         if (signal.aborted) return;
         for (let attempt = t.attempts + 1; attempt <= maxAttempts; attempt++) {
-          db()
-            .prepare("UPDATE tasks SET status = 'running', attempts = ?, updated_at = ? WHERE run_id = ? AND stage = ? AND task_key = ?")
-            .run(attempt, now(), runId, stage, t.task_key);
+          await tasks.updateOne({ _id: t._id }, { $set: { status: "running", attempts: attempt, updatedAt: now() } });
           try {
-            const out = await def.exec(ctx, JSON.parse(t.input_json), t.task_key);
-            db()
-              .prepare(
-                "UPDATE tasks SET status = 'done', output_json = ?, error = NULL, updated_at = ? WHERE run_id = ? AND stage = ? AND task_key = ?",
-              )
-              .run(JSON.stringify(out ?? null), now(), runId, stage, t.task_key);
+            const out = await def.exec(ctx, t.input, t.key);
+            await tasks.updateOne({ _id: t._id }, { $set: { status: "done", output: out ?? null, error: null, updatedAt: now() } });
             completedThisProcess++;
-            maybeCrash(opts, stage, completedThisProcess, ctx);
+            await maybeCrash(opts, stage, completedThisProcess, ctx);
             return;
           } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
-            db()
-              .prepare("UPDATE tasks SET status = 'failed', error = ?, updated_at = ? WHERE run_id = ? AND stage = ? AND task_key = ?")
-              .run(msg.slice(0, 1000), now(), runId, stage, t.task_key);
-            ctx.log(`Task ${t.task_key} failed (attempt ${attempt}/${maxAttempts}): ${msg.slice(0, 200)}`, "warn");
+            await tasks.updateOne({ _id: t._id }, { $set: { status: "failed", error: msg.slice(0, 1000), updatedAt: now() } });
+            ctx.log(`Task ${t.key} failed (attempt ${attempt}/${maxAttempts}): ${msg.slice(0, 200)}`, "warn");
             if (err instanceof Error && (err.name === "NonRetryableError" || (err as { nonRetryable?: boolean }).nonRetryable)) return;
             if (signal.aborted) return;
           }
@@ -205,18 +214,16 @@ async function runStage(ctx: StageContext, def: StageDef, signal: AbortSignal, o
     ),
   );
 
-  addActiveTime(runId, stage, now() - stageStart);
+  await addActiveTime(runId, stage, now() - stageStart);
   if (signal.aborted) return false;
 
   // 3) Reduce
-  const rows = db()
-    .prepare("SELECT task_key, status, output_json, error FROM tasks WHERE run_id = ? AND stage = ?")
-    .all(runId, stage) as { task_key: string; status: string; output_json: string | null; error: string | null }[];
+  const rows = await tasks.find({ runId, stage }, { projection: { key: 1, status: 1, output: 1, error: 1 } }).toArray();
   const outputs = new Map<string, unknown>();
   const failed: string[] = [];
   for (const r of rows) {
-    if (r.status === "done") outputs.set(r.task_key, parseJson(r.output_json));
-    else failed.push(r.task_key);
+    if (r.status === "done") outputs.set(r.key, r.output ?? null);
+    else failed.push(r.key);
   }
   if (failed.length && !def.tolerateFailures) {
     // Kèm lỗi gốc của task đầu tiên để UI nói được nguyên nhân (vd. key bị từ chối), không chỉ "task failed"
@@ -227,47 +234,47 @@ async function runStage(ctx: StageContext, def: StageDef, signal: AbortSignal, o
 
   const reduceStart = now();
   const result = await def.reduce(ctx, outputs, failed);
-  db()
-    .prepare("UPDATE run_stages SET status = 'done', output_json = ?, finished_at = ? WHERE run_id = ? AND stage = ?")
-    .run(JSON.stringify(result), now(), runId, stage);
-  addActiveTime(runId, stage, now() - reduceStart);
+  await stagesC.updateOne({ _id: `${runId}:${stage}` }, { $set: { status: "done", output: result, finishedAt: now() } });
+  stageOutputs.set(stage, result);
+  await addActiveTime(runId, stage, now() - reduceStart);
   return true;
 }
 
-function addActiveTime(runId: string, stage: string, ms: number) {
-  db().prepare("UPDATE run_stages SET active_ms = active_ms + ? WHERE run_id = ? AND stage = ?").run(ms, runId, stage);
-  db().prepare("UPDATE runs SET active_ms = active_ms + ? WHERE id = ?").run(ms, runId);
+async function addActiveTime(runId: string, stage: string, ms: number) {
+  await (await runStagesCol()).updateOne({ _id: `${runId}:${stage}` }, { $inc: { activeMs: ms } });
+  await (await runsCol()).updateOne({ _id: runId }, { $inc: { activeMs: ms } });
 }
 
-function maybeCrash(opts: RunOptions, stage: StageName, completed: number, ctx: StageContext) {
+async function maybeCrash(opts: RunOptions, stage: StageName, completed: number, ctx: StageContext) {
   if (opts.crashAfter && opts.crashAfter.stage === stage && completed >= opts.crashAfter.tasks) {
     ctx.log(`💥 Simulated hard crash after ${completed} task(s) in ${stage} (process.exit)`, "error");
+    await flushEvents(); // để log crash kịp nằm trong DB
     // Không release lease, không cập nhật status -> giống hệt process bị kill thật
     process.exit(137);
   }
 }
 
 // ---------------------------------------------------------------------------
-// Lease: đảm bảo 1 run chỉ có 1 worker. Atomic nhờ 1 câu UPDATE có điều kiện.
+// Lease: đảm bảo 1 run chỉ có 1 worker. Atomic nhờ findOneAndUpdate có điều kiện.
 // ---------------------------------------------------------------------------
-function acquireLease(runId: string, owner: string): boolean {
+async function acquireLease(runId: string, owner: string): Promise<boolean> {
+  const runs = await runsCol();
   const t = now();
-  const res = db()
-    .prepare(
-      `UPDATE runs SET lease_owner = ?, lease_until = ?, updated_at = ?
-       WHERE id = ? AND status != 'completed' AND (lease_owner IS NULL OR lease_until < ?)`,
-    )
-    .run(owner, t + LEASE_MS, t, runId, t);
-  if (res.changes === 1) return true;
+  const got = await runs.findOneAndUpdate(
+    { _id: runId, status: { $ne: "completed" }, $or: [{ leaseOwner: null }, { leaseUntil: { $lt: t } }] },
+    { $set: { leaseOwner: owner, leaseUntil: t + LEASE_MS, updatedAt: t } },
+  );
+  if (got) return true;
 
   // Lease còn hạn nhưng owner có thể đã chết (crash). Nếu owner cùng máy và PID không còn
   // tồn tại -> chắc chắn đã chết -> tiếp quản ngay, không cần chờ lease hết hạn.
-  const cur = db().prepare("SELECT lease_owner FROM runs WHERE id = ?").get(runId) as { lease_owner: string | null } | undefined;
-  if (cur?.lease_owner && isDeadLocalOwner(cur.lease_owner)) {
-    const steal = db()
-      .prepare("UPDATE runs SET lease_owner = ?, lease_until = ?, updated_at = ? WHERE id = ? AND lease_owner = ?")
-      .run(owner, t + LEASE_MS, t, runId, cur.lease_owner);
-    return steal.changes === 1;
+  const cur = await runs.findOne({ _id: runId }, { projection: { leaseOwner: 1 } });
+  if (cur?.leaseOwner && isDeadLocalOwner(cur.leaseOwner)) {
+    const steal = await runs.findOneAndUpdate(
+      { _id: runId, leaseOwner: cur.leaseOwner },
+      { $set: { leaseOwner: owner, leaseUntil: t + LEASE_MS, updatedAt: t } },
+    );
+    return !!steal;
   }
   return false;
 }
@@ -284,20 +291,19 @@ function isDeadLocalOwner(leaseOwner: string): boolean {
   }
 }
 
-function renewLease(runId: string, owner: string) {
-  db().prepare("UPDATE runs SET lease_until = ? WHERE id = ? AND lease_owner = ?").run(now() + LEASE_MS, runId, owner);
+async function renewLease(runId: string, owner: string) {
+  await (await runsCol()).updateOne({ _id: runId, leaseOwner: owner }, { $set: { leaseUntil: now() + LEASE_MS } });
 }
 
 /**
  * Run bị "kẹt" (status running nhưng lease hết hạn) = worker đã chết. Đánh dấu interrupted
  * để UI hiện nút Resume. Gọi khi list runs.
  */
-export function markStaleRuns() {
-  db()
-    .prepare(
-      "UPDATE runs SET status = 'interrupted', lease_owner = NULL WHERE status = 'running' AND (lease_until IS NULL OR lease_until < ?)",
-    )
-    .run(now());
+export async function markStaleRuns() {
+  await (await runsCol()).updateMany(
+    { status: "running", $or: [{ leaseUntil: null }, { leaseUntil: { $lt: now() } }] },
+    { $set: { status: "interrupted", leaseOwner: null } },
+  );
 }
 
 /** Chạy nền (fire-and-forget) trong process Next.js */

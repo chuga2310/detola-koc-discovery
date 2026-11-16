@@ -331,6 +331,11 @@ function SignalPills({ pick }: { pick: Pick }) {
   if (s.videoGpm) items.push({ text: `${compact(s.videoGpm)} ₫ / 1.000 view`, title: "GPM video: doanh thu trên mỗi 1.000 view (khả năng chuyển đổi)" });
   if (s.avgUnitPriceVnd) items.push({ text: `Khán giả mua ~${compact(s.avgUnitPriceVnd)} ₫/sp`, title: "Giá trung bình sản phẩm khán giả đã mua qua creator" });
   if (s.followerGrowthPct !== undefined) items.push({ text: `+${(s.followerGrowthPct * 100).toFixed(1)}% follower / 30 ngày`, title: "Follower mới trong 30 ngày" });
+  if (s.sameCategoryProducts?.length)
+    items.push({ text: `Đã bán ${s.sameCategoryProducts.length} sp cùng loại`, title: `Đã bán: ${s.sameCategoryProducts.join("; ")}` });
+  if (s.categoryRevenueShare !== undefined)
+    items.push({ text: `${pct(s.categoryRevenueShare)} doanh thu trong ngành`, title: "Tỷ trọng doanh thu trong ngành của brief (dữ liệu chuyên sâu)" });
+  if (s.analyzedVideoRoas) items.push({ text: `ROAS QC ${s.analyzedVideoRoas.toFixed(1)}`, title: "ROAS quảng cáo trung bình của các video AI xem (dữ liệu chuyên sâu)" });
   items.push(
     s.contactChannels.length
       ? { text: `Liên hệ: ${s.contactChannels.join(", ")}`, title: "Kênh liên hệ công khai trên hồ sơ (xem trên TikTok / Kalodata)" }

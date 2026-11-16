@@ -7,15 +7,14 @@
  *   - Video URL:                          0.5 credit / call   <- đắt, chỉ dùng làm fallback
  *   - Credit balance:                     miễn phí
  *
- * Vì credit là chi phí thật (giống token AI), client này làm 4 việc:
- *  1. Cache response vào SQLite (kalo_cache) theo hash(endpoint + body) -> resume / chạy lại /
- *     benchmark warm run = 0 credit.
- *  2. Budget guard: mỗi run có trần credit (KALODATA_MAX_CREDITS_PER_RUN). Vượt trần -> từ chối gọi.
- *  3. Rate limit theo endpoint (rank/video: 10 req / 10s; detail: 500 req / 10s).
- *  4. Log từng call vào data_calls (credit, cache hit, latency) -> hiển thị + benchmark.
+ * Vì credit là chi phí thật (giống token AI), client này làm 3 việc khi THỰC SỰ gọi API:
+ *  1. Budget guard: mỗi run có trần credit (KALODATA_MAX_CREDITS_PER_RUN). Vượt trần -> từ chối gọi.
+ *  2. Rate limit theo endpoint (rank/video: 10 req / 10s; detail: 500 req / 10s).
+ *  3. Log từng call vào data_calls (credit, dùng lại từ DB hay gọi mới, latency) -> hiển thị + benchmark.
+ * Việc LƯU dữ liệu để tái sử dụng (thay cho cache response) nằm ở kaloStore.ts.
  */
-import { db, now } from "../db";
-import { backoffMs, sleep, stableHash } from "../util";
+import { dataCallsCol, now, runsCol } from "../db";
+import { backoffMs, sleep } from "../util";
 
 const BASE_URL = process.env.KALODATA_BASE_URL?.trim() || "https://www.kalodata.com/openapi/v1";
 
@@ -48,6 +47,7 @@ const RATE: Record<string, number> = {
   "/tiktok/video/url": 10,
   "/tiktok/creator/detail": 500,
   "/tiktok/video/detail": 100,
+  "/tiktok/product/rank": 10,
 };
 const windows = new Map<string, number[]>();
 async function rateLimit(path: string) {
@@ -65,53 +65,41 @@ async function rateLimit(path: string) {
 
 export interface KaloCallOpts {
   runId?: string | null;
-  /** Bỏ qua cache (ví dụ muốn data mới) */
-  fresh?: boolean;
   /** Ước tính số dòng để kiểm tra budget trước khi gọi rank */
   expectedRows?: number;
-  /** Kiểm tra data trong cache còn dùng được không (ví dụ signed URL chưa hết hạn) */
-  validate?: (data: unknown) => boolean;
 }
 
-export function creditsSpent(runId: string): number {
-  const r = db().prepare("SELECT COALESCE(SUM(credits),0) c FROM data_calls WHERE run_id = ? AND cache_hit = 0").get(runId) as { c: number };
-  return r.c;
+export async function creditsSpent(runId: string): Promise<number> {
+  const r = await (await dataCallsCol())
+    .aggregate<{ c: number }>([{ $match: { runId, cacheHit: false } }, { $group: { _id: null, c: { $sum: "$credits" } } }])
+    .toArray();
+  return r[0]?.c ?? 0;
 }
 
-export function maxCreditsPerRun(): number {
-  // Ước tính 1 run N=5: rank 0.1 + enrich 20 x 0.2 + video chính 10 x 0.5 ≈ 9.1 credit
-  return Number(process.env.KALODATA_MAX_CREDITS_PER_RUN ?? 12);
+/** Trần credit 1 run: mức cơ bản + phần cộng thêm cho tính năng trả phí người dùng đã bật (lưu trong run) */
+export async function maxCreditsPerRun(runId?: string | null): Promise<number> {
+  // Ước tính 1 run N=5: rank ~0.9 + enrich 20 x 0.2 + video chính 10 x 0.5 ≈ 10 credit
+  const base = Number(process.env.KALODATA_MAX_CREDITS_PER_RUN ?? 12);
+  if (!runId) return base;
+  const run = await (await runsCol()).findOne({ _id: runId }, { projection: { config: 1 } });
+  const extra = Number((run?.config as { paidCreditsBudget?: number } | undefined)?.paidCreditsBudget ?? 0);
+  return base + extra;
 }
 
-const cacheTtlMs = () => Number(process.env.KALODATA_CACHE_TTL_HOURS ?? 72) * 3600_000;
-
-/** Gọi 1 endpoint Kalodata, trả về field `data` của envelope */
-export async function kaloRequest<T = unknown>(path: string, body: Record<string, unknown>, opts: KaloCallOpts = {}): Promise<T> {
-  const key = stableHash({ path, body });
+/** Gọi THẬT 1 endpoint Kalodata (không đọc dữ liệu đã lưu), trả về field `data` của envelope */
+export async function kaloCall<T = unknown>(path: string, body: Record<string, unknown>, opts: KaloCallOpts = {}): Promise<T> {
   const runId = opts.runId ?? null;
-
-  if (!opts.fresh) {
-    const hit = db().prepare("SELECT data_json, fetched_at FROM kalo_cache WHERE cache_key = ?").get(key) as
-      | { data_json: string; fetched_at: number }
-      | undefined;
-    if (hit && now() - hit.fetched_at < cacheTtlMs() && (!opts.validate || opts.validate(JSON.parse(hit.data_json)))) {
-      const data = JSON.parse(hit.data_json) as T;
-      // Ghi lại số credit ĐÃ TIẾT KIỆM nhờ cache (để benchmark thấy chi phí lạnh vs thực trả)
-      logDataCall(runId, path, 0, true, 0, creditCost(path, Array.isArray(data) ? data.length : undefined));
-      return data;
-    }
-  }
-
   const apiKey = process.env.KALODATA_API_KEY?.trim();
   if (!apiKey) throw new KalodataError("KALODATA_API_KEY is not set", "auth");
 
   // Budget guard: chặn TRƯỚC khi tiêu credit
   const estimate = creditCost(path, opts.expectedRows);
   if (runId) {
-    const spent = creditsSpent(runId);
-    if (spent + estimate > maxCreditsPerRun() + 1e-9) {
+    const spent = await creditsSpent(runId);
+    const cap = await maxCreditsPerRun(runId);
+    if (spent + estimate > cap + 1e-9) {
       throw new KalodataError(
-        `Kalodata credit budget exceeded for this run (spent ${spent.toFixed(2)} + ${estimate} > ${maxCreditsPerRun()})`,
+        `Kalodata credit budget exceeded for this run (spent ${spent.toFixed(2)} + ${estimate} > ${cap})`,
         "budget",
       );
     }
@@ -143,10 +131,7 @@ export async function kaloRequest<T = unknown>(path: string, body: Record<string
       const data = envelope.data as T;
       const rows = Array.isArray(data) ? data.length : undefined;
       const credits = creditCost(path, rows);
-      db()
-        .prepare("INSERT OR REPLACE INTO kalo_cache (cache_key, path, body_json, data_json, fetched_at) VALUES (?, ?, ?, ?, ?)")
-        .run(key, path, JSON.stringify(body), JSON.stringify(data), now());
-      logDataCall(runId, path, credits, false, now() - started);
+      await logDataCall(runId, path, credits, false, now() - started);
       return data;
     }
 
@@ -173,17 +158,22 @@ export async function kaloRequest<T = unknown>(path: string, body: Record<string
   throw new KalodataError(`Kalodata unreachable after 3 attempts: ${lastErr}`, "network");
 }
 
-function logDataCall(runId: string | null, path: string, credits: number, cacheHit: boolean, latencyMs: number, avoided = 0) {
-  db()
-    .prepare(
-      "INSERT INTO data_calls (run_id, provider, endpoint, credits, credits_avoided, cache_hit, latency_ms, created_at) VALUES (?, 'kalodata', ?, ?, ?, ?, ?, ?)",
-    )
-    .run(runId, path, credits, avoided, cacheHit ? 1 : 0, latencyMs, now());
+export async function logDataCall(runId: string | null, path: string, credits: number, cacheHit: boolean, latencyMs: number, avoided = 0) {
+  await (await dataCallsCol()).insertOne({
+    runId,
+    provider: "kalodata",
+    endpoint: path,
+    credits,
+    creditsAvoided: avoided,
+    cacheHit,
+    latencyMs,
+    createdAt: now(),
+  });
 }
 
 /** Ghi nhận credit được tiết kiệm khi dùng lại kết quả đã có ở nơi khác (vd video đã tải về đĩa) */
-export function logAvoidedCredit(runId: string | null | undefined, path: string, credits: number) {
-  logDataCall(runId ?? null, path, 0, true, 0, credits);
+export async function logAvoidedCredit(runId: string | null | undefined, path: string, credits: number) {
+  await logDataCall(runId ?? null, path, 0, true, 0, credits);
 }
 
 /** Số dư credit (endpoint miễn phí) */
@@ -193,17 +183,4 @@ export async function creditBalance(): Promise<number | null> {
   const res = await fetch(`${BASE_URL}/credit/balance`, { headers: { "secret-key": apiKey }, signal: AbortSignal.timeout(15_000) });
   const j = (await res.json()) as { success?: boolean; data?: { totalRemain?: number } };
   return j.success ? Number(j.data?.totalRemain ?? 0) : null;
-}
-
-/** Link tải mp4 của video (0.5 credit). Cache lại cho tới khi link sắp hết hạn. */
-export async function kaloVideoUrl(videoId: string, runId?: string | null): Promise<string | null> {
-  const data = await kaloRequest<{ video_url?: string; expires_at?: number | string }>(
-    "/tiktok/video/url",
-    { video_id: videoId },
-    {
-      runId,
-      validate: (d) => Number((d as { expires_at?: number }).expires_at ?? 0) * 1000 > now() + 60_000,
-    },
-  );
-  return data?.video_url ?? null;
 }

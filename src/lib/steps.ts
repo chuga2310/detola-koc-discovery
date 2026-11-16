@@ -4,7 +4,7 @@
  * Đọc output đã checkpoint của từng stage (run_stages.output_json) và rút gọn lại để client
  * không phải tải cả trăm KB dữ liệu thô. Stage đã xong thì output không đổi nữa -> memo trong RAM.
  */
-import { db, parseJson } from "./db";
+import { creatorsCol, runStagesCol } from "./db";
 import type { Report } from "./pipeline/stages/select";
 import { STAGES } from "./types";
 
@@ -41,7 +41,7 @@ export interface StepSummary {
 export const STEP_TEXT: Record<string, { title: string; description: string; usesAi: boolean }> = {
   source: {
     title: "Tìm creator",
-    description: "Tìm trên Kalodata theo 3 hướng: người bán hàng tốt, người có tương tác cao trong ngành, và người đang làm video về sản phẩm.",
+    description: "Tìm trên Kalodata theo 5 hướng: người bán hàng tốt, người có tương tác cao trong ngành, người đang làm video về sản phẩm, người đã bán sản phẩm cùng loại, và người đang tăng trưởng.",
     usesAi: false,
   },
   prefilter: {
@@ -98,7 +98,6 @@ const DROP_WORDS: [RegExp, string][] = [
 ];
 const dropWord = (r: string) => DROP_WORDS.find(([re]) => re.test(r))?.[1] ?? r;
 
-type Rows = Record<string, unknown>;
 interface PrefilterRow {
   id: string;
   handle: string;
@@ -133,14 +132,15 @@ function describeDone(runId: string, stage: string, out: unknown, all: Map<strin
   switch (stage) {
     case "source": {
       const o = out as { ids: string[]; source: string };
-      const counts: Record<string, number> = {};
-      if (o.ids.length) {
-        const q = db().prepare(`SELECT data_json FROM creators WHERE id IN (${o.ids.map(() => "?").join(",")})`);
-        for (const r of q.all(...o.ids) as { data_json: string }[]) {
-          for (const s of (JSON.parse(r.data_json).sources as string[] | undefined) ?? []) counts[s] = (counts[s] ?? 0) + 1;
-        }
-      }
-      const label: Record<string, string> = { commerce: "Bán hàng tốt", engagement: "Tương tác cao", content: "Đang làm video về sản phẩm" };
+      // Số creator theo nguồn: runSteps đọc sẵn từ DB (describeDone giữ đồng bộ)
+      const counts = (all.get("__sourceCounts") as Record<string, number> | undefined) ?? {};
+      const label: Record<string, string> = {
+        commerce: "Bán hàng tốt",
+        engagement: "Tương tác cao",
+        content: "Đang làm video về sản phẩm",
+        proven: "Đã bán sản phẩm cùng loại",
+        rising: "Đang tăng trưởng",
+      };
       res = {
         ...base,
         result: `Tìm được ${o.ids.length} creator`,
@@ -307,17 +307,21 @@ function describeDone(runId: string, stage: string, out: unknown, all: Map<strin
   return res;
 }
 
-export function runSteps(
+export async function runSteps(
   runId: string,
   runStatus: string,
   currentStage: string | null,
   stages: { stage: string; status: string; activeMs: number; tasks: { total: number; done: number; failed: number } }[],
-): StepSummary[] {
-  const rows = db().prepare("SELECT stage, output_json FROM run_stages WHERE run_id = ? AND status = 'done'").all(runId) as {
-    stage: string;
-    output_json: string | null;
-  }[];
-  const outputs = new Map(rows.map((r) => [r.stage, parseJson<Rows>(r.output_json)]));
+): Promise<StepSummary[]> {
+  const rows = await (await runStagesCol()).find({ runId, status: "done" }, { projection: { stage: 1, output: 1 } }).toArray();
+  const outputs = new Map<string, unknown>(rows.map((r) => [r.stage, r.output]));
+  const src = outputs.get("source") as { ids?: string[] } | undefined;
+  if (src?.ids?.length && !memo.has(`${runId}:source`)) {
+    const counts: Record<string, number> = {};
+    const docs = await (await creatorsCol()).find({ _id: { $in: src.ids } }, { projection: { "data.sources": 1 } }).toArray();
+    for (const d of docs) for (const t of d.data?.sources ?? []) counts[t] = (counts[t] ?? 0) + 1;
+    outputs.set("__sourceCounts", counts);
+  }
   return STAGES.map((stage) => {
     const s = stages.find((x) => x.stage === stage)!;
     const t = STEP_TEXT[stage];

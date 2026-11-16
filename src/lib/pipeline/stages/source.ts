@@ -19,7 +19,7 @@ export const sourceStage: StageDef<{ limit: number }, SourceOut, SourceOut> = {
     const src = getDataSource(ctx.cfg.dataSource);
     const list = await src.search({ brief: ctx.brief, limit: input.limit, runId: ctx.runId });
     if (!list.length) throw new Error(`Data source "${src.name}" returned 0 creators`);
-    upsertCreators(list);
+    await upsertCreators(list);
     ctx.log(`Fetched ${list.length} creators from ${src.name}`);
     return { ids: list.map((c) => c.id), source: src.name };
   },

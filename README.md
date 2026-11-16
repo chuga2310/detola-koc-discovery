@@ -1,129 +1,134 @@
 # AI KOC Discovery — DETOLA Technical Assessment
 
-Hệ thống tìm KOC TikTok phù hợp cho một brief chiến dịch (ví dụ: **5 KOC cho kem chống nắng, nữ 18–30, ngân sách 30 triệu VND**). Dữ liệu lấy từ **Kalodata Open API**, kết hợp phân tích nội dung và **phân tích video bằng AI**. Mọi đề xuất đều có **bằng chứng truy vết được** (số liệu, khung hình, câu nói trong video).
+🇬🇧 English: [README.en.md](README.en.md) · 📋 Bảng tính năng chi tiết: [docs/FEATURES.md](docs/FEATURES.md) · 📐 Kiến trúc: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · 📊 Benchmark: [docs/BENCHMARK.md](docs/BENCHMARK.md)
 
-- **Next.js 16** (UI + API routes = backend), **SQLite** (checkpoint + cache), **Claude** (Haiku / Sonnet / Opus theo stage), OpenAI (template), mock (offline).
-- Pipeline phễu 8 stage: 3 nguồn dữ liệu → lọc số liệu (0 token) → enrich có chọn lọc → text AI rẻ → video AI → chấm điểm có trích dẫn → tối ưu ngân sách.
-- Crash giữa chừng → resume đúng chỗ, **không trả tiền AI hay credit Kalodata 2 lần**.
+Tìm KOC TikTok phù hợp cho một brief chiến dịch, ví dụ **5 KOC cho kem chống nắng, khách hàng nữ 18–30, ngân sách 30 triệu VND**. Dữ liệu lấy từ **Kalodata Open API**, kết hợp đọc nội dung và **xem video bằng AI**. Mỗi đề xuất đều có **bằng chứng truy vết được**: con số, khung hình, câu nói trong video.
 
-| Kết quả benchmark (run thật, N = 5) | |
+- **Stack:** Next.js 16 (giao diện + API), **MongoDB** (toàn bộ dữ liệu app), Claude (Haiku / Sonnet / Opus theo từng bước), OpenAI (template), chế độ giả lập offline.
+- **Pipeline phễu 8 bước:** 5 nguồn Kalodata → lọc số liệu (0 token) → lấy hồ sơ chi tiết có chọn lọc → AI đọc nội dung → AI xem video → AI chấm điểm có trích dẫn → chọn tối ưu theo ngân sách.
+- **Chi phí có kiểm soát:**
+  - Mỗi bước có checkpoint; crash giữa chừng thì chạy tiếp đúng chỗ, không trả tiền AI hay credit 2 lần.
+  - Dữ liệu Kalodata đã trả được lưu thành dữ liệu thật trong MongoDB để dùng lại.
+
+| Kết quả benchmark (chạy thật, N = 5) | |
 |---|---|
-| Chi phí 1 run lạnh | **≈ $1.33** = AI $0.39 + Kalodata 9.4 credit (≈ $0.94) |
-| Run lặp lại / campaign gặp lại creator | **$0**: 13/13 call AI và mọi call Kalodata trúng cache |
-| Thời gian xử lý | ~110s khi dữ liệu đã cache; ~2.5–3 phút khi lạnh hoàn toàn |
-| Phục hồi | kill cứng giữa `video_analysis` → resume → **0 call trả tiền 2 lần** |
-| So với naive (video AI cả pool bằng model mạnh, ước tính) | chi phí AI $12.08 → $0.39, **giảm ~97%** |
-
-📐 Kiến trúc & quyết định thiết kế: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
-📊 Kết quả 5 KOC, bằng chứng, token/credit, thời gian, phục hồi, projection 50–500 KOC: [docs/BENCHMARK.md](docs/BENCHMARK.md)
+| Chi phí 1 lần chạy lạnh | **≈ $1.33** = AI $0.39 + Kalodata 9.4 credit (≈ $0.94); thêm 2 nguồn mới ≈ +0.7 credit |
+| Chạy lại / chiến dịch gặp lại creator | **$0**: mọi lần gọi AI và Kalodata đều dùng lại dữ liệu đã lưu |
+| Thời gian | ~110 giây khi dữ liệu đã có; ~2.5–3 phút khi chạy lạnh hoàn toàn |
+| Phục hồi | Kill cứng giữa bước xem video → chạy tiếp → **0 lần gọi bị trả tiền 2 lần** |
+| So với cách naive (AI xem video cả pool bằng model mạnh) | AI $12.08 → $0.39, **giảm ~97%** |
 
 ---
 
 ## 1. Chạy
 
-Yêu cầu: Node ≥ 22, `ffmpeg`, `yt-dlp`.
+Yêu cầu: Node ≥ 22, MongoDB, `ffmpeg`, `yt-dlp`.
 
 ```bash
-brew install ffmpeg yt-dlp      # macOS
+brew tap mongodb/brew
+brew trust mongodb/brew                 # Homebrew mới yêu cầu tin cậy tap trước khi cài
+brew install mongodb-community ffmpeg yt-dlp
+brew services start mongodb-community   # MongoDB chạy ở mongodb://127.0.0.1:27017
 npm install
-cp .env.example .env.local      # điền ANTHROPIC_API_KEY, KALODATA_API_KEY
+cp .env.example .env.local              # điền ANTHROPIC_API_KEY, KALODATA_API_KEY; MONGODB_URI nếu khác mặc định
 ```
 
 ```bash
-npm run dev                                                   # http://localhost:3000 — danh sách chiến dịch, Brief mới, xem từng bước
-npm run discover -- --brief briefs/sunscreen.json             # hoặc chạy bằng CLI
-npm run benchmark -- --fresh                                  # đo end-to-end, ghi docs/BENCHMARK.md
+npm run dev                                         # http://localhost:3000
+npm run discover -- --brief briefs/sunscreen.json   # hoặc chạy bằng CLI
+npm run benchmark -- --fresh                        # đo end-to-end, ghi docs/BENCHMARK.md
+npm run migrate:sqlite                              # (1 lần) chuyển dữ liệu từ bản SQLite cũ .data/koc.db sang MongoDB
 ```
 
 ### Chế độ offline (không cần key)
 
 ```bash
-npm run gen:fixtures                      # 120 creator MẪU (synthetic, handle demo_*)
+npm run gen:fixtures                      # 120 creator MẪU (handle demo_*)
 DATA_SOURCE=fixture AI_PROVIDER=mock npm run dev
 ```
 
-Mock chỉ để xem flow / test resume. Nội dung đánh giá là giả lập và được đánh dấu `[MOCK]`.
+Chế độ này chỉ để xem luồng và thử tính năng phục hồi; nội dung đánh giá là giả lập.
 
-### Demo khả năng phục hồi
+### Thử khả năng phục hồi
 
 ```bash
 npm run discover -- --brief briefs/sunscreen.json --crash-after video_analysis:3   # kill cứng process
-npm run discover -- --list                                                         # thấy run bị gián đoạn
+npm run discover -- --list                                                         # thấy chiến dịch bị gián đoạn
 npm run discover -- --resume <runId>                                               # chạy tiếp từ checkpoint
 ```
 
-Trên UI: bấm **Tạm dừng** khi chiến dịch đang chạy, sau đó bấm **Chạy tiếp** (chạy từ checkpoint).
+Trên giao diện: bấm **Tạm dừng** khi chiến dịch đang chạy, rồi **Chạy tiếp**.
 
-### Giao diện
+## 2. Giao diện
 
 | Màn hình | Nội dung |
 |---|---|
-| `/` **Chiến dịch** | Danh sách mọi lần tìm KOC (TanStack Table: sắp xếp, tự làm mới khi có chiến dịch đang chạy) + nút **Brief mới** |
-| `/new` **Brief mới** | Trên: form điền nhanh (react-hook-form + zod; chip chọn khách hàng/độ tuổi/quy mô, ngân sách chọn tiền tệ VND/USD + mức có sẵn hoặc tự nhập có định dạng, stepper số KOC). Dưới: ô chat có gợi ý, kể bằng lời thì **AI hỏi thêm từng câu kèm lựa chọn** (chọn 1 hoặc nhiều, có "Khác"). Đủ thông tin → thẻ brief để xác nhận → **Bắt đầu tìm creator** |
-| `/runs/:id` **Chiến dịch** | Phiên làm việc: hội thoại lập brief → **8 bước nghiên cứu** (mỗi bước có mô tả, kết quả 1 dòng, mở ra xem chi tiết từng creator) → 5 KOC đề xuất kèm bằng chứng. Chi phí và nhật ký kỹ thuật nằm trong mục thu gọn |
+| `/` **Chiến dịch** | Danh sách mọi lần tìm KOC (sắp xếp được, tự làm mới khi đang chạy) + nút **Brief mới** |
+| `/new` **Brief mới** | **Form** điền nhanh bằng chip (ngân sách chọn tiền tệ + mức có sẵn hoặc tự nhập). **Ô chat**: kể bằng lời, AI hỏi thêm từng câu kèm lựa chọn. Đủ thông tin → thẻ brief để xác nhận, tuỳ chọn bật **dữ liệu chuyên sâu (trả phí)** → **Bắt đầu tìm creator** |
+| `/runs/:id` **Chiến dịch** | Brief đã chốt và hội thoại → **8 bước nghiên cứu** (mở từng bước để xem chi tiết) → KOC đề xuất kèm bằng chứng bấm được. Chi phí và nhật ký nằm trong mục thu gọn |
 
-Hỏi brief bằng AI dùng model rẻ (Haiku, effort low), ~$0.001 mỗi lượt; câu trả lời dạng lựa chọn được áp vào brief bằng code (chính xác, không cần AI hiểu). Chi phí các lượt hỏi được gắn vào chiến dịch khi tạo.
+Giao diện theo design system của DETOLA (detola.vn), mô tả ở [DESIGN.md](DESIGN.md).
 
-## 2. Pipeline
+## 3. Pipeline
 
-| # | Stage | Chi phí | Việc |
+| # | Bước | Chi phí | Việc |
 |---|---|---|---|
-| 1 | `source` | ~0.4 credit | Pool từ 3 nguồn Kalodata: **commerce** (doanh thu video), **engagement** (ER ≥ 8%, Skincare), **content** (video có keyword "kem chống nắng") |
-| 2 | `prefilter` | 0 | Lọc cứng (follower, chi phí ≤ 50% ngân sách, tài khoản shop, seller chỉ livestream…) + điểm số liệu; chia đều suất theo nguồn → giữ ~4N |
-| 3 | `enrich` | 0.2 credit / creator | Detail + video gần đây **chỉ cho ~4N** creator đã qua prefilter, rồi chấm lại điểm |
-| 4 | `text_screen` | Haiku, batch 10 | Ngách, brand fit, liên quan sản phẩm, red flag → shortlist ~2N |
-| 5 | `media_prep` | 0.5 credit / creator | yt-dlp (miễn phí) lấy transcript + thumbnail; video chính lấy mp4 qua Kalodata → contact sheet 6 frame |
-| 6 | `video_analysis` | Sonnet vision, 1 call / creator | Hồ sơ nội dung khách quan (không phụ thuộc campaign → cache dùng lại) |
-| 7 | `final_rank` | Opus, batch 10 | Chấm điểm theo rubric; lý do + rủi ro **bắt buộc trích evidence id**; gợi ý concept |
-| 8 | `select` | 0 | Knapsack: N KOC có tổng điểm cao nhất trong ngân sách |
+| 1 | `source` | ~1.1 credit | 5 nguồn: bán hàng tốt, tương tác cao, đang làm video về sản phẩm, **đã bán sản phẩm cùng loại**, **đang tăng trưởng**. Mỗi nguồn chịu lỗi độc lập |
+| 2 | `prefilter` | 0 | Lọc cứng + điểm số liệu (reach trên view tự nhiên, GPM, đà tăng); chia đều suất theo nguồn → giữ ~4N |
+| 3 | `enrich` | 0.2 credit / người | Hồ sơ chi tiết + video gần đây chỉ cho ~4N người, rồi chấm lại điểm |
+| 4 | `text_screen` | Haiku, 10 người / lần | Ngách, độ hợp thương hiệu, độ liên quan sản phẩm, rủi ro → giữ ~2N |
+| 5 | `media_prep` | 0.5 credit / người | Lời thoại tiếng Việt (miễn phí) + MP4 video chính → ảnh lưới 6 khung hình |
+| 6 | `video_analysis` | Sonnet, 1 lần / người | Hồ sơ nội dung khách quan, không phụ thuộc brief → dùng lại xuyên chiến dịch |
+| 7 | `final_rank` | Opus, 10 người / lần | Điểm theo rubric; lý do và rủi ro **bắt buộc trích mã bằng chứng** |
+| 8 | `select` | 0 | Knapsack: N KOC tổng điểm cao nhất trong ngân sách |
 
-## 3. Cấu hình (`.env.local`)
+**Dữ liệu chuyên sâu (trả phí, mặc định tắt):** doanh thu theo ngành (~2 cr), chi tiết video (~2 cr), sản phẩm creator đang bán (~1 cr). Xem [docs/FEATURES.md](docs/FEATURES.md#3-dữ-liệu-chuyên-sâu-trả-phí-phải-bật).
+
+## 4. Cấu hình (`.env.local`)
 
 | Biến | Mặc định | Ý nghĩa |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | – | Có key → provider `anthropic` |
+| `ANTHROPIC_API_KEY` | – | Có key → dùng Claude |
 | `KALODATA_API_KEY` | – | Kalodata Open API (header `secret-key`) |
+| `MONGODB_URI` / `MONGODB_DB` | `mongodb://127.0.0.1:27017` / `koc_discovery` | Database của app |
 | `DATA_SOURCE` | `kalodata` | `kalodata` \| `fixture` |
-| `AI_PROVIDER` | auto | `anthropic` \| `openai` \| `mock` |
-| `MODEL_SCREEN` / `MODEL_VIDEO` / `MODEL_FINAL` | haiku-5-5 / sonnet-5-5 / opus-5-5 | Model tiering |
+| `AI_PROVIDER` | tự chọn | `anthropic` \| `openai` \| `mock` |
+| `MODEL_SCREEN` / `MODEL_VIDEO` / `MODEL_FINAL` | haiku-5-5 / sonnet-5-5 / opus-5-5 | Model cho từng bước |
 | `EFFORT_SCREEN` / `EFFORT_VIDEO` / `EFFORT_FINAL` | low / low / medium | Độ sâu suy luận |
-| `KALODATA_MAX_CREDITS_PER_RUN` | 12 | Trần credit mỗi run (chặn trước khi gọi) |
-| `KALODATA_VIDEO_URL_FALLBACK` | `primary` | Lấy mp4 trả phí cho: `primary` (video chính) \| `all` \| `off` |
-| `KALODATA_CACHE_TTL_HOURS` | 72 | Thời gian dùng lại response Kalodata |
+| `KALODATA_MAX_CREDITS_PER_RUN` | 12 | Trần credit mỗi chiến dịch (cộng thêm phần trả phí người dùng đã bật) |
+| `KALODATA_DATA_MAX_AGE_HOURS` | 168 | Dữ liệu Kalodata đã lưu được dùng lại bao lâu |
+| `KALODATA_VIDEO_URL_FALLBACK` | `primary` | Lấy MP4 trả phí cho `primary` (video chính) \| `all` \| `off` |
+| `PAID_FEATURES` | `demo` | Dữ liệu chuyên sâu: `demo` (được bật thử) \| `on` \| `off` (khoá) |
 | `AI_CONCURRENCY` / `MEDIA_CONCURRENCY` | 4 / 3 | Giới hạn song song |
 
-Brief (`briefs/sunscreen.json`) gồm: sản phẩm, ngành, keyword, khán giả mục tiêu, ngân sách, số KOC, khoảng follower, category Kalodata, keyword tìm nội dung (`contentKeywords`).
+## 5. Giới hạn hiện tại
 
-## 4. Giới hạn hiện tại
+- **Không có nhân khẩu học follower:** Kalodata Open API không trả tuổi / giới tính khán giả. Phần "nữ 18–30" do AI suy từ nội dung; rubric giới hạn điểm phần này, nên điểm phù hợp thường ở mức 50–65.
+- **Dữ liệu thiên về TikTok Shop:** Kalodata theo dõi creator có bán hàng. 5 nguồn và chia suất giảm thiên lệch, nhưng KOC thuần review không bán qua TikTok Shop có thể không có trong dữ liệu.
+- **AI chưa xem video thật:** model nhận 6 khung hình tĩnh + lời thoại thay cho video, nên mất chuyển động, nhịp dựng, âm thanh. Một model đọc video gốc tốt sẽ cải thiện rất nhiều; chỉ cần thay đầu vào của bước xem video.
+- **Video thứ 2 mỗi creator chỉ có ảnh bìa** (TikTok chặn tải video miễn phí; lấy MP4 cho cả 2 tốn thêm 0.5 credit / người).
+- **Chi phí booking là ước tính** theo tier follower, chưa có báo giá thật.
+- **Kết quả AI không hoàn toàn tất định:** creator điểm sát nhau có thể đổi thứ hạng giữa 2 lần chạy lạnh.
+- Worker chạy trong process Next.js; production nên tách worker. Chưa có đăng nhập cho giao diện.
 
-- **Không có nhân khẩu học follower**: Kalodata Open API không trả tuổi/giới tính khán giả (giao diện web có, API thì không). Phần "khán giả nữ 18–30" được AI suy từ nội dung và persona, rubric giới hạn điểm phần này. Đây là nguyên nhân chính khiến điểm fit chỉ ở khoảng 50–62.
-- **Dữ liệu thiên về TikTok Shop**: Kalodata theo dõi creator có bán hàng, nên nhiều ứng viên là affiliate. Pipeline giảm thiên lệch bằng 3 nguồn + chia suất, nhưng KOC thuần review không bán qua TikTok Shop có thể không có trong dữ liệu.
-- **Chi phí booking là ước tính** theo tier follower (`DEFAULT_RATE_CARD`), chưa có báo giá thật.
-- **Video**: tải video miễn phí từ TikTok hiện bị chặn (chỉ lấy được audio), nên video chính dùng Kalodata (0.5 credit), video phụ chỉ có thumbnail + transcript. 6 frame / video có thể bỏ sót chi tiết giữa các frame.
-- **AI chưa "xem" video thật**: Claude hiện nhận ảnh, chưa nhận video, nên hệ thống cắt 6 khung hình tĩnh + lời thoại thay cho video. Cách này mất chuyển động (thao tác thoa, độ tán, texture khi miết), nhịp dựng, âm thanh/nhạc, biểu cảm và mọi thứ xảy ra giữa 2 khung. **Nếu có model đọc được video gốc tốt, chất lượng phân tích video sẽ cải thiện rất nhiều** (xem §5).
-- **Kết quả AI không hoàn toàn tất định**: 2 lần chạy lạnh có thể đổi thứ hạng ở các creator điểm sát nhau. Run lặp lại thì cố định nhờ cache.
-- **Rubric và trọng số** đặt theo kinh nghiệm, chưa hiệu chỉnh bằng dữ liệu hiệu quả chiến dịch thật.
-- Worker chạy trong process Next.js (fire-and-forget): đủ cho demo, production nên tách worker. Chưa có auth cho UI.
+## 6. Hướng mở rộng
 
-## 5. Hướng mở rộng
+- **Model đọc video gốc** thay cho ảnh lưới 6 khung hình (nâng cấp chất lượng lớn nhất còn lại).
+- **Nhiều worker** kéo task bằng `findOneAndUpdate` có điều kiện (lease đã dùng cơ chế này); MongoDB replica set khi lên production.
+- **Message Batches API** cho bước đọc nội dung / xem video (−50% chi phí AI).
+- **Nguồn có nhân khẩu học follower** (gói Kalodata cao hơn hoặc TikTok Creator Marketplace).
+- **Vòng phản hồi:** lưu kết quả thật sau chiến dịch (view, GMV, CPM) để học lại trọng số.
+- **Tìm creator tương tự** bằng embedding hồ sơ nội dung video đã lưu.
 
-- **Postgres + worker pool** (`SKIP LOCKED`) cho 500 KOC trên nhiều máy; schema giữ nguyên.
-- **Message Batches API** cho `text_screen` / `video_analysis` (−50% chi phí AI, async).
-- Ở quy mô lớn **chi phí video URL vượt chi phí AI** → chỉ trả 0.5 credit cho top cuối, tầng đầu dùng thumbnail + transcript; tận dụng cache hồ sơ video xuyên campaign.
-- Bổ sung nguồn có nhân khẩu học follower (Kalodata gói cao hơn hoặc TikTok Creator Marketplace) → thay suy luận bằng số liệu.
-- **Feedback loop**: lưu kết quả thật sau campaign (view, GMV, CPM) để học lại trọng số và rubric.
-- **Lookalike search**: embedding hồ sơ nội dung video (đã cache) để tìm creator giống những KOC từng hiệu quả.
-- **Model đọc video gốc thay cho 6 khung hình**: đây là nâng cấp chất lượng lớn nhất còn lại. Kiến trúc đã sẵn cho việc thay: `video_analysis` là 1 stage độc lập, output theo schema cố định, kết quả không phụ thuộc campaign và được cache. Chỉ cần đổi phần input (gửi MP4 thay cho contact sheet) và provider; các stage sau không đổi. Cần đo lại chi phí token/video và so chất lượng trên cùng tập creator trước khi chuyển.
-
-## 6. Cấu trúc thư mục
+## 7. Cấu trúc thư mục
 
 ```
 briefs/                 brief mẫu (đề bài kem chống nắng)
-data/fixtures/          data synthetic cho chế độ offline
-docs/                   ARCHITECTURE.md, BENCHMARK.md
+data/fixtures/          dữ liệu mẫu cho chế độ offline
+docs/                   ARCHITECTURE, FEATURES (vi + en), BENCHMARK
 benchmark/results.json  số liệu thô của benchmark
-scripts/                discover (CLI), benchmark, gen-fixtures
+scripts/                discover (CLI), benchmark, gen-fixtures, migrate-sqlite
 src/lib/                lõi hệ thống (xem docs/ARCHITECTURE.md §5)
-src/app, src/components Next.js UI + API routes (brief/ = form, chat/ = hội thoại AI)
-.data/                  SQLite + media cache (gitignored)
+src/app, src/components giao diện Next.js + API (brief/ = form, chat/ = hội thoại AI)
+.data/media/            ảnh lưới và phụ đề video (gitignored)
 ```

@@ -4,6 +4,7 @@ import path from "node:path";
 import Link from "next/link";
 import { NewBrief } from "@/components/brief/NewBrief";
 import { Shell } from "@/components/ui";
+import type { PaidMode } from "@/lib/brief/paid";
 import { briefToDraft } from "@/lib/brief/slots";
 import { getConfig } from "@/lib/config";
 import type { CampaignBrief } from "@/lib/types";
@@ -15,6 +16,7 @@ export default function NewBriefPage() {
   const sample = briefToDraft(JSON.parse(fs.readFileSync(path.join(process.cwd(), "briefs", "sunscreen.json"), "utf8")) as CampaignBrief);
   sample.budget = { amount: 30_000_000, currency: "VND" };
   const mock = getConfig().provider === "mock";
+  const paidMode = (process.env.PAID_FEATURES?.trim() || "demo") as PaidMode;
   return (
     <>
       <Shell
@@ -35,7 +37,7 @@ export default function NewBriefPage() {
             Đang chạy AI giả lập (chưa có API key): AI chỉ hiểu được câu đơn giản và kết quả không phải đánh giá thật.
           </p>
         )}
-        <NewBrief sample={sample} />
+        <NewBrief sample={sample} paidMode={paidMode} />
       </main>
     </>
   );

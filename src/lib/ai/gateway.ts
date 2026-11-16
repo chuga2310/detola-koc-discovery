@@ -11,7 +11,7 @@
  *  4. Ghi log token/cost/latency vào bảng ai_calls -> benchmark + hiển thị chi phí realtime.
  */
 import { getConfig } from "../config";
-import { db, now } from "../db";
+import { aiCacheCol, aiCallsCol, now } from "../db";
 import { backoffMs, createLimiter, sleep, stableHash } from "../util";
 import { anthropicProvider } from "./anthropic";
 import { mockProvider } from "./mock";
@@ -93,14 +93,13 @@ export async function aiGenerate<T>(
   const images = req.content.filter((p) => p.type === "image").length;
 
   // 1) Cache hit -> không gọi API
-  const cached = db()
-    .prepare("SELECT output_json, usage_json, model FROM ai_cache WHERE cache_key = ?")
-    .get(cacheKey) as { output_json: string; usage_json: string; model: string } | undefined;
+  const cache = await aiCacheCol();
+  const cached = await cache.findOne({ _id: cacheKey });
   if (cached) {
-    const parsed = req.schema.safeParse(JSON.parse(cached.output_json));
+    const parsed = req.schema.safeParse(cached.output);
     if (parsed.success) {
       const zero: Usage = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0 };
-      logCall(ctx, provider.name, cached.model, true, zero, images, 0, 0);
+      await logCall(ctx, provider.name, cached.model, true, zero, images, 0, 0);
       return { data: parsed.data, cacheHit: true, costUsd: 0, usage: zero, model: cached.model };
     }
   }
@@ -115,19 +114,19 @@ export async function aiGenerate<T>(
       const primeKey = `${provider.name}:${req.model}:${stableHash(req.system)}`;
       const res = await withCachePriming(primeKey, () => limiter()(() => provider.generate({ ...req, maxTokens })));
       const cost = costUsd(res.model, res.usage);
-      db()
-        .prepare(
-          "INSERT OR REPLACE INTO ai_cache (cache_key, provider, model, output_json, usage_json, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-        )
-        .run(cacheKey, provider.name, res.model, JSON.stringify(res.data), JSON.stringify(res.usage), now());
-      logCall(ctx, provider.name, res.model, false, res.usage, images, cost, now() - started);
+      await cache.replaceOne(
+        { _id: cacheKey },
+        { provider: provider.name, model: res.model, output: res.data as unknown, usage: res.usage, createdAt: now() },
+        { upsert: true },
+      );
+      await logCall(ctx, provider.name, res.model, false, res.usage, images, cost, now() - started);
       return { data: res.data, cacheHit: false, costUsd: cost, usage: res.usage, model: res.model };
     } catch (err) {
       lastErr = err;
       // Call đã chạy xong ở phía provider nhưng output hỏng -> vẫn tốn tiền -> ghi log (ok = 0)
       if ((err instanceof SchemaMismatchError || err instanceof TruncatedError) && err.usage) {
         const m = err.model ?? req.model;
-        logCall(ctx, provider.name, m, false, err.usage, images, costUsd(m, err.usage), now() - started, false);
+        await logCall(ctx, provider.name, m, false, err.usage, images, costUsd(m, err.usage), now() - started, false);
       }
       if (err instanceof NonRetryableError) throw err;
       if (err instanceof TruncatedError) maxTokens = Math.min(maxTokens * 2, 32000);
@@ -137,7 +136,7 @@ export async function aiGenerate<T>(
   throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
 }
 
-function logCall(
+async function logCall(
   ctx: AiContext,
   provider: string,
   model: string,
@@ -148,27 +147,21 @@ function logCall(
   latencyMs: number,
   ok = true,
 ) {
-  db()
-    .prepare(
-      `INSERT INTO ai_calls (run_id, stage, task_key, provider, model, cache_hit, input_tokens, output_tokens,
-        cache_read_tokens, cache_write_tokens, images, cost_usd, latency_ms, created_at, ok)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    )
-    .run(
-      ctx.runId,
-      ctx.stage,
-      ctx.taskKey,
-      provider,
-      model,
-      cacheHit ? 1 : 0,
-      u.inputTokens,
-      u.outputTokens,
-      u.cacheReadTokens,
-      u.cacheWriteTokens,
-      images,
-      cost,
-      latencyMs,
-      now(),
-      ok ? 1 : 0,
-    );
+  await (await aiCallsCol()).insertOne({
+    runId: ctx.runId,
+    stage: ctx.stage,
+    taskKey: ctx.taskKey,
+    provider,
+    model,
+    cacheHit,
+    inputTokens: u.inputTokens,
+    outputTokens: u.outputTokens,
+    cacheReadTokens: u.cacheReadTokens,
+    cacheWriteTokens: u.cacheWriteTokens,
+    images,
+    costUsd: cost,
+    latencyMs,
+    ok,
+    createdAt: now(),
+  });
 }

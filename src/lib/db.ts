@@ -1,192 +1,213 @@
 /**
- * Persistence layer (SQLite, WAL mode).
+ * Persistence layer — MongoDB.
  *
- * Đây là "xương sống" của Reliability: mọi tiến độ đều được ghi xuống DB
- * trước khi chuyển bước. Process chết giữa chừng -> chạy lại sẽ đọc DB và
- * bỏ qua những gì đã xong.
+ * Mọi tiến độ đều được ghi xuống DB trước khi chuyển bước: process chết giữa chừng -> chạy lại
+ * sẽ đọc DB và bỏ qua những gì đã xong.
  *
- * Bảng chính:
- * - runs        : 1 lần chạy discovery cho 1 brief.
- * - run_stages  : stage nào của run đã xong + output tổng hợp (checkpoint cấp stage).
- * - tasks       : đơn vị việc nhỏ nhất (1 batch / 1 creator / 1 video) -> checkpoint cấp task.
- * - creators    : data creator đã chuẩn hoá, dùng chung giữa các run.
- * - ai_cache    : cache kết quả AI theo content hash -> chạy lại/resume không tốn token.
- * - ai_calls    : log từng lần gọi AI (token, cost, latency) -> phục vụ benchmark.
- * - events      : log tiến độ cho UI.
- * - kalo_cache  : cache response Kalodata API (tính phí theo credit).
- * - data_calls  : log credit Kalodata từng call.
+ * Collection (thiết kế theo cách app đọc/ghi, không chép 1:1 bảng SQL):
+ * - runs            : 1 chiến dịch = 1 document: brief, hội thoại lập brief, trạng thái, lease, kết quả.
+ * - run_stages      : checkpoint từng bước + output (tối đa 8 document / chiến dịch).
+ * - tasks           : checkpoint cấp task. Collection riêng vì task cập nhật SONG SONG và độc lập,
+ *                     có thể tới hàng trăm task / bước (500 KOC) -> không nhúng vào run.
+ * - creators        : creator đã chuẩn hoá, dùng chung giữa các chiến dịch.
+ * - ai_cache        : kết quả AI theo content hash -> chạy lại / resume không tốn token.
+ * - ai_calls, data_calls, events : log chỉ ghi thêm (token/cost, credit Kalodata, tiến độ cho UI).
+ * - kalo_*          : dữ liệu Kalodata lưu thành dữ liệu thật để tái sử dụng (xem sources/kaloStore.ts).
  *
- * Lên production: đổi sang Postgres, tasks dùng `SELECT ... FOR UPDATE SKIP LOCKED`
- * để nhiều worker cùng kéo task. Schema giữ nguyên.
+ * Lên production: nhiều worker cùng kéo task bằng findOneAndUpdate có điều kiện (đã dùng cho lease).
  */
-import Database from "better-sqlite3";
-import fs from "node:fs";
-import path from "node:path";
-import { getConfig } from "./config";
-
-let _db: Database.Database | null = null;
-
-export function db(): Database.Database {
-  if (_db) return _db;
-  const { paths } = getConfig();
-  fs.mkdirSync(path.dirname(paths.db), { recursive: true });
-  const d = new Database(paths.db);
-  d.pragma("journal_mode = WAL"); // ghi đồng thời an toàn, crash không hỏng file
-  d.pragma("synchronous = NORMAL");
-  d.pragma("busy_timeout = 5000");
-  migrate(d);
-  _db = d;
-  return d;
-}
-
-function migrate(d: Database.Database) {
-  d.exec(`
-    CREATE TABLE IF NOT EXISTS runs (
-      id TEXT PRIMARY KEY,
-      brief_json TEXT NOT NULL,
-      config_json TEXT NOT NULL,
-      status TEXT NOT NULL,
-      current_stage TEXT,
-      error TEXT,
-      result_json TEXT,
-      lease_owner TEXT,
-      lease_until INTEGER,
-      created_at INTEGER NOT NULL,
-      updated_at INTEGER NOT NULL,
-      finished_at INTEGER,
-      active_ms INTEGER NOT NULL DEFAULT 0,
-      attempts INTEGER NOT NULL DEFAULT 0
-    );
-
-    CREATE TABLE IF NOT EXISTS run_stages (
-      run_id TEXT NOT NULL,
-      stage TEXT NOT NULL,
-      status TEXT NOT NULL,          -- running | done
-      output_json TEXT,
-      started_at INTEGER,
-      finished_at INTEGER,
-      active_ms INTEGER NOT NULL DEFAULT 0,
-      PRIMARY KEY (run_id, stage)
-    );
-
-    CREATE TABLE IF NOT EXISTS tasks (
-      run_id TEXT NOT NULL,
-      stage TEXT NOT NULL,
-      task_key TEXT NOT NULL,
-      input_json TEXT NOT NULL,
-      status TEXT NOT NULL,          -- pending | running | done | failed
-      attempts INTEGER NOT NULL DEFAULT 0,
-      output_json TEXT,
-      error TEXT,
-      updated_at INTEGER NOT NULL,
-      PRIMARY KEY (run_id, stage, task_key)
-    );
-    CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(run_id, stage, status);
-
-    CREATE TABLE IF NOT EXISTS creators (
-      id TEXT PRIMARY KEY,
-      source TEXT NOT NULL,
-      handle TEXT NOT NULL,
-      data_json TEXT NOT NULL,
-      fetched_at INTEGER NOT NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS ai_cache (
-      cache_key TEXT PRIMARY KEY,
-      provider TEXT NOT NULL,
-      model TEXT NOT NULL,
-      output_json TEXT NOT NULL,
-      usage_json TEXT NOT NULL,
-      created_at INTEGER NOT NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS ai_calls (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      run_id TEXT,
-      stage TEXT,
-      task_key TEXT,
-      provider TEXT NOT NULL,
-      model TEXT NOT NULL,
-      cache_hit INTEGER NOT NULL,     -- 1 = lấy từ ai_cache, không gọi API
-      input_tokens INTEGER NOT NULL,
-      output_tokens INTEGER NOT NULL,
-      cache_read_tokens INTEGER NOT NULL,
-      cache_write_tokens INTEGER NOT NULL,
-      images INTEGER NOT NULL,
-      cost_usd REAL NOT NULL,
-      latency_ms INTEGER NOT NULL,
-      created_at INTEGER NOT NULL
-    );
-    CREATE INDEX IF NOT EXISTS idx_ai_calls_run ON ai_calls(run_id);
-
-    CREATE TABLE IF NOT EXISTS events (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      run_id TEXT NOT NULL,
-      ts INTEGER NOT NULL,
-      level TEXT NOT NULL,
-      stage TEXT,
-      message TEXT NOT NULL
-    );
-    CREATE INDEX IF NOT EXISTS idx_events_run ON events(run_id, id);
-
-    -- Cache response của data provider (Kalodata tính phí theo credit) -> chạy lại = 0 credit
-    CREATE TABLE IF NOT EXISTS kalo_cache (
-      cache_key TEXT PRIMARY KEY,
-      path TEXT NOT NULL,
-      body_json TEXT NOT NULL,
-      data_json TEXT NOT NULL,
-      fetched_at INTEGER NOT NULL
-    );
-
-    -- Log từng call data provider: credit tiêu, cache hit, latency
-    CREATE TABLE IF NOT EXISTS data_calls (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      run_id TEXT,
-      provider TEXT NOT NULL,
-      endpoint TEXT NOT NULL,
-      credits REAL NOT NULL,
-      credits_avoided REAL NOT NULL DEFAULT 0,
-      cache_hit INTEGER NOT NULL,
-      latency_ms INTEGER NOT NULL,
-      created_at INTEGER NOT NULL
-    );
-    CREATE INDEX IF NOT EXISTS idx_data_calls_run ON data_calls(run_id);
-  `);
-  // Migration nhẹ cho DB tạo từ phiên bản trước
-  const cols = d.prepare("PRAGMA table_info(data_calls)").all() as { name: string }[];
-  if (!cols.some((c) => c.name === "credits_avoided"))
-    d.exec("ALTER TABLE data_calls ADD COLUMN credits_avoided REAL NOT NULL DEFAULT 0");
-  // ok = 0: call AI đã tính tiền nhưng output hỏng (sai schema / bị cắt) -> vẫn tính vào chi phí
-  const aiCols = d.prepare("PRAGMA table_info(ai_calls)").all() as { name: string }[];
-  if (!aiCols.some((c) => c.name === "ok")) d.exec("ALTER TABLE ai_calls ADD COLUMN ok INTEGER NOT NULL DEFAULT 1");
-  // chat_json: hội thoại lập brief (user <-> AI) lưu kèm chiến dịch để xem lại trên trang kết quả
-  const runCols = d.prepare("PRAGMA table_info(runs)").all() as { name: string }[];
-  if (!runCols.some((c) => c.name === "chat_json")) d.exec("ALTER TABLE runs ADD COLUMN chat_json TEXT");
-}
+import { MongoClient, type Collection, type Db, type Document } from "mongodb";
+import type { Usage } from "./ai/pricing";
+import type { CampaignBrief, CreatorRecord, RunStatus } from "./types";
 
 export const now = () => Date.now();
 
-export function logEvent(
-  runId: string,
-  message: string,
-  opts: { level?: "info" | "warn" | "error"; stage?: string } = {},
-) {
-  db()
-    .prepare(
-      "INSERT INTO events (run_id, ts, level, stage, message) VALUES (?, ?, ?, ?, ?)",
-    )
-    .run(runId, now(), opts.level ?? "info", opts.stage ?? null, message);
+// ---------------------------------------------------------------- kiểu document
+
+export interface RunDoc {
+  _id: string;
+  brief: CampaignBrief;
+  config: Record<string, unknown>;
+  chat?: unknown[] | null;
+  status: RunStatus;
+  currentStage?: string | null;
+  error?: string | null;
+  result?: unknown;
+  leaseOwner?: string | null;
+  leaseUntil?: number | null;
+  createdAt: number;
+  updatedAt: number;
+  finishedAt?: number | null;
+  activeMs: number;
+  attempts: number;
+}
+
+export interface RunStageDoc {
+  _id: string; // `${runId}:${stage}`
+  runId: string;
+  stage: string;
+  status: "running" | "done";
+  output?: unknown;
+  startedAt: number;
+  finishedAt?: number | null;
+  activeMs: number;
+}
+
+export interface TaskDoc {
+  _id: string; // `${runId}:${stage}:${key}`
+  runId: string;
+  stage: string;
+  key: string;
+  /** Thứ tự lập kế hoạch (để chạy theo đúng thứ tự plan) */
+  seq: number;
+  input: unknown;
+  status: "pending" | "running" | "done" | "failed";
+  attempts: number;
+  output?: unknown;
+  error?: string | null;
+  updatedAt: number;
+}
+
+export interface CreatorDoc {
+  _id: string;
+  source: string;
+  handle: string;
+  data: CreatorRecord;
+  fetchedAt: number;
+}
+
+export interface AiCacheDoc {
+  _id: string;
+  provider: string;
+  model: string;
+  output: unknown;
+  usage: Usage;
+  createdAt: number;
+}
+
+export interface AiCallDoc {
+  runId: string | null;
+  stage: string;
+  taskKey: string;
+  provider: string;
+  model: string;
+  cacheHit: boolean;
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  cacheWriteTokens: number;
+  images: number;
+  costUsd: number;
+  latencyMs: number;
+  ok: boolean;
+  createdAt: number;
+}
+
+export interface EventDoc {
+  runId: string;
+  ts: number;
+  /** Thứ tự ghi trong cùng 1 ms */
+  seq: number;
+  level: "info" | "warn" | "error";
+  stage: string | null;
+  message: string;
+}
+
+export interface DataCallDoc {
+  runId: string | null;
+  provider: string;
+  endpoint: string;
+  credits: number;
+  creditsAvoided: number;
+  /** true = dùng lại dữ liệu đã lưu trong DB, không gọi API */
+  cacheHit: boolean;
+  latencyMs: number;
+  createdAt: number;
+}
+
+// ---------------------------------------------------------------- kết nối
+
+const g = globalThis as unknown as { __kocMongo?: { client: MongoClient; db: Promise<Db> } };
+
+function connect() {
+  const uri = process.env.MONGODB_URI?.trim() || "mongodb://127.0.0.1:27017";
+  const name = process.env.MONGODB_DB?.trim() || "koc_discovery";
+  const client = new MongoClient(uri, { serverSelectionTimeoutMS: 5000 });
+  const dbp = client.connect().then(async (c) => {
+    const d = c.db(name);
+    await ensureIndexes(d);
+    return d;
+  });
+  // Kết nối lỗi -> lần gọi sau thử lại (không giữ promise hỏng mãi)
+  dbp.catch(() => {
+    if (g.__kocMongo?.client === client) g.__kocMongo = undefined;
+  });
+  return { client, db: dbp };
+}
+
+/** 1 client cho cả process (globalThis để sống qua HMR của Next dev) */
+export function mdb(): Promise<Db> {
+  g.__kocMongo ??= connect();
+  return g.__kocMongo.db;
+}
+
+export async function col<T extends Document>(name: string): Promise<Collection<T>> {
+  return (await mdb()).collection<T>(name);
+}
+
+export const runsCol = () => col<RunDoc>("runs");
+export const runStagesCol = () => col<RunStageDoc>("run_stages");
+export const tasksCol = () => col<TaskDoc>("tasks");
+export const creatorsCol = () => col<CreatorDoc>("creators");
+export const aiCacheCol = () => col<AiCacheDoc>("ai_cache");
+export const aiCallsCol = () => col<AiCallDoc>("ai_calls");
+export const eventsCol = () => col<EventDoc>("events");
+export const dataCallsCol = () => col<DataCallDoc>("data_calls");
+
+async function ensureIndexes(d: Db) {
+  await Promise.all([
+    d.collection("runs").createIndex({ createdAt: -1 }),
+    d.collection("runs").createIndex({ status: 1, leaseUntil: 1 }),
+    d.collection("run_stages").createIndex({ runId: 1, stage: 1 }),
+    d.collection("tasks").createIndex({ runId: 1, stage: 1, status: 1, seq: 1 }),
+    d.collection("ai_calls").createIndex({ runId: 1, stage: 1 }),
+    d.collection("events").createIndex({ runId: 1, ts: -1, seq: -1 }),
+    d.collection("data_calls").createIndex({ runId: 1, endpoint: 1 }),
+    d.collection("kalo_rank_snapshots").createIndex({ paramsHash: 1, fetchedAt: -1 }),
+    d.collection("kalo_videos").createIndex({ creatorId: 1 }),
+  ]);
+}
+
+/** Đóng kết nối (CLI script gọi trước khi thoát) */
+export async function closeDb() {
+  await flushEvents();
+  const cur = g.__kocMongo;
+  g.__kocMongo = undefined;
+  if (cur) await cur.client.close();
+}
+
+// ---------------------------------------------------------------- log tiến độ
+
+const pending = new Set<Promise<unknown>>();
+let seq = 0;
+
+/**
+ * Ghi 1 dòng log tiến độ. Không chặn luồng chính (UI chỉ cần thấy sau vài trăm ms);
+ * các lần ghi đang chờ được gom lại để flushEvents() đợi trước khi kết thúc run / thoát process.
+ */
+export function logEvent(runId: string, message: string, opts: { level?: "info" | "warn" | "error"; stage?: string } = {}) {
+  const doc: EventDoc = { runId, ts: now(), seq: seq++, level: opts.level ?? "info", stage: opts.stage ?? null, message };
+  const p = eventsCol()
+    .then((c) => c.insertOne(doc))
+    .catch((err) => console.error("[events] write failed", err))
+    .finally(() => pending.delete(p));
+  pending.add(p);
   if (process.env.LOG_EVENTS !== "off") {
     const tag = opts.stage ? `[${opts.stage}]` : "";
     console.log(`[run ${runId.slice(0, 8)}]${tag} ${message}`);
   }
 }
 
-export function parseJson<T>(s: string | null | undefined): T | null {
-  if (!s) return null;
-  try {
-    return JSON.parse(s) as T;
-  } catch {
-    return null;
-  }
+export async function flushEvents() {
+  while (pending.size) await Promise.allSettled([...pending]);
 }

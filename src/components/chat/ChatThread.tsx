@@ -15,6 +15,8 @@ import {
   type Question,
 } from "@/lib/brief/slots";
 import type { CampaignBrief } from "@/lib/types";
+import { paidCredits, type DeepData, type PaidMode } from "@/lib/brief/paid";
+import { DeepDataPanel, deepDataSummary } from "../brief/DeepDataPanel";
 import { AiAvatar, UserAvatar } from "./Avatars";
 
 const OPTIONAL = new Set(["followers", "usp"]);
@@ -27,6 +29,9 @@ export function ChatThread({
   onEdit,
   starting = false,
   readOnly = false,
+  deep,
+  onDeepChange,
+  paidMode,
 }: {
   messages: ChatMessage[];
   pending?: boolean;
@@ -35,6 +40,9 @@ export function ChatThread({
   onEdit?: () => void;
   starting?: boolean;
   readOnly?: boolean;
+  deep?: DeepData;
+  onDeepChange?: (d: DeepData) => void;
+  paidMode?: PaidMode;
 }) {
   const lastAiIdx = messages.findLastIndex((m) => m.role === "assistant");
   return (
@@ -60,7 +68,7 @@ export function ChatThread({
             )}
             {m.brief && !readOnly && (
               <BriefCard
-                brief={m.brief}
+                brief={m.brief} deep={deep} onDeepChange={onDeepChange} paidMode={paidMode}
                 latest={i === lastAiIdx && !reply}
                 readOnly={readOnly}
                 onStart={onStart}
@@ -277,6 +285,9 @@ export function BriefCard({
   onEdit,
   starting = false,
   collapsible = false,
+  deep,
+  onDeepChange,
+  paidMode = "demo",
 }: {
   brief: CampaignBrief;
   latest?: boolean;
@@ -286,7 +297,13 @@ export function BriefCard({
   starting?: boolean;
   /** Trang chiến dịch: mặc định chỉ hiện 1 dòng tóm tắt, bấm để xem đủ */
   collapsible?: boolean;
+  /** Dữ liệu chuyên sâu (trả phí) người dùng chọn trước khi chạy */
+  deep?: DeepData;
+  onDeepChange?: (d: DeepData) => void;
+  paidMode?: PaidMode;
 }) {
+  const extraCredits = paidCredits(deep, b.numKocs);
+  const deepOn = deepDataSummary(b.deepData);
   const [open, setOpen] = useState(!collapsible);
   const money = b.budgetInput
     ? shortMoney(b.budgetInput.amount, b.budgetInput.currency)
@@ -393,6 +410,14 @@ export function BriefCard({
           </div>
         </dl>
       )}
+      {readOnly && open && deepOn && (
+        <p className="border-t border-rule px-4 py-2.5 text-meta text-ink-2">
+          <span className="font-semibold text-ink">Dữ liệu chuyên sâu (trả phí):</span> {deepOn}
+        </p>
+      )}
+      {latest && !readOnly && onDeepChange && (
+        <DeepDataPanel value={deep ?? {}} onChange={onDeepChange} numKocs={b.numKocs} mode={paidMode} disabled={starting} />
+      )}
       {latest && !readOnly && (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-rule px-4 py-4">
           <button
@@ -402,7 +427,7 @@ export function BriefCard({
             onClick={() => onStart?.(b)}
           >
             <Search aria-hidden size={16} strokeWidth={2.25} />
-            {starting ? "Đang tạo chiến dịch…" : "Bắt đầu tìm creator"}
+            {starting ? "Đang tạo chiến dịch…" : extraCredits > 0 ? `Bắt đầu tìm creator · +${extraCredits.toLocaleString("vi-VN")} credit` : "Bắt đầu tìm creator"}
             {!starting && <ArrowRight aria-hidden size={16} />}
           </button>
           <button

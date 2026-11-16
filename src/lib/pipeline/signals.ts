@@ -27,6 +27,20 @@ export interface CreatorSignals {
   revenueTrend?: "up" | "flat" | "down";
   aiVideoCount: number;
   contactChannels: string[];
+  /** [Trả phí] Tỷ trọng doanh thu trong ngành của brief (0..1) */
+  categoryRevenueShare?: number;
+  categoryVideoGpm?: number;
+  /** Sản phẩm cùng loại creator đã bán (nguồn "proven" miễn phí + danh mục sản phẩm trả phí) */
+  sameCategoryProducts: string[];
+  /** [Trả phí] Trung bình các video AI xem: GPM, ROAS, số ngày chạy quảng cáo */
+  analyzedVideoStats?: { gpm?: number; roas?: number; adDays?: number; cpa?: number; withStats: number };
+}
+
+/** Sản phẩm có tên khớp từ khoá của brief = cùng loại (vd "kem chống nắng") */
+export function sameCategory(names: string[], keywords: string[]): string[] {
+  const norm = (x: string) => x.toLowerCase().normalize("NFC");
+  const kws = keywords.map(norm).filter((k) => k.length >= 4);
+  return names.filter((n) => kws.some((k) => norm(n).includes(k)));
 }
 
 const median = (xs: number[]) => {
@@ -39,7 +53,7 @@ const median = (xs: number[]) => {
 export const organicViews = (v: CreatorVideo) =>
   v.adViewRatio !== undefined ? v.views * (1 - Math.min(100, Math.max(0, v.adViewRatio)) / 100) : v.views;
 
-export function signalsOf(c: CreatorRecord): CreatorSignals {
+export function signalsOf(c: CreatorRecord, keywords: string[] = []): CreatorSignals {
   const known = c.videos.filter((v) => v.adViewRatio !== undefined && v.views > 0);
   const totalKnown = known.reduce((s, v) => s + v.views, 0);
   const paidViewShare = totalKnown ? known.reduce((s, v) => s + v.views - organicViews(v), 0) / totalKnown : undefined;
@@ -65,5 +79,23 @@ export function signalsOf(c: CreatorRecord): CreatorSignals {
     revenueTrend,
     aiVideoCount: c.videos.filter((v) => v.isAiVideo).length,
     contactChannels: c.contactChannels ?? [],
+    categoryRevenueShare:
+      c.metrics.categoryRevenueVnd !== undefined && c.metrics.revenueVnd ? Math.min(1, c.metrics.categoryRevenueVnd / c.metrics.revenueVnd) : undefined,
+    categoryVideoGpm: c.metrics.categoryVideoGpm || undefined,
+    sameCategoryProducts: [
+      ...new Set([
+        ...(c.soldProducts ?? []).filter((p) => p.source === "proven").map((p) => p.name),
+        ...sameCategory((c.soldProducts ?? []).filter((p) => p.source === "catalog").map((p) => p.name), keywords),
+      ]),
+    ].filter(Boolean),
+    analyzedVideoStats: (() => {
+      const st = c.videos.map((v) => v.stats).filter((x): x is NonNullable<typeof x> => !!x);
+      if (!st.length) return undefined;
+      const avg = (xs: (number | undefined)[]) => {
+        const v = xs.filter((x): x is number => typeof x === "number");
+        return v.length ? v.reduce((a, b) => a + b, 0) / v.length : undefined;
+      };
+      return { gpm: avg(st.map((x) => x.gpm)), roas: avg(st.map((x) => x.adsRoas)), adDays: avg(st.map((x) => x.adsPeriodDays)), cpa: avg(st.map((x) => x.adCpaVnd)), withStats: st.length };
+    })(),
   };
 }

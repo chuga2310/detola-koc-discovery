@@ -22,9 +22,9 @@ export const prefilterStage: StageDef<never, never, PrefilterOut> = {
   exec: async () => {
     throw new Error("prefilter has no tasks");
   },
-  reduce(ctx) {
+  async reduce(ctx) {
     const { ids } = ctx.output<SourceOut>("source");
-    const creators = [...loadCreators(ids).values()];
+    const creators = [...(await loadCreators(ids)).values()];
     const rows = prefilter(creators, ctx.brief);
     const passed = rows.filter((r) => r.passed);
     // Diversified retrieval: pool đến từ nhiều nguồn (commerce / engagement / content). Nếu chỉ lấy top

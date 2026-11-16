@@ -9,6 +9,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import type { DeepData, PaidMode } from "@/lib/brief/paid";
 import { draftSummaryText, type Answer, type BriefDraft, type ChatMessage } from "@/lib/brief/slots";
 import type { CampaignBrief } from "@/lib/types";
 import { ChatThread } from "../chat/ChatThread";
@@ -25,11 +26,13 @@ interface TurnResult {
   missing: string[];
 }
 
-export function NewBrief({ sample }: { sample: BriefDraft }) {
+export function NewBrief({ sample, paidMode = "demo" }: { sample: BriefDraft; paidMode?: PaidMode }) {
   const router = useRouter();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState<BriefDraft>({ numKocs: 5 });
   const [editing, setEditing] = useState(false);
+  // Dữ liệu chuyên sâu (trả phí): mặc định tắt, người dùng tự bật ở thẻ brief trước khi chạy
+  const [deep, setDeep] = useState<DeepData>({});
   // Đang điền form thì ẩn bong bóng gợi ý của ô chat cho đỡ che
   const [formTouched, setFormTouched] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
@@ -105,7 +108,10 @@ export function NewBrief({ sample }: { sample: BriefDraft }) {
             messages={messages}
             pending={turn.isPending}
             onAnswer={answer}
-            onStart={(b) => start.mutate(b)}
+            onStart={(b) => start.mutate({ ...b, deepData: Object.values(deep).some(Boolean) ? deep : undefined })}
+            deep={deep}
+            onDeepChange={setDeep}
+            paidMode={paidMode}
             onEdit={() => setEditing(true)}
             starting={start.isPending || start.isSuccess}
           />

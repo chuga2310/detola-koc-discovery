@@ -41,7 +41,7 @@ export function creatorCard(ref: string, c: CreatorRecord, pre: PrefilterRow): s
     .map((v) => `"${truncate(v.caption, 90)}" (${compactNum(v.views)}v${v.adViewRatio ? `, ${Math.round(v.adViewRatio)}% ad` : ""})`)
     .join(" | ");
   const prods = (c.topProducts ?? []).slice(0, 3).map((p) => truncate(p.title, 60)).join("; ");
-  const s = signalsOf(c);
+  const s = signalsOf(c, pre.raw.matchedKeywords.length ? pre.raw.matchedKeywords : []);
   const signals = [
     s.paidViewShare !== undefined ? `paid views ${pct(s.paidViewShare)}` : null,
     s.videoGpm ? `GPM ${compactNum(s.videoGpm)} VND/1k views` : null,
@@ -49,6 +49,8 @@ export function creatorCard(ref: string, c: CreatorRecord, pre: PrefilterRow): s
     s.followerGrowthPct !== undefined ? `followers +${pct(s.followerGrowthPct, 1)}/30d` : null,
     s.revenueActiveDays !== undefined ? `GMV on ${s.revenueActiveDays}/30 days, trend ${s.revenueTrend}` : null,
     s.aiVideoCount ? `${s.aiVideoCount} AI-generated videos` : null,
+    s.categoryRevenueShare !== undefined ? `${pct(s.categoryRevenueShare)} of GMV in the brief's category` : null,
+    s.sameCategoryProducts.length ? `already sold same-category products: ${s.sameCategoryProducts.slice(0, 2).map((x) => truncate(x, 40)).join("; ")}` : null,
   ].filter(Boolean);
   return [
     `${ref} | @${c.handle} | ${compactNum(c.followers)} fl | ${compactNum(pre.raw.videoViews30d)} views/30d | median ${compactNum(pre.raw.avgViews)} v/top-vid | ER ${pct(pre.raw.engagementRate, 1)} | GMV30 ${compactNum(c.metrics.revenueVnd)} | sold ${compactNum(c.metrics.itemsSold)}`,
@@ -108,7 +110,7 @@ export const textScreenStage: StageDef<{ ids: string[] }, Record<string, TextScr
   async exec(ctx, input, key) {
     const pf = ctx.output<PrefilterOut>("prefilter");
     const en = ctx.output<EnrichOut>("enrich");
-    const creators = loadCreators(input.ids);
+    const creators = await loadCreators(input.ids);
     const items = input.ids
       .filter((id) => creators.has(id))
       .map((id) => ({ ref: pf.refs[id], c: creators.get(id)!, pre: dataRow(en, pf, id)! }));

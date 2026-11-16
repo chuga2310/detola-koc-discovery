@@ -101,6 +101,7 @@ export function keywordCoverage(c: CreatorRecord, keywords: string[]) {
     ...c.videos.map((v) => `${v.caption} ${v.hashtags.join(" ")} ${v.productTitle ?? ""}`),
     ...(c.topProducts ?? []).map((p) => p.title),
     ...(c.subCategories ?? []), // ví dụ ngành cấp 3 "Kem chống nắng"
+    ...(c.soldProducts ?? []).map((p) => p.name), // sản phẩm đã thực sự bán (nguồn "proven" / danh mục)
   ];
   const hitsPerText = texts.map((t) => keywordHits(t, keywords));
   const matched = new Set(hitsPerText.flat());
@@ -195,7 +196,7 @@ export function prefilter(creators: CreatorRecord[], brief: CampaignBrief): Pref
     if (c.creatorStatus === "BELONGED_TO_SELLER") reasons.push("tài khoản thuộc shop/brand, không phải KOC độc lập");
     const vf = videoFocus(c);
     if (vf !== undefined && vf < 0.1) reasons.push("doanh thu gần như toàn bộ từ livestream (không phải KOC video)");
-    const sig = signalsOf(c);
+    const sig = signalsOf(c, brief.keywords);
     return { c, er, av, aud, cat, kw, cost, reasons, vf, sig };
   });
 
@@ -221,7 +222,8 @@ export function prefilter(creators: CreatorRecord[], brief: CampaignBrief): Pref
       engagement: pEr[i],
       reach: pReach[i] * 0.5 + pAv[i] * 0.5,
       // partial = tìm thấy qua nội dung đúng sản phẩm nhưng chưa biết ngành hàng bán -> trung tính
-      category: b.c.partial && !b.c.categories.length ? 0.5 : b.cat,
+      // Có doanh thu theo ngành (trả phí): pha 50/50 với tín hiệu danh mục để thưởng creator chuyên ngành
+      category: b.sig.categoryRevenueShare !== undefined ? 0.5 * b.cat + 0.5 * b.sig.categoryRevenueShare : b.c.partial && !b.c.categories.length ? 0.5 : b.cat,
       keyword: b.kw.score,
       // Có GPM: ưu tiên chuyển đổi (60%) hơn doanh thu tuyệt đối (40%) để không thiên vị tài khoản lớn
       commerce: b.sig.videoGpm !== undefined ? 0.6 * pGpm[i] + 0.4 * pRev[i] : pRev[i],

@@ -43,6 +43,9 @@ export interface Pick {
     avgUnitPriceVnd?: number;
     followerGrowthPct?: number;
     contactChannels: string[];
+    categoryRevenueShare?: number;
+    sameCategoryProducts?: string[];
+    analyzedVideoRoas?: number;
   };
 }
 
@@ -61,14 +64,14 @@ export const selectStage: StageDef<never, never, Report> = {
   exec: async () => {
     throw new Error("select has no tasks");
   },
-  reduce(ctx) {
+  async reduce(ctx) {
     const pf = ctx.output<PrefilterOut>("prefilter");
     const ts = ctx.output<TextScreenOut>("text_screen");
     const vs = ctx.output<VideoOut>("video_analysis");
     const fr = ctx.output<FinalRankOut>("final_rank");
     const en = ctx.output<EnrichOut>("enrich");
     const ids = Object.keys(fr.byId);
-    const creators = loadCreators(ids);
+    const creators = await loadCreators(ids);
 
     const all: Pick[] = ids.map((id) => {
       const a = fr.byId[id];
@@ -106,13 +109,16 @@ export const selectStage: StageDef<never, never, Report> = {
         invalidEvidence: a.invalidEvidence,
         videoAnalyzed: !!vs.byId[id],
         signals: (() => {
-          const s = signalsOf(c);
+          const s = signalsOf(c, ctx.brief.keywords);
           return {
             paidViewShare: s.paidViewShare,
             videoGpm: s.videoGpm,
             avgUnitPriceVnd: s.avgUnitPriceVnd,
             followerGrowthPct: s.followerGrowthPct,
             contactChannels: s.contactChannels,
+            categoryRevenueShare: s.categoryRevenueShare,
+            sameCategoryProducts: s.sameCategoryProducts,
+            analyzedVideoRoas: s.analyzedVideoStats?.roas,
           };
         })(),
       };

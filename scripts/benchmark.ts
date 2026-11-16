@@ -14,7 +14,7 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { funnelFor, getConfig } from "../src/lib/config";
-import { db } from "../src/lib/db";
+import { aiCacheCol, aiCallsCol, closeDb, runsCol } from "../src/lib/db";
 import { runDetail } from "../src/lib/runs";
 import type { CampaignBrief } from "../src/lib/types";
 
@@ -30,22 +30,25 @@ function discover(args: string[]) {
   return { code: r.status, out: r.stdout + r.stderr };
 }
 
-const latestRunId = () => (db().prepare("SELECT id FROM runs ORDER BY created_at DESC LIMIT 1").get() as { id: string }).id;
+const latestRunId = async () => (await (await runsCol()).find({}, { projection: { _id: 1 } }).sort({ createdAt: -1 }).limit(1).next())!._id;
 
-function paidDuplicates(runId: string) {
+async function paidDuplicates(runId: string) {
   // Cùng task bị gọi AI (không cache) > 1 lần = trả tiền 2 lần -> lỗi reliability
-  return (
-    db()
-      .prepare("SELECT stage, task_key, COUNT(*) n FROM ai_calls WHERE run_id = ? AND cache_hit = 0 AND ok = 1 GROUP BY stage, task_key HAVING n > 1")
-      .all(runId) as { stage: string; task_key: string; n: number }[]
-  ).length;
+  const dups = await (await aiCallsCol())
+    .aggregate([
+      { $match: { runId, cacheHit: false, ok: true } },
+      { $group: { _id: { stage: "$stage", taskKey: "$taskKey" }, n: { $sum: 1 } } },
+      { $match: { n: { $gt: 1 } } },
+    ])
+    .toArray();
+  return dups.length;
 }
 
-function collect() {
+async function collect() {
   const cfg = getConfig();
   const brief = JSON.parse(fs.readFileSync(BRIEF, "utf8")) as CampaignBrief;
   if (process.argv.includes("--fresh")) {
-    db().prepare("DELETE FROM ai_cache").run();
+    await (await aiCacheCol()).deleteMany({});
     console.log("ai_cache cleared (cold start)");
   }
 
@@ -53,16 +56,17 @@ function collect() {
   console.log(`A) cold run with simulated crash at ${CRASH_AT} ...`);
   const t0 = Date.now();
   const a1 = discover(["--brief", BRIEF, "--crash-after", CRASH_AT]);
-  const runA = latestRunId();
+  const runA = await latestRunId();
   const crashed = a1.code !== 0;
-  const statusAfterCrash = (db().prepare("SELECT status, current_stage FROM runs WHERE id = ?").get(runA) as { status: string; current_stage: string });
-  const callsBeforeResume = (db().prepare("SELECT COUNT(*) n FROM ai_calls WHERE run_id = ? AND cache_hit = 0").get(runA) as { n: number }).n;
+  const afterCrash = (await (await runsCol()).findOne({ _id: runA }, { projection: { status: 1, currentStage: 1 } }))!;
+  const statusAfterCrash = { status: afterCrash.status, current_stage: afterCrash.currentStage ?? "" };
+  const callsBeforeResume = await (await aiCallsCol()).countDocuments({ runId: runA, cacheHit: false });
   console.log(`   crashed=${crashed} (exit ${a1.code}) at stage=${statusAfterCrash.current_stage}, paid calls so far=${callsBeforeResume}`);
   const a2 = discover(["--resume", runA]);
   const wallA = Date.now() - t0;
   if (a2.code !== 0) console.error(a2.out);
-  const dA = runDetail(runA)!;
-  const dupA = paidDuplicates(runA);
+  const dA = (await runDetail(runA))!;
+  const dupA = await paidDuplicates(runA);
   console.log(`   resumed -> ${dA.run.status}, cost $${dA.usage.total.costUsd.toFixed(4)}, duplicates=${dupA}`);
 
   // ---- B. warm run (cache reuse)
@@ -70,8 +74,8 @@ function collect() {
   const tB = Date.now();
   discover(["--brief", BRIEF]);
   const wallB = Date.now() - tB;
-  const runB = latestRunId();
-  const dB = runDetail(runB)!;
+  const runB = await latestRunId();
+  const dB = (await runDetail(runB))!;
   console.log(`   ${dB.run.status}, cost $${dB.usage.total.costUsd.toFixed(4)}, cache hits ${dB.usage.total.cacheHits}/${dB.usage.total.calls}`);
 
   // ---- C. projection
@@ -125,15 +129,16 @@ function collect() {
   return results;
 }
 
-type Results = ReturnType<typeof collect>;
+type Results = Awaited<ReturnType<typeof collect>>;
 
-function main() {
-  const results = collect();
+async function main() {
+  const results = await collect();
   fs.mkdirSync("benchmark", { recursive: true });
   fs.mkdirSync("docs", { recursive: true });
   fs.writeFileSync(path.join("benchmark", "results.json"), JSON.stringify(results, null, 2));
   fs.writeFileSync(path.join("docs", "BENCHMARK.md"), renderMarkdown(results));
   console.log("\nWrote benchmark/results.json and docs/BENCHMARK.md");
+  await closeDb();
 }
 
 function renderMarkdown(r: Results): string {
@@ -207,4 +212,7 @@ function renderMarkdown(r: Results): string {
   return lines.join("\n") + "\n";
 }
 
-main();
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
