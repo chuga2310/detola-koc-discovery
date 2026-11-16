@@ -62,7 +62,7 @@ const columns = col.columns([
       const r = row.original;
       return (
         <div className="min-w-0">
-          <Link href={`/runs/${r.id}`} className="text-body font-semibold text-ink no-underline group-hover:text-action group-hover:underline">
+          <Link href={`/runs/${r.id}`} className="text-body font-semibold text-ink no-underline group-hover:text-action-text group-hover:underline">
             {r.brief.product}
           </Link>
           {r.brief.brand !== r.brief.product && <div className="mt-0.5 text-meta text-ink-2">{r.brief.brand}</div>}
@@ -135,7 +135,7 @@ const columns = col.columns([
   col.display({
     id: "go",
     header: () => <span className="sr-only">Mở</span>,
-    cell: () => <ChevronRight aria-hidden size={18} className="text-ink-3 transition-transform group-hover:translate-x-0.5 group-hover:text-action" />,
+    cell: () => <ChevronRight aria-hidden size={18} className="text-ink-3 transition-transform group-hover:translate-x-0.5 group-hover:text-action-text" />,
     meta: { className: "w-8", align: "right" },
   }),
 ]);
@@ -164,7 +164,7 @@ export function CampaignTable() {
 
   if (q.isError && !q.data)
     return (
-      <p role="alert" className="mt-8 text-risk">
+      <p role="alert" className="py-6 text-risk">
         Không tải được danh sách chiến dịch. Kiểm tra server rồi tải lại trang.
       </p>
     );
@@ -172,10 +172,10 @@ export function CampaignTable() {
   if (!q.data.length) return <EmptyState />;
 
   return (
-    <table className="mt-8 w-full border-collapse">
+    <table className="w-full border-collapse">
       <thead>
         {table.getHeaderGroups().map((hg) => (
-          <tr key={hg.id} className="border-b border-rule-strong">
+          <tr key={hg.id} className="border-b border-rule">
             {hg.headers.map((h) => {
               const meta = (h.column.columnDef.meta ?? {}) as Meta;
               const sorted = h.column.getIsSorted();
@@ -213,7 +213,7 @@ export function CampaignTable() {
               if ((e.target as HTMLElement).closest("a")) return;
               router.push(`/runs/${row.original.id}`);
             }}
-            className="group cursor-pointer border-b border-rule transition-colors hover:bg-surface"
+            className="group cursor-pointer border-b border-rule transition-colors last:border-0 hover:bg-ground/60"
           >
             {row.getAllCells().map((cell) => {
               const meta = (cell.column.columnDef.meta ?? {}) as Meta;
@@ -235,12 +235,12 @@ export function CampaignTable() {
 
 function TableSkeleton() {
   return (
-    <div className="mt-8" aria-busy="true" aria-label="Đang tải chiến dịch">
-      <div className="h-px bg-rule-strong" />
+    <div className="py-2" aria-busy="true" aria-label="Đang tải chiến dịch">
+      <div className="h-px bg-rule" />
       {[0, 1, 2].map((i) => (
         <div key={i} className="flex items-center gap-6 border-b border-rule py-4">
-          <div className="h-4 w-48 animate-pulse rounded-[2px] bg-rule" />
-          <div className="ml-auto h-3 w-20 animate-pulse rounded-[2px] bg-rule" />
+          <div className="h-4 w-48 animate-pulse rounded-xl bg-rule" />
+          <div className="ml-auto h-3 w-20 animate-pulse rounded-xl bg-rule" />
         </div>
       ))}
     </div>
@@ -249,7 +249,7 @@ function TableSkeleton() {
 
 function EmptyState() {
   return (
-    <div className="mt-10 max-w-[56ch] border-t border-rule pt-8">
+    <div className="max-w-[56ch] py-8">
       <h2 className="text-title font-bold">Chưa có chiến dịch nào</h2>
       <p className="mt-2 text-ink-2">
         Tạo brief đầu tiên: điền nhanh vài thông tin, hoặc kể cho AI về sản phẩm và khách hàng. Hệ thống sẽ tìm và chấm điểm KOC TikTok kèm bằng

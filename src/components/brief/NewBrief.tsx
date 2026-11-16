@@ -92,11 +92,10 @@ export function NewBrief({ sample }: { sample: BriefDraft }) {
   return (
     <div className={chatting ? "lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-x-14" : ""}>
       <div className="min-w-0">
-        {!chatting && <p className="mb-8 max-w-[62ch] text-ink-2">Cho chúng tôi biết bạn cần KOC cho sản phẩm nào. Điền nhanh bên dưới, hoặc kể cho AI ở ô chat cuối trang.</p>}
         {!chatting ? (
-          <section aria-labelledby="form-title" onFocusCapture={() => setFormTouched(true)} className="rounded-[2px] border border-rule bg-surface p-5 sm:p-7">
+          <section aria-labelledby="form-title" onFocusCapture={() => setFormTouched(true)} className="card p-5 sm:p-8">
             <h2 id="form-title" className="text-title font-bold">
-              Điền nhanh
+              Thông tin brief
             </h2>
             <p className="mt-1 mb-6 text-ink-2">Bấm chọn là xong, chỉ cần gõ tên sản phẩm. Chưa chắc phần nào thì kể cho AI ở ô chat bên dưới.</p>
             <BriefForm initial={draft} onSubmit={submitForm} sample={sample} busy={turn.isPending} />
@@ -113,7 +112,7 @@ export function NewBrief({ sample }: { sample: BriefDraft }) {
         )}
 
         {turn.isError && (
-          <div role="alert" className="mt-6 flex flex-wrap items-center gap-3 rounded-[2px] border border-risk bg-risk-tint px-4 py-3 text-meta">
+          <div role="alert" className="mt-6 flex flex-wrap items-center gap-3 rounded-xl border border-risk/30 bg-risk-tint px-4 py-3 text-meta">
             <span className="text-ink">{turn.error.message}</span>
             <button type="button" className="font-semibold text-risk underline" onClick={retry}>
               Thử lại
@@ -121,13 +120,13 @@ export function NewBrief({ sample }: { sample: BriefDraft }) {
           </div>
         )}
         {start.isError && (
-          <p role="alert" className="mt-6 rounded-[2px] border border-risk bg-risk-tint px-4 py-3 text-meta text-ink">
+          <p role="alert" className="mt-6 rounded-xl border border-risk/30 bg-risk-tint px-4 py-3 text-meta text-ink">
             {start.error.message}
           </p>
         )}
 
         {editing && (
-          <section aria-label="Sửa brief" className="rise-in mt-7 ml-auto max-w-[680px] rounded-[2px] border border-rule-strong bg-surface p-5 sm:p-6">
+          <section aria-label="Sửa brief" className="card rise-in mt-7 ml-auto max-w-[680px] p-5 sm:p-7">
             <div className="mb-5 flex items-baseline justify-between gap-4">
               <h2 className="text-title font-bold">Sửa brief</h2>
               <button type="button" className="text-meta font-semibold text-ink-2 hover:text-ink hover:underline" onClick={() => setEditing(false)}>

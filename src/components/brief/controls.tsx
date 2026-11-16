@@ -222,9 +222,9 @@ export function TagInput({ value, onChange, placeholder, label }: { value: strin
   return (
     <div className="field flex min-h-[44px] flex-wrap items-center gap-1.5 py-1.5">
       {value.map((t) => (
-        <span key={t} className="inline-flex items-center gap-1 rounded-[2px] bg-ground py-0.5 pr-1 pl-2 text-meta">
+        <span key={t} className="inline-flex items-center gap-1 rounded-xl bg-ground py-0.5 pr-1 pl-2 text-meta">
           {t}
-          <button type="button" aria-label={`Xoá ${t}`} onClick={() => onChange(value.filter((x) => x !== t))} className="rounded-[2px] p-0.5 text-ink-2 hover:text-ink">
+          <button type="button" aria-label={`Xoá ${t}`} onClick={() => onChange(value.filter((x) => x !== t))} className="rounded-xl p-0.5 text-ink-2 hover:text-ink">
             <X aria-hidden size={12} />
           </button>
         </span>

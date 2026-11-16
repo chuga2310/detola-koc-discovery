@@ -4,6 +4,17 @@
     "ignoreFiles": [
       ".impeccable/mocks/decision/**"
     ],
-    "ignoreValues": []
+    "ignoreValues": [
+      {
+        "rule": "design-system-color",
+        "value": "#26405e",
+        "createdAt": "2026-11-16T15:17:30.517Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#000",
+        "createdAt": "2026-11-16T15:17:30.530Z"
+      }
+    ]
   }
 }

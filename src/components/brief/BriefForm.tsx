@@ -241,7 +241,7 @@ export function BriefForm({
           {submitLabel}
         </button>
         {sample && (
-          <button type="button" className="text-meta font-semibold text-action underline-offset-3 hover:underline" onClick={() => {
+          <button type="button" className="text-meta font-semibold text-action-text underline-offset-3 hover:underline" onClick={() => {
               setBase(sample);
               reset(draftToForm(sample));
             }}>

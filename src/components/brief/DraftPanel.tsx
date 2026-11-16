@@ -27,7 +27,7 @@ export function DraftPanel({ draft: d }: { draft: BriefDraft }) {
       <ul className="divide-y divide-rule">
         {items.map((i) => (
           <li key={i.label} className="grid grid-cols-[18px_minmax(0,1fr)] gap-x-2.5 py-2.5">
-            <span className={`mt-0.5 grid h-[18px] w-[18px] place-items-center rounded-full ${i.value ? "bg-ink text-surface" : "border border-rule"}`}>
+            <span className={`mt-0.5 grid h-[18px] w-[18px] place-items-center rounded-full ${i.value ? "bg-good-fill text-white" : "border border-rule-strong"}`}>
               {i.value && <Check aria-hidden size={11} strokeWidth={3} />}
             </span>
             <div className="min-w-0">
@@ -45,7 +45,7 @@ export function DraftPanel({ draft: d }: { draft: BriefDraft }) {
           <div className="text-meta text-ink-2">Từ khoá AI gợi ý</div>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {d.keywords.slice(0, 8).map((k) => (
-              <span key={k} className="rounded-[2px] bg-surface px-2 py-0.5 text-meta ring-1 ring-rule">
+              <span key={k} className="rounded-full bg-surface px-2.5 py-0.5 text-meta ring-1 ring-rule">
                 {k}
               </span>
             ))}

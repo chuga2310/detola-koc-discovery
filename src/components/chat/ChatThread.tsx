@@ -104,7 +104,7 @@ export function AiMessage({ children }: { children: React.ReactNode }) {
 function UserMessage({ m }: { m: ChatMessage }) {
   return (
     <li className="rise-in flex items-start justify-end gap-3">
-      <div className="max-w-[min(560px,85%)] rounded-[2px] bg-shell px-4 py-3 text-shell-ink">
+      <div className="max-w-[min(560px,85%)] rounded-2xl rounded-tr-md bg-shell px-4 py-3 text-shell-ink">
         {m.fromForm && (
           <div className="mb-1.5 text-meta font-semibold text-shell-ink-2">
             Brief điền từ form
@@ -147,7 +147,7 @@ function QuestionCard({
 
   const groupId = `q-${q.id}`;
   return (
-    <div className="rounded-[2px] border border-rule bg-surface p-4">
+    <div className="rounded-2xl border border-rule bg-surface p-5 shadow-soft">
       <p id={groupId} className="font-semibold text-ink">
         {q.text}
       </p>
@@ -326,12 +326,12 @@ export function BriefCard({
   if (b.productNotes) rows.push(["Điểm nổi bật", b.productNotes]);
   return (
     <div
-      className={`rounded-[2px] border bg-surface ${latest ? "border-rule-strong" : "border-rule opacity-70"}`}
+      className={`overflow-hidden rounded-2xl border bg-surface ${latest ? "border-rule-strong shadow-soft" : "border-rule opacity-70"}`}
     >
       <div
         className={`flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 py-3 ${open ? "border-b border-rule" : ""}`}
       >
-        <h3 className="condensed text-title font-extrabold">Brief</h3>
+        <h3 className="text-title font-semibold">Brief</h3>
         {!latest && (
           <span className="text-meta text-ink-2">
             Đã được cập nhật bên dưới
@@ -339,13 +339,9 @@ export function BriefCard({
         )}
         {/* Brief sẵn sàng được "đóng dấu" như verdict của KOC */}
         {latest && !readOnly && (
-          <span
-            role="img"
-            aria-label="Brief đã đủ thông tin"
-            className="compressed relative inline-grid h-[52px] w-[52px] shrink-0 -rotate-6 place-items-center self-center rounded-full border-2 border-current text-center text-[12px] leading-[1.05] font-extrabold text-good uppercase"
-          >
-            <span aria-hidden className="absolute inset-[4px] rounded-full border border-current" />
-            <span className="max-w-[38px]">Đủ brief</span>
+          <span className="inline-flex items-center gap-1.5 self-center rounded-full bg-good px-2.5 py-1 text-[12px] leading-none font-semibold text-white">
+            <Check aria-hidden size={12} strokeWidth={3} />
+            Đủ thông tin
           </span>
         )}
         {collapsible && (
@@ -388,7 +384,7 @@ export function BriefCard({
               {b.keywords.slice(0, 10).map((k) => (
                 <span
                   key={k}
-                  className="rounded-[2px] bg-ground px-2 py-0.5 text-meta"
+                  className="rounded-full bg-sunken px-2.5 py-0.5 text-meta"
                 >
                   {k}
                 </span>

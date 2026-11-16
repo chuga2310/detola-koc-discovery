@@ -19,15 +19,19 @@ export default function NewBriefPage() {
     <>
       <Shell
         aside={
-          <Link href="/" className="inline-flex items-center gap-1.5 text-meta font-semibold text-shell-ink-2 no-underline hover:text-shell-ink">
+          <Link href="/" className="inline-flex items-center gap-1.5 text-meta font-semibold text-ink-2 no-underline hover:text-ink">
             <ArrowLeft aria-hidden size={15} /> Chiến dịch
           </Link>
         }
       />
       <main className="mx-auto max-w-[1080px] px-5 pt-10 md:px-10">
-        <h1 className="condensed mb-2 text-display font-extrabold">Brief mới</h1>
+        <span className="kicker">Brief mới</span>
+        <h1 className="mt-4 mb-8 text-[32px] leading-[1.15] font-semibold tracking-[-0.045em] sm:text-display">
+          Bạn cần KOC cho sản phẩm nào?
+          <span className="block text-ink-mute">Điền nhanh, hoặc kể cho AI.</span>
+        </h1>
         {mock && (
-          <p className="mb-6 rounded-[2px] border border-caution bg-caution-tint px-4 py-3 text-meta">
+          <p className="mb-6 rounded-xl border border-caution/30 bg-caution-tint px-4 py-3 text-meta">
             Đang chạy AI giả lập (chưa có API key): AI chỉ hiểu được câu đơn giản và kết quả không phải đánh giá thật.
           </p>
         )}

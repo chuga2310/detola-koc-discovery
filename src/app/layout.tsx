@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
-import { Archivo } from "next/font/google";
+import { Be_Vietnam_Pro } from "next/font/google";
 import { Providers } from "@/components/Providers";
 import "./globals.css";
 
-// Archivo variable: trục wdth (62–125) cho phép 1 họ chữ vừa là chữ UI vừa là chữ condensed
-// cho số thứ hạng / handle / con dấu verdict — phân cấp bằng độ rộng thay vì đổi font.
-const archivo = Archivo({
-  variable: "--font-archivo",
+// Be Vietnam Pro: font của design system DETOLA, hỗ trợ đầy đủ dấu tiếng Việt
+const beVietnam = Be_Vietnam_Pro({
+  variable: "--font-be-vietnam",
   subsets: ["latin", "vietnamese"],
-  axes: ["wdth"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -19,7 +18,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="vi" className={`${archivo.variable} h-full`}>
+    <html lang="vi" className={`${beVietnam.variable} h-full`}>
       <body className="min-h-full">
         <Providers>{children}</Providers>
       </body>

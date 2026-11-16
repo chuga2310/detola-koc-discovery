@@ -1,11 +1,11 @@
 /**
  * Avatar 2 phía của hội thoại.
- * - AI: con dấu vòng kép trên nền shell, bên trong là thấu kính -> cùng họ với con dấu verdict.
- * - Bạn: hình người giản lược trên nền crimson nhạt.
+ * - AI: nền cam DETOLA, thấu kính navy (trợ lý "đi tìm" creator).
+ * - Bạn: hình người navy trên nền trắng viền mảnh.
  */
 export function AiAvatar({ size = 36 }: { size?: number }) {
   return (
-    <span className="inline-grid shrink-0 place-items-center rounded-full bg-shell text-shell-ink" style={{ width: size, height: size }} role="img" aria-label="Trợ lý AI">
+    <span className="inline-grid shrink-0 place-items-center rounded-full bg-action text-ink" style={{ width: size, height: size }} role="img" aria-label="Trợ lý AI">
       <svg viewBox="0 0 36 36" width={size} height={size} aria-hidden>
         <circle cx="18" cy="18" r="14.5" fill="none" stroke="currentColor" strokeOpacity="0.45" strokeWidth="1" />
         <circle cx="16.5" cy="16.5" r="5.5" fill="none" stroke="currentColor" strokeWidth="2" />
@@ -18,7 +18,7 @@ export function AiAvatar({ size = 36 }: { size?: number }) {
 
 export function UserAvatar({ size = 36 }: { size?: number }) {
   return (
-    <span className="inline-grid shrink-0 place-items-center rounded-full border border-rule bg-surface text-ink-2" style={{ width: size, height: size }} role="img" aria-label="Bạn">
+    <span className="inline-grid shrink-0 place-items-center rounded-full border border-rule bg-surface text-ink" style={{ width: size, height: size }} role="img" aria-label="Bạn">
       <svg viewBox="0 0 36 36" width={size} height={size} aria-hidden>
         <circle cx="18" cy="14" r="5" fill="currentColor" />
         <path d="M8.5 28c1.2-5 5-7.5 9.5-7.5s8.3 2.5 9.5 7.5" fill="currentColor" />

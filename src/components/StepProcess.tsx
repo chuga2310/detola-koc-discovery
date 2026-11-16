@@ -25,7 +25,7 @@ export function StepProcess({ steps }: { steps: StepSummary[] }) {
         return (
           <li key={s.stage} className="relative grid grid-cols-[28px_minmax(0,1fr)] gap-x-4">
             {/* Đường nối giữa các bước */}
-            {!last && <span aria-hidden className={`absolute top-8 bottom-0 left-[13.5px] w-px ${s.status === "done" ? "bg-ink" : "bg-rule"}`} />}
+            {!last && <span aria-hidden className={`absolute top-8 bottom-0 left-[13.5px] w-px ${s.status === "done" ? "bg-good-fill/50" : "bg-rule"}`} />}
             <Node status={s.status} n={i + 1} />
             <div className={`min-w-0 ${last ? "" : "pb-5"}`}>
               <button
@@ -34,10 +34,10 @@ export function StepProcess({ steps }: { steps: StepSummary[] }) {
                 aria-controls={canOpen ? panelId : undefined}
                 disabled={!canOpen}
                 onClick={() => setOverride({ ...override, [s.stage]: !open })}
-                className="group flex w-full items-start justify-between gap-4 rounded-[2px] py-1 text-left disabled:cursor-default"
+                className="group flex w-full items-start justify-between gap-4 rounded-xl py-1 text-left disabled:cursor-default"
               >
                 <span className="min-w-0">
-                  <span className={`block font-semibold ${s.status === "pending" ? "text-ink-2" : "text-ink"} ${canOpen ? "group-hover:text-action" : ""}`}>{s.title}</span>
+                  <span className={`block font-semibold ${s.status === "pending" ? "text-ink-2" : "text-ink"} ${canOpen ? "group-hover:text-action-text" : ""}`}>{s.title}</span>
                   <span className={`mt-0.5 block text-meta ${s.status === "done" ? "text-ink" : "text-ink-2"}`}>
                     {s.status === "running"
                       ? progressText(s)
@@ -53,7 +53,7 @@ export function StepProcess({ steps }: { steps: StepSummary[] }) {
               </button>
 
               {canOpen && open && (
-                <div id={panelId} className="rise-in mt-3 rounded-[2px] border border-rule bg-surface px-4 py-4">
+                <div id={panelId} className="rise-in mt-3 rounded-2xl border border-rule bg-surface px-5 py-5 shadow-soft">
                   <p className="max-w-[70ch] text-ink-2">{s.description}</p>
                   <p className="mt-2 text-meta text-ink-2">{s.usesAi ? "Có dùng AI ở bước này." : "Bước này không dùng AI, chỉ tính bằng số liệu."}</p>
                   {s.status === "running" && s.progress.total > 0 && (
@@ -91,31 +91,30 @@ function progressText(s: StepSummary) {
 }
 
 function Node({ status, n }: { status: StepSummary["status"]; n: number }) {
-  const base = "relative z-[1] mt-0.5 grid h-7 w-7 place-items-center rounded-full text-meta font-bold";
+  const base = "relative z-[1] mt-0.5 grid h-7 w-7 place-items-center rounded-full text-[12px] font-semibold";
   if (status === "done")
     return (
-      <span className={`${base} border-2 border-ink bg-ground text-ink`}>
-        {/* vòng kép mực in, cùng họ với con dấu verdict */}
-        <span aria-hidden className="absolute inset-[2px] rounded-full border border-current" />
-        <Check aria-hidden size={12} strokeWidth={3} />
+      <span className={`${base} bg-good-fill text-white`}>
+        <Check aria-hidden size={14} strokeWidth={3} />
         <span className="sr-only">Xong</span>
       </span>
     );
   if (status === "running")
     return (
-      <span className={`${base} border-2 border-ink bg-ground`}>
-        <span aria-hidden className="h-2 w-2 animate-pulse rounded-full bg-ink" />
+      <span className={`${base} border-2 border-action bg-surface`}>
+        <span aria-hidden className="h-2 w-2 animate-pulse rounded-full bg-action" />
         <span className="sr-only">Đang chạy</span>
       </span>
     );
   if (status === "failed")
     return (
-      <span className={`${base} border-2 border-risk bg-risk-tint text-risk`}>
+      <span className={`${base} bg-risk text-white`}>
         <X aria-hidden size={14} strokeWidth={3} />
         <span className="sr-only">Lỗi</span>
       </span>
     );
-  return <span className={`${base} num border border-rule bg-ground text-ink-3`}>{n}</span>;
+  // Bước chưa tới: số thứ tự "01" như accordion của DETOLA
+  return <span className={`${base} num border border-rule-strong bg-surface text-ink-3`}>{String(n).padStart(2, "0")}</span>;
 }
 
 const TONE: Record<string, string> = { good: "text-good", caution: "text-caution", risk: "text-risk" };
@@ -139,7 +138,7 @@ function Rows({ title, rows }: { title?: string; rows: StepRow[] }) {
         ))}
       </ul>
       {rows.length > 6 && (
-        <button type="button" className="mt-2 text-meta font-semibold text-action hover:underline" onClick={() => setAll(!all)}>
+        <button type="button" className="mt-2 text-meta font-semibold text-action-text hover:underline" onClick={() => setAll(!all)}>
           {all ? "Thu gọn" : `Xem cả ${rows.length} người`}
         </button>
       )}

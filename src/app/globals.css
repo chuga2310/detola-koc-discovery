@@ -1,38 +1,46 @@
 @import "tailwindcss";
 
 /*
- * KOC Discovery — "bàn thử của biên tập viên làm đẹp".
- * Nền trung tính gần trắng (chroma ~0), mực tím-đen; dải shell black-cherry mang nhận diện;
- * crimson sơn mài CHỈ dùng cho thứ bấm được, lựa chọn và mã bằng chứng.
- * Verdict = con dấu in mực (xanh / hổ phách / đỏ), luôn có chữ, không truyền tin chỉ bằng màu.
+ * KOC Discovery — theo design system của DETOLA (detola.vn).
+ * Nền kem ấm xen kẽ mặt trắng; chữ navy; cam DETOLA cho nút chính (chữ navy trên nền cam);
+ * teal cho trạng thái tốt / số liệu; navy cho mảng tối (bong bóng chat của bạn, nút phụ đậm).
+ * Font Be Vietnam Pro, tiêu đề đậm vừa (600) với khoảng chữ khít; bo góc mềm 12–24px, viền mảnh.
+ * Trạng thái và đánh giá luôn có chữ, không truyền tin chỉ bằng màu.
  */
 :root {
-  --ground: oklch(0.975 0.002 350);
-  --surface: oklch(0.995 0.001 350);
-  --ink: oklch(0.21 0.018 345);
-  --ink-2: oklch(0.43 0.016 345);
-  --ink-3: oklch(0.55 0.012 345);
-  --rule: oklch(0.89 0.006 345);
-  --rule-strong: oklch(0.21 0.018 345);
+  --ground: #f8f3ea; /* kem DETOLA */
+  --surface: #ffffff;
+  --surface-2: #fcfbf8; /* mặt trong của panel */
+  --sunken: #f4f1ea; /* nền khối lồng (danh sách trong thẻ) */
+  --ink: #1c3048; /* navy DETOLA */
+  --ink-2: #56616e; /* chữ phụ, ≥ 4.5:1 trên nền kem */
+  --ink-3: #66717e; /* placeholder, chú thích nhỏ */
+  --ink-mute: #7f8a94; /* dòng thứ 2 của tiêu đề 2 tông: chữ lớn, 3.2:1 trên nền kem (đạt AA cho chữ lớn) */
+  --rule: rgb(28 48 72 / 0.1);
+  --rule-strong: rgb(28 48 72 / 0.22);
 
-  --shell: oklch(0.29 0.075 5);
-  --shell-ink: oklch(0.97 0.008 5);
-  --shell-ink-2: oklch(0.86 0.03 5);
-  --shell-rule: oklch(0.42 0.07 5);
+  --shell: #1c3048; /* mảng navy: bong bóng chat của bạn, nút đậm */
+  --shell-ink: #ffffff;
+  --shell-ink-2: #c3ccd7;
+  --shell-rule: rgb(255 255 255 / 0.16);
 
-  --action: oklch(0.47 0.155 6);
-  --action-hover: oklch(0.41 0.145 6);
-  --action-tint: oklch(0.955 0.022 6);
-  --action-ink: oklch(0.99 0.005 6);
+  --action: #ff794d; /* cam DETOLA: nền nút chính */
+  --action-hover: #f46a3c;
+  --action-tint: #fff1ea;
+  --action-ink: #1c3048; /* chữ trên nền cam (5.2:1) */
+  --action-text: #b54620; /* cam đậm khi cam là CHỮ / viền focus trên nền sáng (≥ 4.9:1) */
 
-  --good: oklch(0.44 0.095 158);
-  --good-tint: oklch(0.955 0.025 158);
-  --caution: oklch(0.47 0.105 70);
-  --caution-tint: oklch(0.96 0.035 80);
-  --risk: oklch(0.49 0.165 30);
-  --risk-tint: oklch(0.955 0.025 30);
+  --good: #367064; /* teal đậm cho chữ: ≥ 5:1 trên good-tint */
+  --good-fill: #4c9386; /* teal DETOLA cho nền/thanh */
+  --good-tint: #edf3f0;
+  --caution: #8f5c10;
+  --caution-tint: #fcf2e0;
+  --risk: #c0392b;
+  --risk-tint: #fbebe8;
 
-  --radius: 2px;
+  --radius: 12px;
+  --radius-lg: 20px;
+  --shadow-soft: 0 20px 55px rgb(28 48 72 / 0.045), 0 2px 6px rgb(28 48 72 / 0.03);
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 
   --z-sticky: 10;
@@ -42,9 +50,12 @@
 @theme inline {
   --color-ground: var(--ground);
   --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-sunken: var(--sunken);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
   --color-ink-3: var(--ink-3);
+  --color-ink-mute: var(--ink-mute);
   --color-rule: var(--rule);
   --color-rule-strong: var(--rule-strong);
   --color-shell: var(--shell);
@@ -55,23 +66,28 @@
   --color-action-hover: var(--action-hover);
   --color-action-tint: var(--action-tint);
   --color-action-ink: var(--action-ink);
+  --color-action-text: var(--action-text);
   --color-good: var(--good);
+  --color-good-fill: var(--good-fill);
   --color-good-tint: var(--good-tint);
   --color-caution: var(--caution);
   --color-caution-tint: var(--caution-tint);
   --color-risk: var(--risk);
   --color-risk-tint: var(--risk-tint);
-  --font-sans: var(--font-archivo);
+  --font-sans: var(--font-be-vietnam);
+  --shadow-soft: var(--shadow-soft);
 
-  /* Thang chữ 4 bậc: thứ hạng thể hiện bằng weight + độ rộng chữ, không bằng thêm cỡ */
+  /* Thang chữ 4 bậc như cũ; tiêu đề dùng weight 600 + khoảng chữ âm theo DETOLA */
   --text-display: 40px;
-  --text-display--line-height: 1;
+  --text-display--line-height: 1.12;
+  --text-display--letter-spacing: -0.045em;
   --text-title: 24px;
-  --text-title--line-height: 1.1;
+  --text-title--line-height: 1.2;
+  --text-title--letter-spacing: -0.025em;
   --text-body: 15px;
-  --text-body--line-height: 1.5;
+  --text-body--line-height: 1.55;
   --text-meta: 13px;
-  --text-meta--line-height: 1.4;
+  --text-meta--line-height: 1.45;
 }
 
 html {
@@ -88,13 +104,11 @@ html {
 body {
   background: var(--ground);
   color: var(--ink);
-  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-family: var(--font-be-vietnam), system-ui, sans-serif;
   font-size: 15px;
-  line-height: 1.5;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum" 1;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
-  caret-color: var(--action);
+  caret-color: var(--action-text);
 }
 
 ::selection {
@@ -103,7 +117,7 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--action);
+  outline: 2px solid var(--action-text);
   outline-offset: 2px;
 }
 
@@ -122,12 +136,12 @@ a {
   text-decoration-thickness: 1px;
 }
 
-/* Độ rộng chữ (trục wdth) là công cụ phân cấp chính, thay vì cỡ chữ */
+/* Be Vietnam Pro không có trục độ rộng: "condensed" = khoảng chữ khít cho số thứ hạng, handle, số liệu */
 .condensed {
-  font-stretch: 72%;
+  letter-spacing: -0.03em;
 }
 .compressed {
-  font-stretch: 64%;
+  letter-spacing: -0.04em;
 }
 
 .num {
@@ -137,16 +151,45 @@ a {
 
 /* Component class nằm trong @layer components để utility Tailwind (pl-8, min-h-…) ghi đè được */
 @layer components {
+  /* Nhãn nhỏ viết hoa có chấm cam (kicker kiểu DETOLA), chỉ dùng ở đầu trang */
+  .kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .kicker::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--action);
+  }
+
+  /* Thẻ trắng bo mềm, viền mảnh, bóng rất nhẹ */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+  }
+
   /* Control chuẩn: input / select / textarea */
   .field {
     width: 100%;
     background: var(--surface);
-    border: 1px solid var(--rule);
+    border: 1px solid var(--rule-strong);
     border-radius: var(--radius);
-    padding: 0.5rem 0.625rem;
+    padding: 0.625rem 0.875rem;
     font-size: 15px;
     color: var(--ink);
-    transition: border-color 160ms var(--ease-out);
+    transition:
+      border-color 160ms var(--ease-out),
+      box-shadow 160ms var(--ease-out);
   }
   .field::placeholder {
     color: var(--ink-3);
@@ -155,18 +198,24 @@ a {
     border-color: var(--ink-3);
   }
   .field:focus-visible {
-    outline: 2px solid var(--action);
-    outline-offset: 0;
-    border-color: var(--action);
+    outline: none;
+    border-color: var(--action-text);
+    box-shadow: 0 0 0 3px rgb(255 121 77 / 0.22);
+  }
+  .field:focus-within:not(input, textarea, select) {
+    border-color: var(--action-text);
+    box-shadow: 0 0 0 3px rgb(255 121 77 / 0.22);
   }
 
   .btn {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
+    min-height: 40px;
     border-radius: var(--radius);
-    padding: 0.5rem 0.875rem;
-    font-size: 15px;
+    padding: 0.5rem 1.125rem;
+    font-size: 14px;
     font-weight: 600;
     line-height: 1.2;
     border: 1px solid var(--rule-strong);
@@ -175,11 +224,16 @@ a {
     cursor: pointer;
     transition:
       background-color 160ms var(--ease-out),
-      border-color 160ms var(--ease-out);
+      border-color 160ms var(--ease-out),
+      transform 160ms var(--ease-out);
   }
   .btn:hover {
-    background: var(--ground);
+    border-color: var(--ink);
   }
+  .btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+  /* Nút chính: cam DETOLA, chữ navy */
   .btn-primary {
     background: var(--action);
     border-color: var(--action);
@@ -189,37 +243,33 @@ a {
     background: var(--action-hover);
     border-color: var(--action-hover);
   }
-  .btn-on-shell {
-    background: transparent;
-    border-color: var(--shell-ink-2);
+  /* Nút đậm: navy, chữ trắng (như "Trao đổi với DETOLA" trên header) */
+  .btn-dark {
+    background: var(--shell);
+    border-color: var(--shell);
     color: var(--shell-ink);
   }
-  .btn-on-shell:hover {
-    background: var(--shell-rule);
+  .btn-dark:hover {
+    background: #26405e;
+    border-color: #26405e;
   }
   .btn:disabled {
-    opacity: 0.55;
+    opacity: 0.5;
     cursor: not-allowed;
   }
 
-  .field:focus-within:not(input, textarea, select) {
-    border-color: var(--action);
-    outline: 2px solid var(--action);
-    outline-offset: 0;
-  }
-
-  /* Chip chọn nhanh (thay cho select/input số): single = radio, multi = checkbox */
+  /* Chip chọn nhanh dạng pill: single = radio, multi = checkbox */
   .chip {
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
-    min-height: 36px;
-    padding: 0.375rem 0.75rem;
-    border: 1px solid var(--rule);
-    border-radius: var(--radius);
+    min-height: 38px;
+    padding: 0.375rem 0.875rem;
+    border: 1px solid var(--rule-strong);
+    border-radius: 999px;
     background: var(--surface);
     color: var(--ink);
-    font-size: 15px;
+    font-size: 14px;
     line-height: 1.2;
     cursor: pointer;
     transition:
@@ -228,16 +278,17 @@ a {
       color 160ms var(--ease-out);
   }
   .chip:hover:not(:disabled) {
-    border-color: var(--ink-3);
+    border-color: var(--ink);
   }
   .chip[aria-checked="true"] {
-    border-color: var(--action);
+    border-color: var(--ink);
     background: var(--action-tint);
+    box-shadow: inset 0 0 0 1px var(--ink);
     font-weight: 600;
   }
   .chip .chip-check {
     display: none;
-    color: var(--action);
+    color: var(--action-text);
   }
   .chip[aria-checked="true"] .chip-check {
     display: inline;
@@ -255,17 +306,17 @@ a {
   .segmented {
     display: inline-flex;
     border: 1px solid var(--rule-strong);
-    border-radius: var(--radius);
-    padding: 2px;
+    border-radius: 999px;
+    padding: 3px;
     background: var(--surface);
   }
   .segmented > button {
     min-height: 30px;
-    padding: 0.25rem 0.625rem;
+    padding: 0.25rem 0.75rem;
     font-size: 13px;
     font-weight: 600;
     color: var(--ink-2);
-    border-radius: 1px;
+    border-radius: 999px;
     cursor: pointer;
   }
   .segmented > button[aria-checked="true"] {
@@ -277,10 +328,11 @@ a {
   .stepper {
     display: inline-flex;
     align-items: stretch;
-    border: 1px solid var(--rule);
+    border: 1px solid var(--rule-strong);
     border-radius: var(--radius);
     background: var(--surface);
     height: 44px;
+    overflow: hidden;
   }
   .stepper > button {
     display: grid;
@@ -300,21 +352,20 @@ a {
   .stepper > input {
     width: 3.5rem;
     text-align: center;
-    font-size: 24px;
-    font-weight: 700;
-    font-stretch: 72%;
+    font-size: 20px;
+    font-weight: 600;
     border-inline: 1px solid var(--rule);
     background: transparent;
   }
   .stepper > input:focus-visible {
-    outline: 2px solid var(--action);
+    outline: 2px solid var(--action-text);
     outline-offset: -2px;
   }
 }
 
 /*
- * Ô chat lúc chưa dùng: một vệt crimson chạy quanh viền để gợi ý "có thể kể cho AI ở đây".
- * Dừng ngay khi user focus hoặc đã bắt đầu hội thoại. Reduced motion: viền crimson tĩnh.
+ * Ô chat lúc chưa dùng: một vệt cam chạy quanh viền để gợi ý "có thể kể cho AI ở đây".
+ * Dừng ngay khi user focus hoặc đã bắt đầu hội thoại. Reduced motion: viền cam tĩnh.
  */
 @property --sweep {
   syntax: "<angle>";

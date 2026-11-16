@@ -51,7 +51,7 @@ export function Composer({
       {/* Gợi ý nằm TRONG luồng (không phủ lên form), mũi tên chỉ xuống ô chat */}
       {showHint && (
         <div id="composer-hint" className="rise-in mb-3 w-full max-w-[520px]">
-          <div className="relative rounded-[2px] bg-ink px-4 py-3 pr-10 text-surface">
+          <div className="relative rounded-xl bg-ink px-4 py-3 pr-10 text-surface">
             <p className="text-meta leading-relaxed">
               <b className="font-semibold">Chưa biết bắt đầu từ đâu?</b>
               <span className="hidden sm:inline"> Hãy mô tả sản phẩm và khách hàng của bạn, AI sẽ hỏi thêm và gợi ý phần còn lại.</span>
@@ -69,7 +69,7 @@ export function Composer({
             <button
               type="button"
               aria-label="Đóng gợi ý"
-              className="absolute top-2 right-2 grid h-7 w-7 place-items-center rounded-[2px] text-[oklch(0.86_0.03_5)] hover:bg-[oklch(0.3_0.02_345)] hover:text-surface"
+              className="absolute top-2 right-2 grid h-7 w-7 place-items-center rounded-xl text-[oklch(0.86_0.03_5)] hover:bg-[oklch(0.3_0.02_345)] hover:text-surface"
               onClick={() => setHintClosed(true)}
             >
               <X aria-hidden size={14} />
@@ -85,8 +85,8 @@ export function Composer({
           e.preventDefault();
           send();
         }}
-        className={`relative flex items-end gap-2 rounded-[2px] border bg-surface p-2 pl-4 transition-colors focus-within:outline-2 focus-within:outline-offset-0 focus-within:outline-action ${
-          focused ? "border-action" : "border-rule-strong"
+        className={`relative flex items-end gap-2 rounded-xl border bg-surface p-2 pl-4 transition-colors focus-within:outline-2 focus-within:outline-offset-0 focus-within:outline-action-text ${
+          focused ? "border-action-text" : "border-rule-strong"
         } ${glow ? "composer-attn" : ""}`}
       >
         <label htmlFor="composer" className="sr-only">
@@ -115,7 +115,7 @@ export function Composer({
           type="submit"
           aria-label="Gửi"
           disabled={disabled || !text.trim()}
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-[2px] bg-action text-action-ink transition-colors hover:bg-action-hover disabled:bg-rule disabled:text-ink-3"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-action text-action-ink transition-colors hover:bg-action-hover disabled:bg-rule disabled:text-ink-3"
         >
           <ArrowUp aria-hidden size={18} strokeWidth={2.25} />
         </button>

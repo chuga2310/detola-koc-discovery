@@ -30,13 +30,13 @@ export function KocReview({ pick, onRead }: { pick: Pick; onRead: () => void }) 
 
   return (
     <article aria-labelledby={`koc-${pick.id}`} className="min-w-0">
-      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-6 border-b border-rule-strong pb-5 sm:gap-x-8">
+      <header className="grid grid-cols-1 items-start gap-x-8 gap-y-3 border-b border-rule pb-5 sm:grid-cols-[minmax(0,1fr)_auto]">
         <div className="min-w-0">
           <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-            <h2 id={`koc-${pick.id}`} className="condensed text-display font-extrabold break-all">
+            <h2 id={`koc-${pick.id}`} className="text-[30px] leading-tight font-semibold tracking-[-0.04em] [overflow-wrap:anywhere] sm:text-display">
               @{pick.handle}
             </h2>
-            <a href={pick.profileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-meta font-semibold text-action">
+            <a href={pick.profileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-meta font-semibold text-action-text">
               Hồ sơ TikTok <ArrowUpRight aria-hidden size={15} />
             </a>
           </div>
@@ -48,10 +48,10 @@ export function KocReview({ pick, onRead }: { pick: Pick; onRead: () => void }) 
         <span className="hidden sm:block">
           <Seal verdict={pick.verdict} size="lg" />
         </span>
-        <span className="sm:hidden">
+        <span className="-order-1 sm:hidden">
           <Seal verdict={pick.verdict} />
         </span>
-        <dl className="col-span-2 mt-4 grid grid-cols-5 divide-x divide-rule border-y border-rule sm:flex">
+        <dl className="mt-2 grid grid-cols-6 gap-px overflow-hidden rounded-xl border border-rule bg-rule sm:col-span-2 sm:grid-cols-5">
           {[
             ["Tổng", pick.scores.final],
             ["AI chấm", pick.scores.fit],
@@ -59,9 +59,9 @@ export function KocReview({ pick, onRead }: { pick: Pick; onRead: () => void }) 
             ["Nội dung", pick.scores.text],
             ["Video", pick.scores.video],
           ].map(([label, v], i) => (
-            <div key={label as string} className="min-w-0 px-2 py-2 first:pl-0 sm:px-4">
-              <dt className="truncate text-meta text-ink-2">{label}</dt>
-              <dd className={`condensed num text-title ${i === 0 ? "font-extrabold" : "font-semibold"}`}>
+            <div key={label as string} className={`min-w-0 bg-surface-2 px-3 py-2.5 sm:col-span-1 sm:px-4 ${i < 2 ? "col-span-3" : "col-span-2"}`}>
+              <dt className="truncate text-[12px] text-ink-2 sm:text-meta">{label}</dt>
+              <dd className={`num text-[19px] leading-tight sm:text-title ${i === 0 ? "font-bold text-ink" : "font-semibold text-ink"}`}>
                 {v === null ? "–" : (v as number).toFixed(i === 1 ? 0 : 1)}
               </dd>
             </div>
@@ -94,10 +94,10 @@ export function KocReview({ pick, onRead }: { pick: Pick; onRead: () => void }) 
 
       <div aria-live="polite" className="mt-5">
         {activeEv ? (
-          <div key={activeEv.id} className="evidence-in flex items-start gap-4 border border-action bg-surface px-4 py-3">
+          <div key={activeEv.id} className="evidence-in flex items-start gap-4 rounded-xl border border-action/50 bg-action-tint/60 px-4 py-3">
             {activeEv.image && activeEv.frame ? <FrameTile src={`/api/media/${activeEv.image}`} frame={activeEv.frame} className="h-[90px] w-[51px]" /> : null}
             <div className="min-w-0">
-              <span className="num text-meta font-bold text-action">{shortId(activeEv.id)}</span>
+              <span className="num text-meta font-bold text-action-text">{shortId(activeEv.id)}</span>
               <p className="mt-0.5">
                 <span className="font-semibold text-ink-2">{KIND[activeEv.kind]}. </span>
                 {activeEv.text}
@@ -156,7 +156,7 @@ function Claims({
 }) {
   return (
     <div>
-      <h3 className="condensed border-b border-rule pb-1.5 text-title font-extrabold">{title}</h3>
+      <h3 className="condensed border-b border-rule pb-1.5 text-title font-bold">{title}</h3>
       {items.length === 0 ? (
         <p className="mt-3 text-ink-2">{empty}</p>
       ) : (
@@ -175,8 +175,8 @@ function Claims({
                     onClick={() => onKey(active === e.id ? null : e.id)}
                     aria-pressed={active === e.id}
                     aria-label={`Bằng chứng ${shortId(e.id)}`}
-                    className={`num ml-1.5 inline-block rounded-[2px] border px-1.5 align-[1px] text-meta leading-[18px] font-semibold transition-colors ${
-                      active === e.id ? "border-action bg-action text-action-ink" : "border-action text-action hover:bg-action-tint"
+                    className={`num ml-1.5 inline-block rounded-xl border px-1.5 align-[1px] text-meta leading-[18px] font-semibold transition-colors ${
+                      active === e.id ? "border-action bg-action text-action-ink" : "border-action-text/40 bg-surface text-action-text hover:bg-action-tint"
                     }`}
                   >
                     {shortId(e.id)}
@@ -198,7 +198,7 @@ function FrameTile({ src, frame, className }: { src: string; frame: number; clas
   return (
     <span
       aria-hidden
-      className={`block shrink-0 rounded-[2px] bg-rule ${className}`}
+      className={`block shrink-0 rounded-xl bg-rule ${className}`}
       style={{ backgroundImage: `url(${src})`, backgroundSize: "300% 200%", backgroundPosition: `${col * 50}% ${row * 100}%` }}
     />
   );
@@ -271,7 +271,7 @@ function FrameStrip({
           </span>
         </h3>
         {video.videoUrl && (
-          <a href={video.videoUrl} target="_blank" rel="noreferrer" className="ml-auto inline-flex shrink-0 items-center gap-0.5 text-meta font-semibold text-action">
+          <a href={video.videoUrl} target="_blank" rel="noreferrer" className="ml-auto inline-flex shrink-0 items-center gap-0.5 text-meta font-semibold text-action-text">
             Gốc <ArrowUpRight aria-hidden size={14} />
             <span className="sr-only">: mở video {label} trên TikTok</span>
           </a>
@@ -296,7 +296,7 @@ function FrameStrip({
               className="shrink-0 text-left disabled:cursor-default"
             >
               <span
-                className={`block h-[132px] w-[74px] rounded-[2px] bg-rule outline-2 outline-offset-[3px] transition-[outline-color,translate] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                className={`block h-[132px] w-[74px] rounded-xl bg-rule outline-2 outline-offset-[3px] transition-[outline-color,translate] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
                   on ? "-translate-y-1 outline-action" : "outline-transparent"
                 }`}
                 style={
@@ -306,7 +306,7 @@ function FrameStrip({
                 }
               />
               <span className="num mt-1 block text-meta text-ink-2">{times[f] !== undefined ? `${times[f]}s` : `frame ${f}`}</span>
-              {cite && <span className={`num block text-meta font-semibold ${on ? "text-action" : "text-ink"}`}>{shortId(cite)}</span>}
+              {cite && <span className={`num block text-meta font-semibold ${on ? "text-action-text" : "text-ink"}`}>{shortId(cite)}</span>}
             </button>
           );
         })}

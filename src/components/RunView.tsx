@@ -9,7 +9,7 @@ import { KocReview } from "./KocReview";
 import { Costs, Log } from "./RunPanels";
 import type { Pick, RunDetail } from "./runTypes";
 import { StepProcess } from "./StepProcess";
-import { compact, LedgerFigure, millions, Seal, Shell, StatusOnShell } from "./ui";
+import { compact, LedgerFigure, millions, Seal, Shell, StatusTag } from "./ui";
 
 const LIVE = new Set(["queued", "running"]);
 const readKey = (runId: string) => `koc-read:${runId}`;
@@ -86,7 +86,7 @@ export function RunView({ id }: { id: string }) {
   const select = (pickId: string) => {
     setSel(pickId);
     markRead(pickId);
-    if (window.innerWidth < 1024) reviewRef.current?.scrollIntoView({ block: "start" });
+    if (window.innerWidth < 1280) reviewRef.current?.scrollIntoView({ block: "start" });
   };
 
   if (q.data === null)
@@ -94,7 +94,7 @@ export function RunView({ id }: { id: string }) {
       <>
         <Shell />
         <main className="mx-auto max-w-[1200px] px-5 py-16 md:px-10">
-          <h1 className="condensed text-display font-extrabold">Không tìm thấy chiến dịch</h1>
+          <h1 className="text-display font-semibold">Không tìm thấy chiến dịch</h1>
           <p className="mt-2 text-ink-2">Chiến dịch có thể đã bị xoá. Quay lại danh sách để mở chiến dịch khác.</p>
           <Link href="/" className="btn mt-6 no-underline">
             <ArrowLeft aria-hidden size={15} /> Chiến dịch
@@ -126,17 +126,17 @@ export function RunView({ id }: { id: string }) {
           <>
             <LedgerFigure value={`≈ $${totalUsd.toFixed(2)}`} label={`chi phí · ${minutes(run.activeMs)}`} />
             {run.status === "running" && (
-              <button className="btn btn-on-shell" disabled={busy} onClick={() => act.mutate("stop")}>
+              <button className="btn" disabled={busy} onClick={() => act.mutate("stop")}>
                 <Pause aria-hidden size={15} /> Tạm dừng
               </button>
             )}
             {(run.status === "interrupted" || run.status === "failed") && (
-              <button className="btn border-shell-ink bg-shell-ink text-shell hover:bg-shell-ink-2" disabled={busy} onClick={() => act.mutate("resume")}>
+              <button className="btn btn-primary" disabled={busy} onClick={() => act.mutate("resume")}>
                 <RotateCcw aria-hidden size={15} /> Chạy tiếp
               </button>
             )}
             {run.status === "completed" && (
-              <Link href="/new" className="btn btn-on-shell no-underline">
+              <Link href="/new" className="btn no-underline">
                 <Plus aria-hidden size={15} /> Brief mới
               </Link>
             )}
@@ -144,13 +144,13 @@ export function RunView({ id }: { id: string }) {
         }
       >
         <nav aria-label="Vị trí" className="flex flex-wrap items-center gap-x-2 gap-y-1 text-body">
-          <Link href="/" className="text-shell-ink-2 no-underline hover:text-shell-ink hover:underline">
+          <Link href="/" className="text-ink-2 no-underline hover:text-ink hover:underline">
             Chiến dịch
           </Link>
-          <ChevronRight aria-hidden size={14} className="text-shell-ink-2" />
-          <span className="font-semibold text-shell-ink">{b.product}</span>
+          <ChevronRight aria-hidden size={14} className="text-ink-3" />
+          <span className="font-semibold text-ink">{b.product}</span>
           <span className="ml-3">
-            <StatusOnShell status={run.status} />
+            <StatusTag status={run.status} />
           </span>
         </nav>
       </Shell>
@@ -158,12 +158,12 @@ export function RunView({ id }: { id: string }) {
       <main className="mx-auto max-w-[1200px] px-5 pt-8 pb-20 md:px-10">
         <h1 className="sr-only">Chiến dịch {b.product}</h1>
         {run.config.provider === "mock" && (
-          <p className="mb-6 rounded-[2px] border border-caution bg-caution-tint px-4 py-3 text-meta">
+          <p className="mb-6 rounded-xl border border-caution/30 bg-caution-tint px-4 py-3 text-meta">
             Chiến dịch chạy bằng AI giả lập: điểm và lý do chỉ để xem luồng, không phải đánh giá thật.
           </p>
         )}
         {run.error && (
-          <div role="alert" className="mb-6 rounded-[2px] border border-risk bg-risk-tint px-4 py-3 text-meta">
+          <div role="alert" className="mb-6 rounded-xl border border-risk/30 bg-risk-tint px-4 py-3 text-meta">
             <b className="text-risk">Chiến dịch dừng vì lỗi.</b> {friendlyError(run.error)} Các bước đã xong được giữ nguyên, bấm “Chạy tiếp” để thử lại từ chỗ dở.
           </div>
         )}
@@ -200,7 +200,7 @@ export function RunView({ id }: { id: string }) {
                   aria-expanded={showSteps}
                   aria-controls="run-steps"
                   onClick={() => setShowSteps(!showSteps)}
-                  className="inline-flex items-center gap-1.5 font-semibold text-ink hover:text-action"
+                  className="inline-flex items-center gap-1.5 font-semibold text-ink hover:text-action-text"
                 >
                   {showSteps ? "Ẩn quy trình" : `Xem ${d.steps.length} bước đã làm`}
                   <ChevronDown aria-hidden size={16} className={`transition-transform ${showSteps ? "rotate-180" : ""}`} />
@@ -228,9 +228,9 @@ export function RunView({ id }: { id: string }) {
 
         {report && current && (
           <section aria-label="Kết quả" className="mt-10 border-t border-rule-strong pt-10">
-            <div className="grid grid-cols-1 gap-x-12 gap-y-12 lg:grid-cols-[minmax(0,500px)_minmax(0,1fr)]">
+            <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,560px)_minmax(0,1fr)]">
               <Ranking report={report} selected={current.id} read={read} onSelect={select} />
-              <div ref={reviewRef} className="min-w-0 scroll-mt-6 lg:border-l lg:border-rule lg:pl-12">
+              <div ref={reviewRef} className="card min-w-0 scroll-mt-24 p-5 sm:p-8">
                 <KocReview key={current.id} pick={current} onRead={() => markRead(current.id)} />
               </div>
             </div>
@@ -245,7 +245,7 @@ export function RunView({ id }: { id: string }) {
           </summary>
           <div className="mt-6 space-y-12">
             {run.error && (
-              <p className="num rounded-[2px] border border-rule bg-surface px-4 py-3 text-meta">
+              <p className="num rounded-xl border border-rule bg-surface px-4 py-3 text-meta">
                 <b>Lỗi:</b> {run.error}
               </p>
             )}
@@ -290,7 +290,7 @@ function sessionLine(status: string, d: RunDetail) {
 }
 
 // Cột bảng xếp hạng: mobile gộp follower/booking vào dòng phụ; từ sm có cột số riêng, căn phải
-const ROW_COLS = "grid-cols-[40px_minmax(0,1fr)_60px_52px] sm:grid-cols-[40px_minmax(0,1fr)_56px_64px_60px_52px]";
+const ROW_COLS = "grid-cols-[34px_minmax(0,1fr)_84px_48px] sm:grid-cols-[34px_minmax(0,1fr)_52px_56px_84px_48px]";
 
 function Ranking({
   report,
@@ -306,8 +306,8 @@ function Ranking({
   const { picks, alternates, totals } = report;
   const used = Math.min(1, totals.estCostVnd / totals.budgetVnd);
   return (
-    <section aria-labelledby="rank-title" className="min-w-0 lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:self-start lg:overflow-y-auto lg:pr-1">
-      <h2 id="rank-title" className="condensed text-display font-extrabold">
+    <section aria-labelledby="rank-title" className="card min-w-0 p-5 sm:p-7 xl:sticky xl:top-24">
+      <h2 id="rank-title" className="text-title font-semibold">
         {picks.length} KOC đề xuất
       </h2>
       <div aria-hidden className={`mt-4 grid ${ROW_COLS} items-end gap-x-3 border-b border-rule-strong px-2 pb-2 text-meta text-ink-2`}>
@@ -359,14 +359,14 @@ function Row({ p, on, read, onSelect }: { p: Pick; on: boolean; read: boolean; o
         type="button"
         onClick={() => onSelect(p.id)}
         aria-pressed={on}
-        className={`grid w-full ${ROW_COLS} items-center gap-x-3 px-2 py-3 text-left transition-colors ${on ? "bg-action-tint" : "hover:bg-surface"}`}
+        className={`grid w-full ${ROW_COLS} items-center gap-x-3 px-2 py-3 text-left transition-colors rounded-xl ${on ? "bg-action-tint" : "hover:bg-ground/60"}`}
       >
-        <span className={`compressed num text-display font-extrabold ${on ? "text-action" : "text-ink"}`}>{String(p.rank).padStart(2, "0")}</span>
+        <span className={`num text-title font-semibold ${on ? "text-action-text" : "text-ink-3"}`}>{String(p.rank).padStart(2, "0")}</span>
         <span className="min-w-0">
           <span className="flex items-center gap-1.5">
             <span className="truncate font-semibold">@{p.handle}</span>
             {read && (
-              <span className={`inline-flex shrink-0 items-center ${on ? "text-action" : "text-ink-3"}`} title="Đã xem">
+              <span className={`inline-flex shrink-0 items-center ${on ? "text-action-text" : "text-ink-3"}`} title="Đã xem">
                 <Check aria-hidden size={14} strokeWidth={2.25} />
                 <span className="sr-only">Đã xem</span>
               </span>

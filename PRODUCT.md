@@ -38,7 +38,8 @@ Every recommendation is evidence-cited: each reason links to a specific metric, 
 
 - Personality (confirmed by user): precise, calm, trustworthy.
 - Reference feel (confirmed): Linear / Stripe Dashboard — tight hierarchy, restrained color, crisp numbers.
-- Anti-references (confirmed): dark neon/gradient SaaS; cream/beige editorial "paper" look (the previous version had drifted there); washed-out Notion-style light-gray text with weak hierarchy.
+- Brand system (user decision, 2026-11-16): follow the DETOLA design system from detola.vn — cream ground with white cards, navy ink, DETOLA orange primary buttons, teal for positive states, Be Vietnam Pro. This supersedes the earlier "no cream" anti-reference: the cream is DETOLA's committed brand color, not a default. Do not copy DETOLA's logo or mascot illustrations.
+- Anti-references (still apply): dark neon/gradient SaaS; washed-out light-gray text with weak hierarchy.
 
 ## Evidence on Hand
 

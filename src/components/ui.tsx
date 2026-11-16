@@ -1,4 +1,4 @@
-/** Primitive dùng chung: shell band, con dấu verdict, trạng thái run, định dạng số */
+/** Primitive dùng chung theo design system DETOLA: header, badge đánh giá, trạng thái, định dạng số */
 import Link from "next/link";
 
 export const vnd = (n: number) => `${Math.round(n).toLocaleString("vi-VN")} ₫`;
@@ -14,97 +14,84 @@ export const compact = (n: number | null | undefined) =>
           : String(Math.round(n));
 export const millions = (n: number) => `${(n / 1e6).toLocaleString("vi-VN", { maximumFractionDigits: 1 })}M ₫`;
 
-/** Dải shell black-cherry: nhận diện + ngữ cảnh của màn hình hiện tại */
+/** Dấu nhận diện nhỏ: chấm cam + vòng navy (không dùng logo DETOLA) */
+function Mark() {
+  return (
+    <span aria-hidden className="relative inline-grid h-8 w-8 place-items-center rounded-[10px] bg-shell">
+      <span className="h-2.5 w-2.5 rounded-full bg-action" />
+      <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-action/60" />
+    </span>
+  );
+}
+
+/** Header sáng, dính đầu trang (kiểu header detola.vn): nhận diện bên trái, ngữ cảnh ở giữa, hành động bên phải */
 export function Shell({ children, aside }: { children?: React.ReactNode; aside?: React.ReactNode }) {
   return (
-    <header className="bg-shell text-shell-ink">
-      <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-x-10 gap-y-4 px-5 py-5 md:px-10">
-        <div className="flex min-w-0 flex-col items-start gap-3 md:flex-row md:items-center md:gap-6">
-          <Link href="/" className="compressed shrink-0 text-title leading-none font-extrabold tracking-[0.01em] uppercase no-underline">
+    <header className="sticky top-0 z-[var(--z-sticky)] border-b border-rule bg-ground/90 backdrop-blur-md">
+      <div className="mx-auto flex min-h-[68px] max-w-[1200px] flex-wrap items-center justify-between gap-x-8 gap-y-3 px-5 py-3 md:px-10">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-6 gap-y-2">
+          <Link href="/" className="flex shrink-0 items-center gap-2.5 text-[17px] font-bold tracking-[-0.03em] text-ink no-underline">
+            <Mark />
             KOC Discovery
           </Link>
-          {children && <div className="min-w-0 md:border-l md:border-shell-rule md:pl-6">{children}</div>}
+          {children && <div className="min-w-0 md:border-l md:border-rule md:pl-6">{children}</div>}
         </div>
-        {aside && <div className="flex flex-wrap items-center gap-x-8 gap-y-3">{aside}</div>}
+        {aside && <div className="flex flex-wrap items-center gap-x-5 gap-y-2">{aside}</div>}
       </div>
     </header>
   );
 }
 
-/** Một con số trong sổ chi phí trên dải shell */
+/** Một con số tóm tắt trên header (chi phí, thời gian) */
 export function LedgerFigure({ value, label }: { value: string; label: string }) {
   return (
     <div className="text-right">
-      <div className="condensed num text-title leading-none font-bold">{value}</div>
-      <div className="mt-1 text-meta text-shell-ink-2">{label}</div>
+      <div className="num text-[17px] leading-none font-semibold tracking-[-0.02em] text-ink">{value}</div>
+      <div className="mt-1 text-meta text-ink-2">{label}</div>
     </div>
   );
 }
 
-const VERDICT: Record<string, { word: string; tone: string; ring: string }> = {
-  strong: { word: "Rất hợp", tone: "text-good", ring: "double" },
-  good: { word: "Phù hợp", tone: "text-good", ring: "double" },
-  weak: { word: "Cân nhắc", tone: "text-caution", ring: "single" },
-  reject: { word: "Loại", tone: "text-risk", ring: "struck" },
+const VERDICT: Record<string, { word: string; cls: string; dot: string }> = {
+  strong: { word: "Rất hợp", cls: "bg-good text-white border-good", dot: "bg-white" },
+  good: { word: "Phù hợp", cls: "bg-good-tint text-good border-good/30", dot: "bg-good-fill" },
+  weak: { word: "Cân nhắc", cls: "bg-caution-tint text-caution border-caution/30", dot: "bg-caution" },
+  reject: { word: "Loại", cls: "bg-risk-tint text-risk border-risk/30", dot: "bg-risk" },
 };
 
 export const verdictWord = (v: string) => VERDICT[v]?.word ?? v;
 
-/**
- * Con dấu verdict — dấu ấn của thế giới "bàn thử". Hình dạng khác nhau theo mức
- * (vòng kép / vòng đơn / gạch chéo) để không phụ thuộc vào màu.
- */
+/** Badge đánh giá dạng pill có chấm màu + chữ (không truyền tin chỉ bằng màu) */
 export function Seal({ verdict, size = "sm" }: { verdict: string; size?: "sm" | "lg" }) {
-  const v = VERDICT[verdict] ?? { word: verdict, tone: "text-ink-2", ring: "single" };
+  const v = VERDICT[verdict] ?? { word: verdict, cls: "bg-surface text-ink-2 border-rule", dot: "bg-ink-3" };
   const lg = size === "lg";
   return (
     <span
-      className={`compressed relative inline-grid shrink-0 place-items-center rounded-full border-2 border-current text-center leading-[1.05] font-extrabold uppercase ${v.tone} ${
-        lg ? "h-[120px] w-[120px] -rotate-6 text-title" : "h-[60px] w-[60px] text-[12px]"
+      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border font-semibold whitespace-nowrap ${v.cls} ${
+        lg ? "px-3.5 py-1.5 text-body" : "px-2.5 py-1 text-[12px] leading-none"
       }`}
-      role="img"
-      aria-label={`Verdict: ${v.word}`}
     >
-      {v.ring === "double" && <span aria-hidden className={`absolute rounded-full border border-current ${lg ? "inset-[7px]" : "inset-[4px]"}`} />}
-      {v.ring === "struck" && <span aria-hidden className="absolute top-1/2 left-[8%] h-[2px] w-[84%] -rotate-[28deg] bg-current" />}
-      <span className={lg ? "max-w-[78px]" : "max-w-[44px]"}>{v.word}</span>
+      <span aria-hidden className={`rounded-full ${v.dot} ${lg ? "h-2 w-2" : "h-1.5 w-1.5"}`} />
+      <span className="sr-only">Đánh giá: </span>
+      {v.word}
     </span>
   );
 }
 
-/*
- * Trạng thái run. Crimson dành cho hành động nên không dùng ở đây:
- * bình thường (xong / đang chạy / chờ) là chữ yên lặng kèm chấm; chỉ trạng thái cần xử lý
- * (gián đoạn, lỗi) mới có khung màu để nổi lên khi quét danh sách.
- */
-const STATUS: Record<string, { word: string; dot: string; loud?: string }> = {
-  completed: { word: "Hoàn tất", dot: "bg-good" },
-  running: { word: "Đang chạy", dot: "bg-ink animate-pulse" },
-  queued: { word: "Chờ chạy", dot: "bg-ink-3" },
-  interrupted: { word: "Bị gián đoạn", dot: "bg-caution", loud: "text-caution border-caution bg-caution-tint" },
-  failed: { word: "Lỗi", dot: "bg-risk", loud: "text-risk border-risk bg-risk-tint" },
+/* Trạng thái chiến dịch: pill nhạt; chỉ trạng thái cần xử lý (gián đoạn, lỗi) mới có màu cảnh báo */
+const STATUS: Record<string, { word: string; dot: string; cls: string }> = {
+  completed: { word: "Hoàn tất", dot: "bg-good-fill", cls: "bg-good-tint text-good" },
+  running: { word: "Đang chạy", dot: "bg-action animate-pulse", cls: "bg-action-tint text-ink" },
+  queued: { word: "Chờ chạy", dot: "bg-ink-3", cls: "bg-sunken text-ink-2" },
+  interrupted: { word: "Tạm dừng", dot: "bg-caution", cls: "bg-caution-tint text-caution" },
+  failed: { word: "Lỗi", dot: "bg-risk", cls: "bg-risk-tint text-risk" },
 };
 
 export function StatusTag({ status }: { status: string }) {
   const s = STATUS[status] ?? STATUS.queued;
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 text-meta font-semibold whitespace-nowrap ${
-        s.loud ? `rounded-[2px] border px-2 py-0.5 ${s.loud}` : "text-ink"
-      }`}
-    >
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] leading-none font-semibold whitespace-nowrap ${s.cls}`}>
       <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
-      {s.word}
-    </span>
-  );
-}
-
-/** Trạng thái trên nền shell tối: chữ sáng, viền màu trạng thái */
-export function StatusOnShell({ status }: { status: string }) {
-  const s = STATUS[status] ?? STATUS.queued;
-  return (
-    <span className="inline-flex items-center gap-2 text-meta font-semibold text-shell-ink">
-      <span aria-hidden className={`h-2 w-2 rounded-full ${status === "running" ? "animate-pulse bg-shell-ink" : status === "completed" ? "bg-[oklch(0.8_0.12_158)]" : status === "failed" ? "bg-[oklch(0.75_0.14_30)]" : "bg-[oklch(0.85_0.12_85)]"}`} />
       {s.word}
     </span>
   );

@@ -1,417 +1,446 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-16T14:22:41.516Z",
+  "generatedAt": "2026-11-16T15:16:59.000Z",
   "title": "Design System: KOC Discovery",
   "extensions": {
     "colorMeta": {
-      "ground": {
-        "role": "neutral",
-        "displayName": "Workbench",
-        "canonical": "oklch(0.975 0.002 350)",
-        "tonalRamp": [
-          "oklch(0.15 0.002 350)",
-          "oklch(0.26 0.003 350)",
-          "oklch(0.37 0.003 350)",
-          "oklch(0.48 0.004 350)",
-          "oklch(0.59 0.004 350)",
-          "oklch(0.70 0.003 350)",
-          "oklch(0.82 0.003 350)",
-          "oklch(0.95 0.002 350)"
-        ]
-      },
-      "surface": {
-        "role": "neutral",
-        "displayName": "Sheet",
-        "canonical": "oklch(0.995 0.001 350)",
-        "tonalRamp": [
-          "oklch(0.15 0.002 350)",
-          "oklch(0.26 0.003 350)",
-          "oklch(0.37 0.003 350)",
-          "oklch(0.48 0.004 350)",
-          "oklch(0.59 0.004 350)",
-          "oklch(0.70 0.003 350)",
-          "oklch(0.82 0.003 350)",
-          "oklch(0.95 0.002 350)"
-        ]
-      },
-      "ink": {
-        "role": "neutral",
-        "displayName": "Plum Ink",
-        "canonical": "oklch(0.21 0.018 345)",
-        "tonalRamp": [
-          "oklch(0.15 0.009 345)",
-          "oklch(0.26 0.011 345)",
-          "oklch(0.37 0.014 345)",
-          "oklch(0.48 0.016 345)",
-          "oklch(0.59 0.017 345)",
-          "oklch(0.70 0.015 345)",
-          "oklch(0.82 0.012 345)",
-          "oklch(0.95 0.009 345)"
-        ]
-      },
-      "ink-2": {
-        "role": "neutral",
-        "displayName": "Plum Ink 2",
-        "canonical": "oklch(0.43 0.016 345)",
-        "tonalRamp": [
-          "oklch(0.15 0.008 345)",
-          "oklch(0.26 0.010 345)",
-          "oklch(0.37 0.012 345)",
-          "oklch(0.48 0.015 345)",
-          "oklch(0.59 0.015 345)",
-          "oklch(0.70 0.013 345)",
-          "oklch(0.82 0.011 345)",
-          "oklch(0.95 0.008 345)"
-        ]
-      },
-      "ink-3": {
-        "role": "neutral",
-        "displayName": "Plum Ink 3",
-        "canonical": "oklch(0.55 0.012 345)",
-        "tonalRamp": [
-          "oklch(0.15 0.006 345)",
-          "oklch(0.26 0.008 345)",
-          "oklch(0.37 0.009 345)",
-          "oklch(0.48 0.011 345)",
-          "oklch(0.59 0.011 345)",
-          "oklch(0.70 0.010 345)",
-          "oklch(0.82 0.008 345)",
-          "oklch(0.95 0.006 345)"
-        ]
-      },
-      "rule": {
-        "role": "neutral",
-        "displayName": "Hairline",
-        "canonical": "oklch(0.89 0.006 345)",
-        "tonalRamp": [
-          "oklch(0.15 0.003 345)",
-          "oklch(0.26 0.004 345)",
-          "oklch(0.37 0.005 345)",
-          "oklch(0.48 0.005 345)",
-          "oklch(0.59 0.006 345)",
-          "oklch(0.70 0.005 345)",
-          "oklch(0.82 0.004 345)",
-          "oklch(0.95 0.003 345)"
-        ]
-      },
-      "rule-strong": {
-        "role": "neutral",
-        "displayName": "Strong Rule",
-        "canonical": "oklch(0.21 0.018 345)",
-        "tonalRamp": [
-          "oklch(0.15 0.009 345)",
-          "oklch(0.26 0.011 345)",
-          "oklch(0.37 0.014 345)",
-          "oklch(0.48 0.016 345)",
-          "oklch(0.59 0.017 345)",
-          "oklch(0.70 0.015 345)",
-          "oklch(0.82 0.012 345)",
-          "oklch(0.95 0.009 345)"
-        ]
-      },
-      "shell": {
-        "role": "secondary",
-        "displayName": "Black Cherry",
-        "canonical": "oklch(0.29 0.075 5)",
-        "tonalRamp": [
-          "oklch(0.15 0.037 5)",
-          "oklch(0.26 0.047 5)",
-          "oklch(0.37 0.058 5)",
-          "oklch(0.48 0.068 5)",
-          "oklch(0.59 0.071 5)",
-          "oklch(0.70 0.061 5)",
-          "oklch(0.82 0.049 5)",
-          "oklch(0.95 0.037 5)"
-        ]
-      },
-      "shell-ink": {
-        "role": "secondary",
-        "displayName": "Shell Ink",
-        "canonical": "oklch(0.97 0.008 5)",
-        "tonalRamp": [
-          "oklch(0.15 0.004 5)",
-          "oklch(0.26 0.005 5)",
-          "oklch(0.37 0.006 5)",
-          "oklch(0.48 0.007 5)",
-          "oklch(0.59 0.008 5)",
-          "oklch(0.70 0.006 5)",
-          "oklch(0.82 0.005 5)",
-          "oklch(0.95 0.004 5)"
-        ]
-      },
-      "shell-ink-2": {
-        "role": "secondary",
-        "displayName": "Shell Ink Muted",
-        "canonical": "oklch(0.86 0.03 5)",
-        "tonalRamp": [
-          "oklch(0.15 0.015 5)",
-          "oklch(0.26 0.019 5)",
-          "oklch(0.37 0.023 5)",
-          "oklch(0.48 0.027 5)",
-          "oklch(0.59 0.028 5)",
-          "oklch(0.70 0.024 5)",
-          "oklch(0.82 0.020 5)",
-          "oklch(0.95 0.015 5)"
-        ]
-      },
-      "shell-rule": {
-        "role": "secondary",
-        "displayName": "Shell Rule",
-        "canonical": "oklch(0.42 0.07 5)",
-        "tonalRamp": [
-          "oklch(0.15 0.034 5)",
-          "oklch(0.26 0.044 5)",
-          "oklch(0.37 0.054 5)",
-          "oklch(0.48 0.064 5)",
-          "oklch(0.59 0.066 5)",
-          "oklch(0.70 0.057 5)",
-          "oklch(0.82 0.046 5)",
-          "oklch(0.95 0.034 5)"
-        ]
-      },
       "action": {
         "role": "primary",
-        "displayName": "Lacquer Crimson",
-        "canonical": "oklch(0.47 0.155 6)",
+        "displayName": "DETOLA Orange",
+        "canonical": "oklch(0.726 0.174 39)",
         "tonalRamp": [
-          "oklch(0.15 0.076 6)",
-          "oklch(0.26 0.098 6)",
-          "oklch(0.37 0.119 6)",
-          "oklch(0.48 0.141 6)",
-          "oklch(0.59 0.147 6)",
-          "oklch(0.70 0.125 6)",
-          "oklch(0.82 0.102 6)",
-          "oklch(0.95 0.076 6)"
+          "oklch(0.15 0.085 39)",
+          "oklch(0.26 0.110 39)",
+          "oklch(0.37 0.134 39)",
+          "oklch(0.48 0.159 39)",
+          "oklch(0.59 0.165 39)",
+          "oklch(0.70 0.141 39)",
+          "oklch(0.82 0.114 39)",
+          "oklch(0.95 0.085 39)"
         ]
       },
       "action-hover": {
         "role": "primary",
-        "displayName": "Deep Lacquer",
-        "canonical": "oklch(0.41 0.145 6)",
+        "displayName": "Pressed Orange",
+        "canonical": "oklch(0.688 0.180 38)",
         "tonalRamp": [
-          "oklch(0.15 0.071 6)",
-          "oklch(0.26 0.091 6)",
-          "oklch(0.37 0.112 6)",
-          "oklch(0.48 0.132 6)",
-          "oklch(0.59 0.138 6)",
-          "oklch(0.70 0.117 6)",
-          "oklch(0.82 0.095 6)",
-          "oklch(0.95 0.071 6)"
+          "oklch(0.15 0.089 38)",
+          "oklch(0.26 0.114 38)",
+          "oklch(0.37 0.139 38)",
+          "oklch(0.48 0.164 38)",
+          "oklch(0.59 0.171 38)",
+          "oklch(0.70 0.146 38)",
+          "oklch(0.82 0.118 38)",
+          "oklch(0.95 0.089 38)"
         ]
       },
       "action-tint": {
         "role": "primary",
-        "displayName": "Blush Selection",
-        "canonical": "oklch(0.955 0.022 6)",
+        "displayName": "Peach Wash",
+        "canonical": "oklch(0.967 0.018 49)",
         "tonalRamp": [
-          "oklch(0.15 0.011 6)",
-          "oklch(0.26 0.014 6)",
-          "oklch(0.37 0.017 6)",
-          "oklch(0.48 0.020 6)",
-          "oklch(0.59 0.021 6)",
-          "oklch(0.70 0.018 6)",
-          "oklch(0.82 0.014 6)",
-          "oklch(0.95 0.011 6)"
+          "oklch(0.15 0.009 49)",
+          "oklch(0.26 0.011 49)",
+          "oklch(0.37 0.014 49)",
+          "oklch(0.48 0.016 49)",
+          "oklch(0.59 0.017 49)",
+          "oklch(0.70 0.014 49)",
+          "oklch(0.82 0.012 49)",
+          "oklch(0.95 0.009 49)"
         ]
       },
-      "action-ink": {
+      "action-text": {
         "role": "primary",
-        "displayName": "Lacquer Ink",
-        "canonical": "oklch(0.99 0.005 6)",
+        "displayName": "Burnt Orange Text",
+        "canonical": "oklch(0.539 0.153 38)",
         "tonalRamp": [
-          "oklch(0.15 0.002 6)",
-          "oklch(0.26 0.003 6)",
-          "oklch(0.37 0.004 6)",
-          "oklch(0.48 0.005 6)",
-          "oklch(0.59 0.005 6)",
-          "oklch(0.70 0.004 6)",
-          "oklch(0.82 0.003 6)",
-          "oklch(0.95 0.002 6)"
+          "oklch(0.15 0.075 38)",
+          "oklch(0.26 0.096 38)",
+          "oklch(0.37 0.118 38)",
+          "oklch(0.48 0.139 38)",
+          "oklch(0.59 0.145 38)",
+          "oklch(0.70 0.124 38)",
+          "oklch(0.82 0.100 38)",
+          "oklch(0.95 0.075 38)"
         ]
       },
       "good": {
-        "role": "tertiary",
-        "displayName": "Tested Green",
-        "canonical": "oklch(0.44 0.095 158)",
+        "role": "secondary",
+        "displayName": "Deep Teal",
+        "canonical": "oklch(0.534 0.069 178)",
         "tonalRamp": [
-          "oklch(0.15 0.047 158)",
-          "oklch(0.26 0.060 158)",
-          "oklch(0.37 0.073 158)",
-          "oklch(0.48 0.087 158)",
-          "oklch(0.59 0.090 158)",
-          "oklch(0.70 0.077 158)",
-          "oklch(0.82 0.062 158)",
-          "oklch(0.95 0.047 158)"
+          "oklch(0.15 0.034 178)",
+          "oklch(0.26 0.043 178)",
+          "oklch(0.37 0.053 178)",
+          "oklch(0.48 0.063 178)",
+          "oklch(0.59 0.065 178)",
+          "oklch(0.70 0.056 178)",
+          "oklch(0.82 0.045 178)",
+          "oklch(0.95 0.034 178)"
+        ]
+      },
+      "good-fill": {
+        "role": "secondary",
+        "displayName": "DETOLA Teal",
+        "canonical": "oklch(0.613 0.075 180)",
+        "tonalRamp": [
+          "oklch(0.15 0.037 180)",
+          "oklch(0.26 0.047 180)",
+          "oklch(0.37 0.058 180)",
+          "oklch(0.48 0.068 180)",
+          "oklch(0.59 0.071 180)",
+          "oklch(0.70 0.061 180)",
+          "oklch(0.82 0.049 180)",
+          "oklch(0.95 0.037 180)"
         ]
       },
       "good-tint": {
-        "role": "tertiary",
-        "displayName": "Tested Green Tint",
-        "canonical": "oklch(0.955 0.025 158)",
+        "role": "secondary",
+        "displayName": "Teal Mist",
+        "canonical": "oklch(0.959 0.007 165)",
         "tonalRamp": [
-          "oklch(0.15 0.012 158)",
-          "oklch(0.26 0.016 158)",
-          "oklch(0.37 0.019 158)",
-          "oklch(0.48 0.023 158)",
-          "oklch(0.59 0.024 158)",
-          "oklch(0.70 0.020 158)",
-          "oklch(0.82 0.016 158)",
-          "oklch(0.95 0.012 158)"
+          "oklch(0.15 0.004 165)",
+          "oklch(0.26 0.005 165)",
+          "oklch(0.37 0.006 165)",
+          "oklch(0.48 0.007 165)",
+          "oklch(0.59 0.007 165)",
+          "oklch(0.70 0.006 165)",
+          "oklch(0.82 0.005 165)",
+          "oklch(0.95 0.004 165)"
+        ]
+      },
+      "ground": {
+        "role": "neutral",
+        "displayName": "DETOLA Cream",
+        "canonical": "oklch(0.966 0.013 82)",
+        "tonalRamp": [
+          "oklch(0.15 0.006 82)",
+          "oklch(0.26 0.008 82)",
+          "oklch(0.37 0.010 82)",
+          "oklch(0.48 0.012 82)",
+          "oklch(0.59 0.012 82)",
+          "oklch(0.70 0.011 82)",
+          "oklch(0.82 0.009 82)",
+          "oklch(0.95 0.006 82)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Card White",
+        "canonical": "oklch(1.000 0.000 90)",
+        "tonalRamp": [
+          "oklch(0.15 0.000 90)",
+          "oklch(0.26 0.000 90)",
+          "oklch(0.37 0.000 90)",
+          "oklch(0.48 0.000 90)",
+          "oklch(0.59 0.000 90)",
+          "oklch(0.70 0.000 90)",
+          "oklch(0.82 0.000 90)",
+          "oklch(0.95 0.000 90)"
+        ]
+      },
+      "surface-2": {
+        "role": "neutral",
+        "displayName": "Inner Panel",
+        "canonical": "oklch(0.988 0.004 91)",
+        "tonalRamp": [
+          "oklch(0.15 0.002 91)",
+          "oklch(0.26 0.003 91)",
+          "oklch(0.37 0.003 91)",
+          "oklch(0.48 0.004 91)",
+          "oklch(0.59 0.004 91)",
+          "oklch(0.70 0.003 91)",
+          "oklch(0.82 0.003 91)",
+          "oklch(0.95 0.002 91)"
+        ]
+      },
+      "sunken": {
+        "role": "neutral",
+        "displayName": "Sunken Oat",
+        "canonical": "oklch(0.959 0.010 87)",
+        "tonalRamp": [
+          "oklch(0.15 0.005 87)",
+          "oklch(0.26 0.006 87)",
+          "oklch(0.37 0.008 87)",
+          "oklch(0.48 0.009 87)",
+          "oklch(0.59 0.009 87)",
+          "oklch(0.70 0.008 87)",
+          "oklch(0.82 0.006 87)",
+          "oklch(0.95 0.005 87)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "DETOLA Navy",
+        "canonical": "oklch(0.305 0.051 254)",
+        "tonalRamp": [
+          "oklch(0.15 0.025 254)",
+          "oklch(0.26 0.032 254)",
+          "oklch(0.37 0.039 254)",
+          "oklch(0.48 0.046 254)",
+          "oklch(0.59 0.048 254)",
+          "oklch(0.70 0.041 254)",
+          "oklch(0.82 0.033 254)",
+          "oklch(0.95 0.025 254)"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Slate Secondary",
+        "canonical": "oklch(0.488 0.025 253)",
+        "tonalRamp": [
+          "oklch(0.15 0.012 253)",
+          "oklch(0.26 0.016 253)",
+          "oklch(0.37 0.019 253)",
+          "oklch(0.48 0.023 253)",
+          "oklch(0.59 0.024 253)",
+          "oklch(0.70 0.020 253)",
+          "oklch(0.82 0.016 253)",
+          "oklch(0.95 0.012 253)"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Slate Caption",
+        "canonical": "oklch(0.544 0.024 253)",
+        "tonalRamp": [
+          "oklch(0.15 0.012 253)",
+          "oklch(0.26 0.015 253)",
+          "oklch(0.37 0.019 253)",
+          "oklch(0.48 0.022 253)",
+          "oklch(0.59 0.023 253)",
+          "oklch(0.70 0.020 253)",
+          "oklch(0.82 0.016 253)",
+          "oklch(0.95 0.012 253)"
+        ]
+      },
+      "ink-mute": {
+        "role": "neutral",
+        "displayName": "Two-Tone Grey",
+        "canonical": "oklch(0.628 0.020 246)",
+        "tonalRamp": [
+          "oklch(0.15 0.010 246)",
+          "oklch(0.26 0.013 246)",
+          "oklch(0.37 0.015 246)",
+          "oklch(0.48 0.018 246)",
+          "oklch(0.59 0.019 246)",
+          "oklch(0.70 0.016 246)",
+          "oklch(0.82 0.013 246)",
+          "oklch(0.95 0.010 246)"
+        ]
+      },
+      "shell": {
+        "role": "neutral",
+        "displayName": "Navy Block",
+        "canonical": "oklch(0.305 0.051 254)",
+        "tonalRamp": [
+          "oklch(0.15 0.025 254)",
+          "oklch(0.26 0.032 254)",
+          "oklch(0.37 0.039 254)",
+          "oklch(0.48 0.046 254)",
+          "oklch(0.59 0.048 254)",
+          "oklch(0.70 0.041 254)",
+          "oklch(0.82 0.033 254)",
+          "oklch(0.95 0.025 254)"
+        ]
+      },
+      "shell-ink": {
+        "role": "neutral",
+        "displayName": "On-Navy White",
+        "canonical": "oklch(1.000 0.000 90)",
+        "tonalRamp": [
+          "oklch(0.15 0.000 90)",
+          "oklch(0.26 0.000 90)",
+          "oklch(0.37 0.000 90)",
+          "oklch(0.48 0.000 90)",
+          "oklch(0.59 0.000 90)",
+          "oklch(0.70 0.000 90)",
+          "oklch(0.82 0.000 90)",
+          "oklch(0.95 0.000 90)"
+        ]
+      },
+      "shell-ink-2": {
+        "role": "neutral",
+        "displayName": "On-Navy Mist",
+        "canonical": "oklch(0.842 0.018 253)",
+        "tonalRamp": [
+          "oklch(0.15 0.009 253)",
+          "oklch(0.26 0.012 253)",
+          "oklch(0.37 0.014 253)",
+          "oklch(0.48 0.017 253)",
+          "oklch(0.59 0.017 253)",
+          "oklch(0.70 0.015 253)",
+          "oklch(0.82 0.012 253)",
+          "oklch(0.95 0.009 253)"
+        ]
+      },
+      "action-ink": {
+        "role": "neutral",
+        "displayName": "Navy On Orange",
+        "canonical": "oklch(0.305 0.051 254)",
+        "tonalRamp": [
+          "oklch(0.15 0.025 254)",
+          "oklch(0.26 0.032 254)",
+          "oklch(0.37 0.039 254)",
+          "oklch(0.48 0.046 254)",
+          "oklch(0.59 0.048 254)",
+          "oklch(0.70 0.041 254)",
+          "oklch(0.82 0.033 254)",
+          "oklch(0.95 0.025 254)"
         ]
       },
       "caution": {
         "role": "tertiary",
-        "displayName": "Amber Proof",
-        "canonical": "oklch(0.47 0.105 70)",
+        "displayName": "Amber Ink",
+        "canonical": "oklch(0.549 0.112 71)",
         "tonalRamp": [
-          "oklch(0.15 0.052 70)",
-          "oklch(0.26 0.066 70)",
-          "oklch(0.37 0.081 70)",
-          "oklch(0.48 0.096 70)",
-          "oklch(0.59 0.100 70)",
-          "oklch(0.70 0.085 70)",
-          "oklch(0.82 0.069 70)",
-          "oklch(0.95 0.052 70)"
+          "oklch(0.15 0.055 71)",
+          "oklch(0.26 0.071 71)",
+          "oklch(0.37 0.087 71)",
+          "oklch(0.48 0.102 71)",
+          "oklch(0.59 0.107 71)",
+          "oklch(0.70 0.091 71)",
+          "oklch(0.82 0.074 71)",
+          "oklch(0.95 0.055 71)"
         ]
       },
       "caution-tint": {
         "role": "tertiary",
-        "displayName": "Amber Proof Tint",
-        "canonical": "oklch(0.96 0.035 80)",
+        "displayName": "Amber Wash",
+        "canonical": "oklch(0.964 0.026 82)",
         "tonalRamp": [
-          "oklch(0.15 0.017 80)",
-          "oklch(0.26 0.022 80)",
-          "oklch(0.37 0.027 80)",
-          "oklch(0.48 0.032 80)",
-          "oklch(0.59 0.033 80)",
-          "oklch(0.70 0.028 80)",
-          "oklch(0.82 0.023 80)",
-          "oklch(0.95 0.017 80)"
+          "oklch(0.15 0.013 82)",
+          "oklch(0.26 0.016 82)",
+          "oklch(0.37 0.020 82)",
+          "oklch(0.48 0.024 82)",
+          "oklch(0.59 0.025 82)",
+          "oklch(0.70 0.021 82)",
+          "oklch(0.82 0.017 82)",
+          "oklch(0.95 0.013 82)"
         ]
       },
       "risk": {
         "role": "tertiary",
-        "displayName": "Red Proof",
-        "canonical": "oklch(0.49 0.165 30)",
+        "displayName": "Brick Red",
+        "canonical": "oklch(0.543 0.174 30)",
         "tonalRamp": [
-          "oklch(0.15 0.081 30)",
-          "oklch(0.26 0.104 30)",
-          "oklch(0.37 0.127 30)",
-          "oklch(0.48 0.150 30)",
-          "oklch(0.59 0.157 30)",
-          "oklch(0.70 0.134 30)",
-          "oklch(0.82 0.108 30)",
-          "oklch(0.95 0.081 30)"
+          "oklch(0.15 0.085 30)",
+          "oklch(0.26 0.110 30)",
+          "oklch(0.37 0.134 30)",
+          "oklch(0.48 0.159 30)",
+          "oklch(0.59 0.165 30)",
+          "oklch(0.70 0.141 30)",
+          "oklch(0.82 0.114 30)",
+          "oklch(0.95 0.085 30)"
         ]
       },
       "risk-tint": {
         "role": "tertiary",
-        "displayName": "Red Proof Tint",
-        "canonical": "oklch(0.955 0.025 30)",
+        "displayName": "Brick Wash",
+        "canonical": "oklch(0.952 0.018 30)",
         "tonalRamp": [
-          "oklch(0.15 0.012 30)",
-          "oklch(0.26 0.016 30)",
-          "oklch(0.37 0.019 30)",
-          "oklch(0.48 0.023 30)",
-          "oklch(0.59 0.024 30)",
-          "oklch(0.70 0.020 30)",
-          "oklch(0.82 0.016 30)",
-          "oklch(0.95 0.012 30)"
+          "oklch(0.15 0.009 30)",
+          "oklch(0.26 0.011 30)",
+          "oklch(0.37 0.014 30)",
+          "oklch(0.48 0.016 30)",
+          "oklch(0.59 0.017 30)",
+          "oklch(0.70 0.014 30)",
+          "oklch(0.82 0.012 30)",
+          "oklch(0.95 0.009 30)"
         ]
       }
     },
     "typographyMeta": {
       "display": {
         "displayName": "Display",
-        "purpose": "Page titles, the ranking heading and the reviewed KOC handle; condensed 72%."
+        "purpose": "Two-tone page titles from sm up; selected KOC handle on desktop."
       },
-      "rank-numeral": {
-        "displayName": "Rank numeral",
-        "purpose": "Zero-padded rank in ranking rows; compressed 64%, crimson when selected."
+      "display-mobile": {
+        "displayName": "Display (mobile, 32px)",
+        "purpose": "Page titles below sm. Intentional off-ramp."
+      },
+      "handle-mobile": {
+        "displayName": "Handle (mobile, 30px)",
+        "purpose": "KOC handle in the review card on phones. Intentional off-ramp."
       },
       "title": {
         "displayName": "Title",
-        "purpose": "Wordmark, ledger figures, scores, step facts, Ưu / Lưu ý, card titles, stepper value."
+        "purpose": "Card and section titles, rank numerals, score figures."
+      },
+      "stepper-value": {
+        "displayName": "Stepper value (20px)",
+        "purpose": "Number inside the KOC count stepper. Intentional off-ramp."
+      },
+      "score-mobile": {
+        "displayName": "Score (mobile, 19px)",
+        "purpose": "Score grid cells on phones. Intentional off-ramp."
+      },
+      "figure": {
+        "displayName": "Figure / wordmark (17px)",
+        "purpose": "Header wordmark (700) and ledger figures (600, tabular). Intentional off-ramp."
       },
       "body": {
         "displayName": "Body",
-        "purpose": "Reading text, AI messages, reasons, table cells, buttons and chips; 62–70ch measure."
+        "purpose": "Reading text, field values, chat messages."
       },
       "label": {
-        "displayName": "Label / meta",
-        "purpose": "Field labels, column headers, meta lines, statuses, evidence keys, hints."
+        "displayName": "Label (14px)",
+        "purpose": "Button and chip text. Intentional off-ramp."
       },
-      "seal": {
-        "displayName": "Seal word",
-        "purpose": "Only inside the 60px verdict seal and the 52px \"Đủ brief\" stamp; uppercase."
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Captions, table headers, helper lines, segmented options."
+      },
+      "badge": {
+        "displayName": "Badge (12px)",
+        "purpose": "Verdict, status and evidence-key pills. Intentional off-ramp."
+      },
+      "kicker": {
+        "displayName": "Kicker (11px)",
+        "purpose": "Uppercase orange-dot label above a page title, one per page. Intentional off-ramp."
       }
     },
     "shadows": [
       {
-        "name": "none",
-        "value": "none",
-        "purpose": "The system is flat; depth comes from tone steps and rules. The cited frame lifts 4px with a 2px crimson outline (offset 3px) instead of a shadow."
+        "name": "soft-lift",
+        "value": "0 20px 55px rgb(28 48 72 / 0.045), 0 2px 6px rgb(28 48 72 / 0.03)",
+        "purpose": "Cards, ready-brief card, open step panel. The only shadow."
       },
       {
-        "name": "focus-ring",
-        "value": "outline: 2px solid var(--action); outline-offset: 2px",
-        "purpose": "Global :focus-visible; 0 offset on fields, -2px inset on the stepper input."
-      },
-      {
-        "name": "composer-backdrop",
-        "value": "background: color-mix(in oklch, var(--ground) 95%, transparent); backdrop-filter: blur(2px)",
-        "purpose": "Sticky composer area so text scrolling beneath stays legible."
+        "name": "focus-halo",
+        "value": "0 0 0 3px rgb(255 121 77 / 0.22)",
+        "purpose": "Focused fields and composite fields, paired with a #b54620 border. Intentional value."
       }
     ],
     "motion": [
       {
         "name": "ease-out",
         "value": "cubic-bezier(0.22, 1, 0.36, 1)",
-        "purpose": "The single easing curve for every transition and entrance."
-      },
-      {
-        "name": "state",
-        "value": "160ms cubic-bezier(0.22, 1, 0.36, 1)",
-        "purpose": "Color and border changes on buttons, chips, fields, stepper."
-      },
-      {
-        "name": "chevron",
-        "value": "200ms cubic-bezier(0.22, 1, 0.36, 1)",
-        "purpose": "Disclosure chevron rotation."
-      },
-      {
-        "name": "frame-lift",
-        "value": "300ms cubic-bezier(0.22, 1, 0.36, 1)",
-        "purpose": "Cited frame translates -4px and gains its crimson ring."
-      },
-      {
-        "name": "rise-in",
-        "value": "320ms cubic-bezier(0.22, 1, 0.36, 1) (translateY 6px + fade); late variant 360ms with 700ms delay",
-        "purpose": "Chat messages, hint bubble, edit sheet, opened step panels."
-      },
-      {
-        "name": "evidence-in",
-        "value": "280ms cubic-bezier(0.22, 1, 0.36, 1) (translateY -4px + fade + 2px blur)",
-        "purpose": "The one staged moment: the evidence panel appearing."
-      },
-      {
-        "name": "progress",
-        "value": "700ms cubic-bezier(0.22, 1, 0.36, 1)",
-        "purpose": "scaleX of step progress bars."
+        "purpose": "All state transitions (160ms controls, 200ms chevron)."
       },
       {
         "name": "composer-sweep",
-        "value": "3.6s linear infinite conic crimson arc",
-        "purpose": "Invites the first chat message; stops on focus or text. Reduced motion: static crimson ring."
+        "value": "conic orange arc around the composer border, 3.6s linear infinite",
+        "purpose": "Invites the first chat message; stops on focus or first send; static orange border under reduced motion."
       },
       {
-        "name": "typing",
-        "value": "1.2s ease-in-out infinite, 0.15s stagger",
-        "purpose": "Three-dot AI typing indicator."
+        "name": "rise-in",
+        "value": "opacity 0 + translateY(6px), 320ms ease-out (360ms with 700ms delay for late variant)",
+        "purpose": "New chat cards and opened step panels."
+      },
+      {
+        "name": "evidence-in",
+        "value": "opacity 0 + translateY(-4px) + blur(2px), 280ms ease-out",
+        "purpose": "Evidence revealed by pressing an evidence key; the one staged moment."
+      },
+      {
+        "name": "typing-dots",
+        "value": "opacity pulse 1.2s, 0.15s stagger",
+        "purpose": "AI is replying."
       },
       {
         "name": "reduced-motion",
-        "value": "animation/transition 0.01ms, scroll-behavior auto",
+        "value": "transition/animation duration 0.01ms",
         "purpose": "prefers-reduced-motion: reduce collapses all motion."
       }
     ],
@@ -427,10 +456,39 @@
       {
         "name": "lg",
         "value": "1024px"
+      }
+    ],
+    "stateColors": [
+      {
+        "name": "btn-dark-hover",
+        "value": "#26405e",
+        "purpose": "Dark button hover. Intentional value."
+      }
+    ],
+    "contrast": [
+      {
+        "pair": "ink-2 on ground",
+        "ratio": "5.7:1"
       },
       {
-        "name": "xl",
-        "value": "1280px"
+        "pair": "ink-mute on ground",
+        "ratio": "3.2:1 (large text only)"
+      },
+      {
+        "pair": "action-ink on action",
+        "ratio": "5.2:1"
+      },
+      {
+        "pair": "action-text on ground",
+        "ratio": "4.9:1"
+      },
+      {
+        "pair": "action-text on surface",
+        "ratio": "5.4:1"
+      },
+      {
+        "pair": "ink-3 on surface",
+        "ratio": "5.0:1"
       }
     ]
   },
@@ -439,173 +497,139 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "One primary action per area: \"Gửi brief\", \"Bắt đầu tìm creator\".",
-      "html": "<button class=\"ds-btn ds-btn-primary\">Bắt đầu tìm creator</button>",
-      "css": ".ds-btn{display:inline-flex;align-items:center;gap:8px;border-radius:2px;padding:8px 14px;font:600 15px/1.2 var(--font-archivo),system-ui,sans-serif;border:1px solid var(--rule-strong);cursor:pointer;transition:background-color 160ms cubic-bezier(0.22, 1, 0.36, 1),border-color 160ms cubic-bezier(0.22, 1, 0.36, 1)}.ds-btn-primary{background:var(--action);border-color:var(--action);color:var(--action-ink)}.ds-btn-primary:hover{background:var(--action-hover);border-color:var(--action-hover)}.ds-btn-primary:focus-visible{outline:2px solid var(--action);outline-offset:2px}"
+      "description": "DETOLA orange fill with navy text; the one primary action per view.",
+      "html": "<button class=\"ds-btn ds-btn-primary\">Tạo brief mới</button>",
+      "css": ".ds-btn{font-family: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;border-radius:12px;padding:8px 18px;font-size:14px;font-weight:600;line-height:1.2;border:1px solid rgb(28 48 72 / 0.22);background:#fff;color:#1c3048;cursor:pointer;transition:background-color 160ms cubic-bezier(0.22,1,0.36,1),border-color 160ms cubic-bezier(0.22,1,0.36,1),transform 160ms cubic-bezier(0.22,1,0.36,1)}.ds-btn:active{transform:translateY(1px)}.ds-btn:focus-visible{outline:2px solid #b54620;outline-offset:2px}.ds-btn-primary{background:#ff794d;border-color:#ff794d;color:#1c3048}.ds-btn-primary:hover{background:#f46a3c;border-color:#f46a3c}"
+    },
+    {
+      "name": "Dark Button",
+      "kind": "button",
+      "refersTo": "button-dark",
+      "description": "Navy fill with white text, used for the header's 'Brief mới'.",
+      "html": "<button class=\"ds-btn-dark\">+ Brief mới</button>",
+      "css": ".ds-btn-dark{font-family: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, sans-serif;display:inline-flex;align-items:center;gap:8px;min-height:40px;border-radius:12px;padding:8px 18px;font-size:14px;font-weight:600;border:1px solid #1c3048;background:#1c3048;color:#fff;cursor:pointer;transition:background-color 160ms}.ds-btn-dark:hover{background:#26405e;border-color:#26405e}.ds-btn-dark:focus-visible{outline:2px solid #b54620;outline-offset:2px}"
     },
     {
       "name": "Secondary Button",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "Outlined companion action: \"Sửa brief\".",
-      "html": "<button class=\"ds-btn2\">Sửa brief</button>",
-      "css": ".ds-btn2{display:inline-flex;align-items:center;gap:8px;border-radius:2px;padding:8px 14px;font:600 15px/1.2 var(--font-archivo),system-ui,sans-serif;border:1px solid var(--rule-strong);background:var(--surface);color:var(--ink);cursor:pointer;transition:background-color 160ms cubic-bezier(0.22, 1, 0.36, 1)}.ds-btn2:hover{background:var(--ground)}.ds-btn2:focus-visible{outline:2px solid var(--action);outline-offset:2px}"
-    },
-    {
-      "name": "Shell Band",
-      "kind": "nav",
-      "refersTo": "shell-band",
-      "description": "Black-cherry band: wordmark, breadcrumb + status, ledger figure, one next action.",
-      "html": "<header class=\"ds-shell\"><a class=\"ds-mark\" href=\"#\">KOC Discovery</a><nav class=\"ds-crumb\"><a href=\"#\">Chiến dịch</a> › <b>Kem chống nắng</b> <span class=\"ds-st\"><i></i>Hoàn tất</span></nav><div class=\"ds-aside\"><div class=\"ds-led\"><div>≈ $0.42</div><small>chi phí · 2 phút 10 giây</small></div><button class=\"ds-onshell\">Brief mới</button></div></header>",
-      "css": ".ds-shell{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px 40px;background:var(--shell);color:var(--shell-ink);padding:20px 40px;font-family:var(--font-archivo),system-ui,sans-serif}.ds-mark{font:800 24px/1 inherit;font-stretch:64%;text-transform:uppercase;color:inherit;text-decoration:none}.ds-crumb{font-size:15px;border-left:1px solid var(--shell-rule);padding-left:24px;flex:1}.ds-crumb a{color:var(--shell-ink-2);text-decoration:none}.ds-crumb a:hover{color:var(--shell-ink);text-decoration:underline}.ds-st{margin-left:12px;font-size:13px;font-weight:600}.ds-st i{display:inline-block;width:8px;height:8px;border-radius:50%;background:oklch(0.8 0.12 158);margin-right:8px}.ds-aside{display:flex;align-items:center;gap:32px}.ds-led{text-align:right}.ds-led div{font:700 24px/1 inherit;font-stretch:72%;font-variant-numeric:tabular-nums}.ds-led small{font-size:13px;color:var(--shell-ink-2)}.ds-onshell{border:1px solid var(--shell-ink-2);background:transparent;color:var(--shell-ink);border-radius:2px;padding:8px 14px;font:600 15px/1.2 inherit;cursor:pointer;transition:background-color 160ms cubic-bezier(0.22, 1, 0.36, 1)}.ds-onshell:hover{background:var(--shell-rule)}.ds-onshell:focus-visible{outline:2px solid var(--action);outline-offset:2px}"
+      "description": "White button with strong hairline that turns navy on hover.",
+      "html": "<button class=\"ds-btn-sec\">Brief mới</button>",
+      "css": ".ds-btn-sec{font-family: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, sans-serif;min-height:40px;border-radius:12px;padding:8px 18px;font-size:14px;font-weight:600;border:1px solid rgb(28 48 72 / 0.22);background:#fff;color:#1c3048;cursor:pointer;transition:border-color 160ms}.ds-btn-sec:hover{border-color:#1c3048}.ds-btn-sec:focus-visible{outline:2px solid #b54620;outline-offset:2px}"
     },
     {
       "name": "Field",
       "kind": "input",
       "refersTo": "field",
-      "description": "Standard text input with crimson focus.",
-      "html": "<input class=\"ds-field\" placeholder=\"Ví dụ: Kem chống nắng nâng tông SPF50+\">",
-      "css": ".ds-field{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--rule);border-radius:2px;padding:8px 10px;font:15px/1.5 var(--font-archivo),system-ui,sans-serif;color:var(--ink);transition:border-color 160ms cubic-bezier(0.22, 1, 0.36, 1)}.ds-field::placeholder{color:var(--ink-3)}.ds-field:hover{border-color:var(--ink-3)}.ds-field:focus-visible{outline:2px solid var(--action);outline-offset:0;border-color:var(--action)}"
+      "description": "Text input with orange focus border and halo.",
+      "html": "<input class=\"ds-field\" placeholder=\"Ví dụ: Kem chống nắng nâng tông SPF50\">",
+      "css": ".ds-field{font-family: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, sans-serif;width:100%;background:#fff;border:1px solid rgb(28 48 72 / 0.22);border-radius:12px;padding:10px 14px;font-size:15px;color:#1c3048;transition:border-color 160ms,box-shadow 160ms}.ds-field::placeholder{color:#66717e}.ds-field:hover{border-color:#66717e}.ds-field:focus-visible{outline:none;border-color:#b54620;box-shadow:0 0 0 3px rgb(255 121 77 / 0.22)}"
     },
     {
-      "name": "Choice Chip",
+      "name": "Choice Chips",
       "kind": "chip",
       "refersTo": "chip",
-      "description": "Single (radio) or multi (checkbox) quick choice; selected = crimson border + blush.",
-      "html": "<div class=\"ds-chips\" role=\"group\"><button class=\"ds-chip\" role=\"checkbox\" aria-checked=\"false\">Nano <small>1k–10k</small></button><button class=\"ds-chip\" role=\"checkbox\" aria-checked=\"true\"><span class=\"ds-ck\">✓</span>Micro <small>10k–100k</small></button></div>",
-      "css": ".ds-chips{display:flex;flex-wrap:wrap;gap:8px}.ds-chip{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 12px;border:1px solid var(--rule);border-radius:2px;background:var(--surface);color:var(--ink);font:15px/1.2 var(--font-archivo),system-ui,sans-serif;cursor:pointer;transition:border-color 160ms cubic-bezier(0.22, 1, 0.36, 1),background-color 160ms cubic-bezier(0.22, 1, 0.36, 1)}.ds-chip small{font-size:13px;color:var(--ink-2)}.ds-chip:hover{border-color:var(--ink-3)}.ds-chip[aria-checked=\"true\"]{border-color:var(--action);background:var(--action-tint);font-weight:600}.ds-ck{color:var(--action)}.ds-chip:focus-visible{outline:2px solid var(--action);outline-offset:2px}"
+      "description": "Pill chips; selected = peach wash, navy outline, burnt-orange check.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip\" aria-checked=\"false\">20 triệu</button><button class=\"ds-chip\" aria-checked=\"true\"><span class=\"ds-chk\">✓</span>30 triệu</button></div>",
+      "css": ".ds-chips{display:flex;gap:8px;flex-wrap:wrap}.ds-chip{font-family: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, sans-serif;display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:6px 14px;border:1px solid rgb(28 48 72 / 0.22);border-radius:999px;background:#fff;color:#1c3048;font-size:14px;line-height:1.2;cursor:pointer;transition:border-color 160ms,background-color 160ms}.ds-chip:hover{border-color:#1c3048}.ds-chip:focus-visible{outline:2px solid #b54620;outline-offset:2px}.ds-chip[aria-checked=true]{border-color:#1c3048;background:#fff1ea;box-shadow:inset 0 0 0 1px #1c3048;font-weight:600}.ds-chk{color:#b54620}"
     },
     {
-      "name": "Verdict Seal",
+      "name": "Segmented Control",
+      "kind": "chip",
+      "refersTo": "segmented-active",
+      "description": "Pill track; active option is a navy pill.",
+      "html": "<div class=\"ds-seg\"><button aria-checked=\"true\">₫ VND</button><button aria-checked=\"false\">$ USD</button></div>",
+      "css": ".ds-seg{font-family: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, sans-serif;display:inline-flex;border:1px solid rgb(28 48 72 / 0.22);border-radius:999px;padding:3px;background:#fff}.ds-seg button{min-height:30px;padding:4px 12px;font-size:13px;font-weight:600;color:#56616e;border-radius:999px;border:0;background:transparent;cursor:pointer}.ds-seg button[aria-checked=true]{background:#1c3048;color:#fff}"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "White card on cream with hairline border and soft lift.",
+      "html": "<div class=\"ds-card\"><h3>5 KOC đề xuất</h3><p>Chi phí booking ước tính 29M ₫ / 30M ₫</p></div>",
+      "css": ".ds-card{font-family: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, sans-serif;background:#fff;border:1px solid rgb(28 48 72 / 0.1);border-radius:20px;box-shadow:0 20px 55px rgb(28 48 72 / 0.045),0 2px 6px rgb(28 48 72 / 0.03);padding:20px 28px;color:#1c3048}.ds-card h3{margin:0 0 8px;font-size:24px;font-weight:600;letter-spacing:-0.025em}.ds-card p{margin:0;font-size:13px;color:#56616e}"
+    },
+    {
+      "name": "Verdict Badges",
+      "kind": "chip",
+      "refersTo": "badge-good",
+      "description": "Dot-plus-word pills; colour never stands alone.",
+      "html": "<div class=\"ds-badges\"><span class=\"ds-b ds-strong\"><i></i>Rất hợp</span><span class=\"ds-b ds-good\"><i></i>Phù hợp</span><span class=\"ds-b ds-weak\"><i></i>Cân nhắc</span><span class=\"ds-b ds-reject\"><i></i>Loại</span></div>",
+      "css": ".ds-badges{display:flex;gap:8px;flex-wrap:wrap}.ds-b{font-family: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, sans-serif;display:inline-flex;align-items:center;gap:6px;border-radius:999px;border:1px solid;padding:4px 10px;font-size:12px;line-height:1;font-weight:600}.ds-b i{width:6px;height:6px;border-radius:999px}.ds-strong{background:#367064;color:#fff;border-color:#367064}.ds-strong i{background:#fff}.ds-good{background:#edf3f0;color:#367064;border-color:rgb(59 122 109 / 0.3)}.ds-good i{background:#4c9386}.ds-weak{background:#fcf2e0;color:#8f5c10;border-color:rgb(154 100 18 / 0.3)}.ds-weak i{background:#8f5c10}.ds-reject{background:#fbebe8;color:#c0392b;border-color:rgb(192 57 43 / 0.3)}.ds-reject i{background:#c0392b}"
+    },
+    {
+      "name": "Sticky Header",
+      "kind": "nav",
+      "refersTo": "header",
+      "description": "Light translucent header: navy mark, wordmark, breadcrumb, ledger figure, one action.",
+      "html": "<header class=\"ds-hdr\"><a class=\"ds-brand\"><span class=\"ds-mark\"><span></span></span>KOC Discovery</a><span class=\"ds-crumb\">Chiến dịch › <b>Kem chống nắng</b></span><span class=\"ds-fig\"><b>≈ $0.00</b><small>chi phí · 0 giây</small></span></header>",
+      "css": ".ds-hdr{font-family: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, sans-serif;display:flex;align-items:center;gap:24px;min-height:68px;padding:12px 20px;background:rgb(248 243 234 / 0.9);backdrop-filter:blur(12px);border-bottom:1px solid rgb(28 48 72 / 0.1);color:#1c3048}.ds-brand{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:700;letter-spacing:-0.03em}.ds-mark{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:10px;background:#1c3048}.ds-mark span{width:10px;height:10px;border-radius:999px;background:#ff794d}.ds-crumb{font-size:15px;color:#56616e;border-left:1px solid rgb(28 48 72 / 0.1);padding-left:24px}.ds-crumb b{color:#1c3048;font-weight:600}.ds-fig{margin-left:auto;text-align:right;display:flex;flex-direction:column}.ds-fig b{font-size:17px;font-weight:600;letter-spacing:-0.02em;font-variant-numeric:tabular-nums;line-height:1}.ds-fig small{font-size:13px;color:#56616e;margin-top:4px}"
+    },
+    {
+      "name": "Step Node Rail",
       "kind": "custom",
-      "refersTo": "seal",
-      "description": "Printed ink seal: double ring (good), single ring (caution), struck (reject); always with a word.",
-      "html": "<div class=\"ds-seals\"><span class=\"ds-seal ds-good\" role=\"img\" aria-label=\"Verdict: Phù hợp\"><i class=\"ds-ring\"></i><b>Phù hợp</b></span><span class=\"ds-seal ds-caution\" role=\"img\" aria-label=\"Verdict: Cân nhắc\"><b>Cân nhắc</b></span><span class=\"ds-seal ds-risk\" role=\"img\" aria-label=\"Verdict: Loại\"><i class=\"ds-strike\"></i><b>Loại</b></span></div>",
-      "css": ".ds-seals{display:flex;gap:16px}.ds-seal{position:relative;display:inline-grid;place-items:center;width:60px;height:60px;border-radius:50%;border:2px solid currentColor;font:800 12px/1.05 var(--font-archivo),system-ui,sans-serif;font-stretch:64%;text-transform:uppercase;text-align:center}.ds-seal b{max-width:44px}.ds-good{color:var(--good)}.ds-caution{color:var(--caution)}.ds-risk{color:var(--risk)}.ds-ring{position:absolute;inset:4px;border-radius:50%;border:1px solid currentColor}.ds-strike{position:absolute;top:50%;left:8%;width:84%;height:2px;background:currentColor;transform:rotate(-28deg)}"
-    },
-    {
-      "name": "Evidence Key",
-      "kind": "custom",
-      "refersTo": "evidence-key",
-      "description": "Proof key after a claim; pressing it rings the cited frame and reveals the evidence.",
-      "html": "<p class=\"ds-claim\">Đã quay cận texture trên tay. <button class=\"ds-key\" aria-pressed=\"false\">v1.o2</button><button class=\"ds-key\" aria-pressed=\"true\">v1.o1</button></p>",
-      "css": ".ds-claim{font:15px/1.5 var(--font-archivo),system-ui,sans-serif;color:var(--ink)}.ds-key{margin-left:6px;border:1px solid var(--action);border-radius:2px;padding:0 6px;font:600 13px/18px var(--font-archivo),system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--action);background:transparent;cursor:pointer;transition:background-color 160ms cubic-bezier(0.22, 1, 0.36, 1)}.ds-key:hover{background:var(--action-tint)}.ds-key[aria-pressed=\"true\"]{background:var(--action);color:var(--action-ink)}.ds-key:focus-visible{outline:2px solid var(--action);outline-offset:2px}"
-    },
-    {
-      "name": "Ranking Row",
-      "kind": "custom",
-      "refersTo": "ranking-row-selected",
-      "description": "Compressed rank numeral, handle, tabular figures, seal, score; selected = blush + crimson numeral.",
-      "html": "<button class=\"ds-row\" aria-pressed=\"true\"><span class=\"ds-rank\">01</span><span class=\"ds-who\"><b>@luumaianh_</b><small>Luumaianh</small></span><span class=\"ds-n\">183k</span><span class=\"ds-n\">7M ₫</span><span class=\"ds-score\">58.5<small>AI 62</small></span></button>",
-      "css": ".ds-row{display:grid;grid-template-columns:40px minmax(0,1fr) 56px 64px 60px;align-items:center;gap:0 12px;width:100%;max-width:520px;padding:12px 8px;border:0;border-bottom:1px solid var(--rule);background:transparent;text-align:left;font:15px/1.5 var(--font-archivo),system-ui,sans-serif;color:var(--ink);cursor:pointer;transition:background-color 160ms cubic-bezier(0.22, 1, 0.36, 1)}.ds-row:hover{background:var(--surface)}.ds-row[aria-pressed=\"true\"]{background:var(--action-tint)}.ds-rank{font:800 40px/1 inherit;font-stretch:64%;font-variant-numeric:tabular-nums}.ds-row[aria-pressed=\"true\"] .ds-rank{color:var(--action)}.ds-who small,.ds-score small{display:block;font-size:13px;color:var(--ink-2)}.ds-n{text-align:right;font-variant-numeric:tabular-nums}.ds-score{text-align:right;font:700 24px/1 inherit;font-stretch:72%}.ds-row:focus-visible{outline:2px solid var(--action);outline-offset:2px}"
-    },
-    {
-      "name": "Chat Composer",
-      "kind": "input",
-      "refersTo": "field",
-      "description": "Sticky composer with crimson send square; crimson sweep around the border until first focus.",
-      "html": "<form class=\"ds-comp\"><textarea rows=\"1\" placeholder=\"Hoặc kể cho AI: sản phẩm, khách hàng, ngân sách…\"></textarea><button type=\"button\" aria-label=\"Gửi\">↑</button></form>",
-      "css": ".ds-comp{display:flex;align-items:flex-end;gap:8px;max-width:640px;border:1px solid var(--rule-strong);border-radius:2px;background:var(--surface);padding:8px 8px 8px 16px}.ds-comp:focus-within{border-color:var(--action);outline:2px solid var(--action);outline-offset:0}.ds-comp textarea{flex:1;min-height:40px;resize:none;border:0;background:transparent;padding:8px 0;font:15px/1.5 var(--font-archivo),system-ui,sans-serif;color:var(--ink);outline:none}.ds-comp textarea::placeholder{color:var(--ink-3)}.ds-comp button{width:40px;height:40px;border:0;border-radius:2px;background:var(--action);color:var(--action-ink);font-size:18px;cursor:pointer;transition:background-color 160ms cubic-bezier(0.22, 1, 0.36, 1)}.ds-comp button:hover{background:var(--action-hover)}"
-    },
-    {
-      "name": "Step Node",
-      "kind": "custom",
-      "refersTo": "step-node",
-      "description": "Process nodes: done = double ink ring + check, running = pulsing dot, pending = numbered hairline ring.",
-      "html": "<div class=\"ds-steps\"><span class=\"ds-node ds-done\"><i></i>✓</span><span class=\"ds-node ds-run\"><em></em></span><span class=\"ds-node ds-pend\">3</span></div>",
-      "css": ".ds-steps{display:flex;gap:16px}.ds-node{position:relative;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--ground);font:700 13px/1 var(--font-archivo),system-ui,sans-serif}.ds-done{border:2px solid var(--ink);color:var(--ink)}.ds-done i{position:absolute;inset:2px;border-radius:50%;border:1px solid currentColor}.ds-run{border:2px solid var(--ink)}.ds-run em{width:8px;height:8px;border-radius:50%;background:var(--ink)}.ds-pend{border:1px solid var(--rule);color:var(--ink-3)}"
+      "refersTo": "step-process",
+      "description": "Teal check for done, orange-ringed dot for running, numbered hairline circle for pending.",
+      "html": "<ol class=\"ds-steps\"><li><span class=\"ds-n ds-done\">✓</span>Lọc số liệu</li><li><span class=\"ds-n ds-run\"><i></i></span>Phân tích video</li><li><span class=\"ds-n ds-pend\">03</span>Xếp hạng</li></ol>",
+      "css": ".ds-steps{font-family: var(--font-be-vietnam), 'Be Vietnam Pro', system-ui, sans-serif;list-style:none;margin:0;padding:0;display:grid;gap:14px;color:#1c3048;font-size:15px}.ds-steps li{display:flex;align-items:center;gap:12px}.ds-n{display:grid;place-items:center;width:28px;height:28px;border-radius:999px;font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}.ds-done{background:#4c9386;color:#fff}.ds-run{background:#fff;box-shadow:0 0 0 2px #ff794d}.ds-run i{width:8px;height:8px;border-radius:999px;background:#ff794d}.ds-pend{border:1px solid rgb(28 48 72 / 0.22);background:#fff;color:#56616e}"
     }
   ],
   "narrative": {
-    "northStar": "The Tested-Product Review",
-    "overview": "Every KOC is presented the way a beauty editor writes up a product they have actually tried: a stamped verdict, a short \"Ưu / Lưu ý\" ledger where every line carries a proof key, and the creator's video frames laid out like a swatch strip. The rest of the app is the editor's workbench around that review: a calm, neutral near-white ground, plum-tinted near-black ink, hairline rules, and one black-cherry shell band at the top of every screen that carries identity, location, status, the run's cost and the single next action.\n\nThe system is quiet so the numbers and the proof can be loud. Hierarchy comes from weight, letter width (Archivo's `wdth` axis) and rules rather than from size, color or depth. Lacquer crimson is scarce on purpose: it marks only what you can press, what is selected, and evidence keys. Verdicts and run states never rely on color alone; they carry words, and verdicts also change shape.\n\nConfirmed anti-references from the product record still bind the system: no dark neon or gradient SaaS look, no cream or beige editorial \"paper\" ground, no washed-out light-gray text with weak hierarchy.",
+    "northStar": "The DETOLA Desk",
+    "overview": "KOC Discovery wears the DETOLA brand as a working tool: cream ground, white softly rounded cards, navy ink and dark blocks, one DETOLA orange for the next action, teal for done and good. Inside, content stays dense and exact: tabular figures, hairline navy rules, verdicts spelled out, evidence one click away. Hierarchy comes from weight, tight tracking, the navy-over-grey two-tone headline and the cream-to-white step, not colour floods or heavy shadow.",
     "keyCharacteristics": [
-      "Neutral near-white ground (chroma about 0) with plum-black ink; one black-cherry band per screen.",
-      "Crimson reserved for actions, selection and evidence keys.",
-      "Verdicts as printed ink seals with words: double ring (good), single ring (caution), struck through (reject).",
-      "One variable family, Archivo; rank set by width (64% / 72% / 100%) and weight, on a 4-step size scale.",
-      "Every number tabular; dense numeric columns right-aligned.",
-      "Hairline rules and 2px corners; no decorative shadows.",
-      "One staged motion moment (evidence reveal), everything else is short state easing."
+      "Cream ground, white cards, navy-10% hairlines, one soft shadow",
+      "Navy for text and dark blocks; orange fill only for the primary action, AI avatar, send button and dots",
+      "Teal for completed and positive; amber and brick only for attention states",
+      "12px controls, 16px chat/step panels, 20px cards, pills for tags and choices",
+      "Every status and verdict carries a word"
     ],
     "rules": [
       {
-        "name": "The Pressable Crimson Rule",
-        "body": "Crimson appears only on things you can press, things that are selected, and evidence keys. Status, decoration, headings and charts never use it.",
+        "name": "The One Orange Rule",
+        "body": "Orange fill only on the primary action, AI avatar, send button and dots; orange as text or line uses #b54620.",
         "section": "colors"
       },
       {
-        "name": "The Quiet Status Rule",
-        "body": "Normal run states (\"Hoàn tất\", \"Đang chạy\", \"Chờ chạy\") are plain ink text with a small dot; only states that need action (\"Bị gián đoạn\", \"Lỗi\") get a tinted box with a colored border.",
+        "name": "The Navy-On-Orange Rule",
+        "body": "Text on orange is navy (5.2:1), never white.",
         "section": "colors"
       },
       {
-        "name": "The Words With Color Rule",
-        "body": "No color carries meaning alone: verdicts are words inside a seal whose ring shape also changes, statuses are words, step nodes carry an icon plus screen-reader text.",
+        "name": "The Word-With-Colour Rule",
+        "body": "Teal, amber and brick always ride with a word.",
         "section": "colors"
       },
       {
-        "name": "The Width Not Size Rule",
-        "body": "Rank is carried by weight, letter width and rules. When something needs more presence, condense or embolden it before making it bigger.",
+        "name": "The Tabular Figures Rule",
+        "body": "Comparable numbers are tabular and right-aligned.",
         "section": "typography"
       },
       {
-        "name": "The Four Sizes Rule",
-        "body": "Only 40 / 24 / 15 / 13px. The 12px seal word is the single scoped exception and lives only inside a seal.",
+        "name": "The Two-Tone Headline Rule",
+        "body": "Page titles are a navy line plus an ink-mute line at display size; ink-mute never below 30px.",
         "section": "typography"
       },
       {
-        "name": "The Tabular Everything Rule",
-        "body": "All figures are tabular; numbers in dense columns are right-aligned; money is formatted (\"30.000.000 ₫\", \"7M ₫\", \"≈ $0.42\").",
-        "section": "typography"
-      },
-      {
-        "name": "The One Next Step Rule",
-        "body": "Each run state shows exactly one obvious action in the band: \"Tạm dừng\" while running, \"Chạy tiếp\" when interrupted or failed, \"Brief mới\" when complete.",
-        "section": "layout"
-      },
-      {
-        "name": "The No Decorative Shadow Rule",
-        "body": "Separate things with a rule or a tone step, never with a shadow.",
-        "section": "elevation & depth"
-      },
-      {
-        "name": "The Lift Is a Ring Rule",
-        "body": "When something must come forward (the cited video frame), it moves up 4px and gains a 2px crimson outline offset by 3px; it does not cast a shadow.",
-        "section": "elevation & depth"
-      },
-      {
-        "name": "The Printed Ring Rule",
-        "body": "Circles that judge or confirm are drawn as ink rings, not filled discs: double ring for positive, single for caution, a diagonal strike for reject, and the same double ring on completed step nodes and the AI avatar.",
-        "section": "shapes"
-      },
-      {
-        "name": "The One Staged Moment Rule",
-        "body": "The evidence reveal (key pressed, frame lifted and ringed, proof appears) is the only choreographed motion. Everything else is state easing.",
-        "section": "components"
+        "name": "The One Shadow Rule",
+        "body": "One barely-there shadow; hierarchy comes from cream versus white.",
+        "section": "elevation"
       }
     ],
     "dos": [
-      "Do keep crimson on actions, selection and evidence keys only (The Pressable Crimson Rule).",
-      "Do give every verdict a word and a ring shape, and every status a word (The Words With Color Rule).",
-      "Do raise rank with weight and Archivo width before size, and stay on the 40 / 24 / 15 / 13px scale.",
-      "Do set every number tabular and right-align numbers in dense columns.",
-      "Do separate with 1px hairlines or the strong rule and keep corners at 2px.",
-      "Do put the black-cherry band on every screen with exactly one next action for the current state.",
-      "Do label every estimate, simulation, missing data point and invalid citation in plain Vietnamese.",
-      "Do put a new proof element behind an evidence key that rings its source, never as free-floating claim text.",
-      "Do honor reduced motion in script-driven scrolling as well as in CSS."
+      "Do reserve orange fills for the one primary action per view, the AI avatar and status dots.",
+      "Do use #b54620 whenever orange is read as text, line or focus.",
+      "Do pair every verdict and status colour with its word.",
+      "Do keep numbers tabular and right-aligned.",
+      "Do use the off-ramp sizes (11, 12, 14, 17, 19, 20, 30, 32px) only in their components.",
+      "Do honour prefers-reduced-motion."
     ],
     "donts": [
-      "Don't use crimson for status, headings, decoration or charts.",
-      "Don't add box-shadows, gradients (beyond the composer's single crimson sweep) or glass effects.",
-      "Don't tint the ground warm or cream; it stays near-achromatic.",
-      "Don't add a fifth text size or a second typeface.",
-      "Don't use filled colored discs for verdicts; seals are ink rings.",
-      "Don't use light-gray (ink-3) for readable body text.",
-      "Don't show more than one primary action in the band for a given run state.",
-      "Don't add small uppercase kicker labels above headings; titles stand on their own.",
-      "Don't hard-code color literals in components; add or reuse a token."
+      "Don't put white text on DETOLA orange or set body text in raw orange.",
+      "Don't use ink-mute below 30px or for needed information.",
+      "Don't copy DETOLA's logo or mascot illustrations.",
+      "Don't add a second shadow, hard offset shadows, gradients or dark neon surfaces.",
+      "Don't use more than one kicker per page, and only above the page title."
     ]
   }
 }

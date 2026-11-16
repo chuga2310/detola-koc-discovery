@@ -1,5 +1,5 @@
 ---
-version: 2
+version: 3
 slug: "src-components-runview-tsx"
 primary_target: "src/components/RunView.tsx"
 related_targets: ["src/app/page.tsx","src/components/CampaignTable.tsx","src/app/new/page.tsx","src/components/brief/NewBrief.tsx","src/components/brief/BriefForm.tsx","src/components/brief/controls.tsx","src/components/chat/ChatThread.tsx","src/components/chat/Composer.tsx","src/components/StepProcess.tsx","src/components/KocReview.tsx"]
@@ -8,6 +8,8 @@ related_targets: ["src/app/page.tsx","src/components/CampaignTable.tsx","src/app
 # Surface: KOC Discovery app (campaign results, new brief, campaign list)
 
 Mode: Operate. Primary surface: campaign page (`/runs/[id]`); also new brief (`/new`) and campaign list (`/`).
+
+v3 (2026-11-16, user request): visual world switched to the DETOLA brand design system (detola.vn): cream #F8F3EA ground alternating with white cards (radius 12–24px, hairline navy-10% borders, very soft shadow), navy #1C3048 ink and dark buttons, DETOLA orange #FF794D primary buttons with navy text, teal #4C9386 for good/done states, Be Vietnam Pro (600 headings, tight negative tracking), two-tone headings (navy + grey), uppercase kicker with an orange dot, pill chips/badges, numbered "01" step nodes. The OWN-WORLD/FORM sections below describe the superseded v1/v2 "bàn thử" world and are kept only as history; structure (v2) is unchanged.
 
 v2 (2026-11-16, user request): less technical, fewer words, friendlier inputs. Home = "Chiến dịch" list; "Brief mới" = form on top + AI chat composer at the bottom (animated highlight + hint), turning into a chat session (user/AI avatars, questions with single/multi options + "Khác"); research shows as collapsible steps with description + result. Visual world unchanged.
 Audience/job: brand/agency marketer turning a campaign brief into a defensible KOC shortlist. Task frequency: daily; reads results in depth after watching a ~2–3 min run.
