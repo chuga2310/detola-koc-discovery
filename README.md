@@ -1,6 +1,6 @@
 # AI KOC Discovery — DETOLA Technical Assessment
 
-🇬🇧 English: [README.en.md](README.en.md) · 📋 Bảng tính năng chi tiết: [docs/FEATURES.md](docs/FEATURES.md) · 📐 Kiến trúc: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · 📊 Benchmark: [docs/BENCHMARK.md](docs/BENCHMARK.md)
+🇬🇧 English: [README.en.md](README.en.md) · 📝 **Báo cáo bàn giao: [docs/REPORT.md](docs/REPORT.md)** · 📋 Bảng tính năng chi tiết: [docs/FEATURES.md](docs/FEATURES.md) · 📐 Kiến trúc: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · 📊 Benchmark: [docs/BENCHMARK.md](docs/BENCHMARK.md)
 
 Tìm KOC TikTok phù hợp cho một brief chiến dịch, ví dụ **5 KOC cho kem chống nắng, khách hàng nữ 18–30, ngân sách 30 triệu VND**. Dữ liệu lấy từ **Kalodata Open API**, kết hợp đọc nội dung và **xem video bằng AI**. Mỗi đề xuất đều có **bằng chứng truy vết được**: con số, khung hình, câu nói trong video.
 
@@ -125,7 +125,7 @@ Giao diện theo design system của DETOLA (detola.vn), mô tả ở [DESIGN.md
 ```
 briefs/                 brief mẫu (đề bài kem chống nắng)
 data/fixtures/          dữ liệu mẫu cho chế độ offline
-docs/                   ARCHITECTURE, FEATURES (vi + en), BENCHMARK (tự sinh, tiếng Việt)
+docs/                   REPORT, ARCHITECTURE, FEATURES (vi + en), BENCHMARK (tự sinh, tiếng Việt)
 PRODUCT.md, DESIGN.md   hồ sơ sản phẩm + design system (vi; bản .en.md tiếng Anh), dùng cho công cụ thiết kế
 AGENTS.md               hướng dẫn cho AI coding agent, do `next dev` tự sinh
 benchmark/results.json  số liệu thô của benchmark
