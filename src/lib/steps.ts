@@ -4,7 +4,8 @@
  * Đọc output đã checkpoint của từng stage (run_stages.output_json) và rút gọn lại để client
  * không phải tải cả trăm KB dữ liệu thô. Stage đã xong thì output không đổi nữa -> memo trong RAM.
  */
-import { creatorsCol, runStagesCol } from "./db";
+import { runStagesCol } from "./db";
+import { sourceCounts } from "./pipeline/creators";
 import type { Report } from "./pipeline/stages/select";
 import { STAGES } from "./types";
 
@@ -321,10 +322,7 @@ export async function runSteps(
   const outputs = new Map<string, unknown>(rows.map((r) => [r.stage, r.output]));
   const src = outputs.get("source") as { ids?: string[] } | undefined;
   if (src?.ids?.length && !memo.has(`${runId}:source`)) {
-    const counts: Record<string, number> = {};
-    const docs = await (await creatorsCol()).find({ _id: { $in: src.ids } }, { projection: { "data.sources": 1 } }).toArray();
-    for (const d of docs) for (const t of d.data?.sources ?? []) counts[t] = (counts[t] ?? 0) + 1;
-    outputs.set("__sourceCounts", counts);
+    outputs.set("__sourceCounts", await sourceCounts(runId, src.ids));
   }
   return STAGES.map((stage) => {
     const s = stages.find((x) => x.stage === stage)!;

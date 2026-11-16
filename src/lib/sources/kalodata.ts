@@ -14,6 +14,7 @@ import type { CampaignBrief, CreatorRecord, CreatorVideo } from "../types";
 import type { DataSource, SourceQuery } from "./index";
 import { logEvent } from "../db";
 import { median, redactContact } from "../util";
+import { productTypeKeywords } from "../brief/keywords";
 import { creatorCategoryDetail, detailQuery, rankQuery } from "./kaloStore";
 
 /** Mặc định: Makeup (848648) + Skincare (848776) — category cấp 2 của Kalodata, ngành Beauty & Personal Care */
@@ -24,8 +25,6 @@ const n = (x: unknown): number | undefined => {
   const v = typeof x === "string" ? Number(x) : (x as number);
   return typeof v === "number" && Number.isFinite(v) ? v : undefined;
 };
-
-/** Che số điện thoại / email / link trong bio trước khi lưu + đưa vào prompt (dữ liệu cá nhân, không cần cho đánh giá) */
 
 const HASHTAG_RE = /#[\p{L}\p{N}_]+/gu;
 
@@ -64,8 +63,6 @@ interface DetailData {
   /** Tên các kênh liên hệ công khai (kaloStore tách sẵn, không lưu email/số điện thoại) */
   contact_channels?: string[];
 }
-
-
 
 interface ProductRow {
   product_id: string | number;
@@ -175,7 +172,6 @@ function mapVideo(handle: string, v: VideoRow): CreatorVideo {
   };
 }
 
-
 export function baseParams() {
   return { region: "VN", language: "vi-VN", currency: "VND", date_range: "last30Day" };
 }
@@ -184,11 +180,9 @@ export const kalodataSource: DataSource = {
   name: "kalodata",
 
   /**
-   * Multi-signal retrieval: 3 nguồn bổ sung cho nhau (mỗi nguồn ~0.1 credit / 100 dòng).
-   *  1. commerce:   xếp theo doanh thu từ VIDEO -> creator chứng minh được khả năng bán qua video.
-   *  2. engagement: ER >= 8% (filter MEDIUM của API), xếp theo lượt xem nội dung -> creator nội dung
-   *                 có sức hút tự nhiên (KOC "thật"), thường không lọt top doanh thu.
-   *  3. content:    video 30 ngày có title chứa keyword sản phẩm -> creator ĐÃ làm đúng loại nội dung.
+   * Multi-signal retrieval: 5 nguồn bổ sung cho nhau (chi tiết từng nguồn ở comment trong hàm).
+   *  commerce (bán qua video) · engagement (ER cao, đúng ngành) · rising (tăng trưởng nhanh)
+   *  · content (đã làm video đúng sản phẩm) · proven (đã bán sản phẩm cùng loại).
    * Lý do: Kalodata là dữ liệu TikTok Shop, nếu chỉ xếp theo doanh thu pool sẽ toàn affiliate
    * "deal-poster". Mỗi creator mang tag nguồn để prefilter chia suất công bằng.
    */
@@ -250,7 +244,7 @@ export const kalodataSource: DataSource = {
       ),
     );
 
-    const keywords = brief.contentKeywords?.length ? brief.contentKeywords : [brief.product.toLowerCase()];
+    const keywords = productTypeKeywords(brief);
     // 4. content: video 30 ngày có title chứa keyword sản phẩm -> creator ĐÃ làm đúng loại nội dung.
     //    Bộ lọc miễn phí: bỏ video AI tạo, bỏ video quá ít view, chỉ video đăng trong 30 ngày.
     for (const kw of keywords)

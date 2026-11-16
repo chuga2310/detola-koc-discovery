@@ -44,3 +44,13 @@ export function paidCredits(deep: DeepData | undefined, numKocs: number): number
 
 /** "demo" (mặc định): được bật để dùng thử; "on": bật cho khách trả phí; "off": khoá */
 export type PaidMode = "demo" | "on" | "off";
+
+/**
+ * Đọc chế độ từ biến môi trường PAID_FEATURES (chỉ gọi phía server). Không đặt -> "demo".
+ * Giá trị lạ ("OFF", "false", gõ nhầm...) -> khoá: tính năng tốn tiền thì lỗi cấu hình phải đóng, không mở.
+ */
+export function parsePaidMode(raw: string | undefined): PaidMode {
+  const v = raw?.trim().toLowerCase();
+  if (!v) return "demo";
+  return v === "demo" || v === "on" ? v : "off";
+}

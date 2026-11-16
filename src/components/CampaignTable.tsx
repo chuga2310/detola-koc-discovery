@@ -17,6 +17,7 @@ import {
 import { ArrowDown, ArrowUp, ChevronRight, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { CREDIT_USD } from "@/lib/brief/paid";
 import { GENDER_WORD, shortMoney } from "@/lib/brief/slots";
 import type { CampaignBrief } from "@/lib/types";
 import { STEP_NAMES } from "./runTypes";
@@ -118,7 +119,7 @@ const columns = col.columns([
     meta: { className: "hidden sm:table-cell", align: "right" },
     cell: ({ getValue }) => <span className="num whitespace-nowrap text-ink-2">{when(getValue())}</span>,
   }),
-  col.accessor((r) => r.costUsd + r.credits * 0.1, {
+  col.accessor((r) => r.costUsd + r.credits * CREDIT_USD, {
     id: "cost",
     header: "Chi phí",
     sortFn: "basic",
@@ -127,7 +128,7 @@ const columns = col.columns([
       const r = row.original;
       return (
         <span className="num whitespace-nowrap text-ink-2" title={`AI $${r.costUsd.toFixed(3)} + dữ liệu ${r.credits.toFixed(1)} credit`}>
-          ≈ ${(r.costUsd + r.credits * 0.1).toFixed(2)}
+          ≈ ${(r.costUsd + r.credits * CREDIT_USD).toFixed(2)}
         </span>
       );
     },

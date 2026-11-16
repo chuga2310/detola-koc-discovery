@@ -30,7 +30,7 @@ export const enrichStage: StageDef<{ creatorId: string }, { ok: true }, EnrichOu
     return keptIds.map((id) => ({ key: id, input: { creatorId: id } }));
   },
   async exec(ctx, input) {
-    const c = (await loadCreators([input.creatorId])).get(input.creatorId);
+    const c = (await loadCreators(ctx.runId, [input.creatorId])).get(input.creatorId);
     if (!c) throw new Error("creator not found");
     const src = getDataSource(ctx.cfg.dataSource);
     let full = await src.enrich(c, { brief: ctx.brief, runId: ctx.runId });
@@ -42,12 +42,12 @@ export const enrichStage: StageDef<{ creatorId: string }, { ok: true }, EnrichOu
         ctx.log(`@${full.handle}: không lấy được doanh thu theo ngành (${(err as Error).message.slice(0, 120)})`, "warn");
       }
     }
-    await upsertCreators([full]);
+    await upsertCreators(ctx.runId, [full]);
     return { ok: true };
   },
   async reduce(ctx, outputs, failed) {
     const ids = [...outputs.keys()];
-    const creators = [...(await loadCreators(ids)).values()];
+    const creators = [...(await loadCreators(ctx.runId, ids)).values()];
     const rows = prefilter(creators, ctx.brief);
     const stillPass = rows.filter((r) => r.passed).length;
     ctx.log(`Enriched ${ids.length} creators (${failed.length} failed); ${stillPass} still pass hard filters with full data`);

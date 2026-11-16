@@ -1,4 +1,5 @@
 /** Query đọc trạng thái run cho API / UI / CLI / benchmark (read-only) */
+import { CREDIT_USD } from "./brief/paid";
 import type { ChatMessage } from "./brief/slots";
 import { getConfig } from "./config";
 import { aiCallsCol, dataCallsCol, eventsCol, runsCol, runStagesCol, tasksCol, type RunDoc } from "./db";
@@ -89,8 +90,8 @@ export async function runUsage(runId: string) {
     total,
     models,
     costVnd: Math.round(total.costUsd * getConfig().usdToVnd),
-    /** Chi phí dữ liệu Kalodata: 1 credit ~ 0.1 USD. coldCredits = chi phí nếu không dùng lại dữ liệu đã lưu */
-    data: { byEndpoint: data, credits, avoided, coldCredits: credits + avoided, approxUsd: credits * 0.1 },
+    /** Chi phí dữ liệu Kalodata (CREDIT_USD / credit). coldCredits = chi phí nếu không dùng lại dữ liệu đã lưu */
+    data: { byEndpoint: data, credits, avoided, coldCredits: credits + avoided, approxUsd: credits * CREDIT_USD },
   };
 }
 

@@ -95,19 +95,39 @@ export async function kaloCall<T = unknown>(path: string, body: Record<string, u
   const apiKey = process.env.KALODATA_API_KEY?.trim();
   if (!apiKey) throw new KalodataError("KALODATA_API_KEY is not set", "auth");
 
-  // Budget guard: chặn TRƯỚC khi tiêu credit
-  const estimate = creditCost(path, opts.expectedRows);
-  if (runId) {
-    const spent = await creditsSpent(runId);
-    const cap = await maxCreditsPerRun(runId);
-    if (spent + estimate > cap + 1e-9) {
-      throw new KalodataError(
-        `Kalodata credit budget exceeded for this run (spent ${spent.toFixed(2)} + ${estimate} > ${cap})`,
-        "budget",
-      );
-    }
+  // Budget guard: chặn TRƯỚC khi tiêu credit; giữ chỗ phần ước tính cho tới khi call xong
+  const release = runId ? await reserveCredits(runId, creditCost(path, opts.expectedRows)) : () => undefined;
+  try {
+    return await callWithRetry<T>(path, body, apiKey, runId);
+  } finally {
+    release();
   }
+}
 
+/**
+ * Các task của 1 run gọi song song: đọc `spent` rồi mới gọi API thì nhiều task cùng lọt qua khi gần trần.
+ * Giữ chỗ trong bộ nhớ (kiểm tra + giữ chỗ chạy đồng bộ, không có await xen giữa) -> không vượt trần.
+ */
+const reserved = new Map<string, number>();
+async function reserveCredits(runId: string, estimate: number): Promise<() => void> {
+  const spent = await creditsSpent(runId);
+  const cap = await maxCreditsPerRun(runId);
+  const held = reserved.get(runId) ?? 0;
+  if (spent + held + estimate > cap + 1e-9) {
+    throw new KalodataError(
+      `Kalodata credit budget exceeded for this run (spent ${spent.toFixed(2)} + reserved ${held.toFixed(2)} + ${estimate} > ${cap})`,
+      "budget",
+    );
+  }
+  reserved.set(runId, held + estimate);
+  return () => {
+    const left = (reserved.get(runId) ?? 0) - estimate;
+    if (left > 1e-9) reserved.set(runId, left);
+    else reserved.delete(runId);
+  };
+}
+
+async function callWithRetry<T>(path: string, body: Record<string, unknown>, apiKey: string, runId: string | null): Promise<T> {
   let lastErr = "unknown";
   let pendingWaits = 0;
   for (let attempt = 1; attempt <= 3; attempt++) {

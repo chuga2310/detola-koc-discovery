@@ -85,34 +85,34 @@ export async function runPipeline(runId: string, opts: RunOptions = {}): Promise
   activeRuns.set(runId, ctrl);
   const heartbeat = setInterval(() => void renewLease(runId, owner).catch(() => undefined), HEARTBEAT_MS);
 
-  const runs = await runsCol();
-  const stagesC = await runStagesCol();
-  const tasks = await tasksCol();
-  const row = (await runs.findOne({ _id: runId }, { projection: { brief: 1, attempts: 1, status: 1 } }))!;
-  const brief = row.brief;
-  // Run từng failed (ví dụ API down) -> cho các task lỗi thêm lượt retry mới
-  if (row.status === "failed") await tasks.updateMany({ runId, status: "failed" }, { $set: { attempts: 0 } });
-  await runs.updateOne({ _id: runId }, { $inc: { attempts: 1 }, $set: { status: "running", error: null, updatedAt: now() } });
-  if (row.attempts > 0) logEvent(runId, `Resuming run (attempt #${row.attempts + 1}) from last checkpoint`);
-
-  // Output các stage đã xong nạp sẵn vào bộ nhớ -> ctx.output() đồng bộ, stage không phải đợi DB
-  const outputs = new Map<string, unknown>();
-  for (const st of await stagesC.find({ runId, status: "done" }).toArray()) outputs.set(st.stage, st.output);
-
-  const ctx: StageContext = {
-    runId,
-    brief,
-    funnel: funnelFor(brief.numKocs),
-    cfg: getConfig(),
-    output<T>(stage: StageName): T {
-      if (!outputs.has(stage)) throw new Error(`Stage ${stage} has no output yet`);
-      return outputs.get(stage) as T;
-    },
-    log: (message, level = "info") => logEvent(runId, message, { level }),
-  };
-
+  // Mọi bước sau khi giữ lease đều nằm trong try: lỗi ở đâu cũng nhả lease + dừng heartbeat ở finally
   let status: RunStatus = "running";
   try {
+    const runs = await runsCol();
+    const row = await runs.findOne({ _id: runId }, { projection: { brief: 1, attempts: 1, status: 1 } });
+    if (!row) throw new Error(`Run ${runId} not found`);
+    const brief = row.brief;
+    // Run từng failed (ví dụ API down) -> cho các task lỗi thêm lượt retry mới
+    if (row.status === "failed") await (await tasksCol()).updateMany({ runId, status: "failed" }, { $set: { attempts: 0 } });
+    await runs.updateOne({ _id: runId }, { $inc: { attempts: 1 }, $set: { status: "running", error: null, updatedAt: now() } });
+    if (row.attempts > 0) logEvent(runId, `Resuming run (attempt #${row.attempts + 1}) from last checkpoint`);
+
+    // Output các stage đã xong nạp sẵn vào bộ nhớ -> ctx.output() đồng bộ, stage không phải đợi DB
+    const outputs = new Map<string, unknown>();
+    for (const st of await (await runStagesCol()).find({ runId, status: "done" }).toArray()) outputs.set(st.stage, st.output);
+
+    const ctx: StageContext = {
+      runId,
+      brief,
+      funnel: funnelFor(brief.numKocs),
+      cfg: getConfig(),
+      output<T>(stage: StageName): T {
+        if (!outputs.has(stage)) throw new Error(`Stage ${stage} has no output yet`);
+        return outputs.get(stage) as T;
+      },
+      log: (message, level = "info") => logEvent(runId, message, { level }),
+    };
+
     for (const stageName of STAGES) {
       if (ctrl.signal.aborted) break;
       const def = STAGE_DEFS[stageName];
@@ -136,15 +136,23 @@ export async function runPipeline(runId: string, opts: RunOptions = {}): Promise
   } catch (err) {
     status = "failed";
     const msg = err instanceof Error ? err.message : String(err);
-    await runs.updateOne({ _id: runId }, { $set: { error: msg } });
+    await (await runsCol()).updateOne({ _id: runId }, { $set: { error: msg } }).catch(() => undefined);
     logEvent(runId, `Run failed: ${msg}`, { level: "error" });
   } finally {
     clearInterval(heartbeat);
     activeRuns.delete(runId);
-    await runs.updateOne({ _id: runId }, { $set: { status, leaseOwner: null, leaseUntil: null, updatedAt: now() } });
+    await releaseLease(runId, owner, status).catch((err) => console.error(`[run ${runId}] release lease failed`, err));
     await flushEvents();
   }
   return status;
+}
+
+/** Nhả lease + ghi trạng thái cuối (chỉ khi vẫn là chủ lease) */
+async function releaseLease(runId: string, owner: string, status: RunStatus) {
+  await (await runsCol()).updateOne(
+    { _id: runId, leaseOwner: owner },
+    { $set: { status, leaseOwner: null, leaseUntil: null, updatedAt: now() } },
+  );
 }
 
 /** Trả về true nếu stage hoàn thành, false nếu bị dừng giữa chừng */

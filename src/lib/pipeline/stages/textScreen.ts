@@ -14,7 +14,8 @@ import { loadCreators } from "../creators";
 import { PROMPT_VERSION, textScreenSystem } from "../prompts";
 import { TextScreenSchema, type TextScreenOutput } from "../schemas";
 import type { PrefilterRow } from "../scoring";
-import { productTypeKeywords, signalsOf } from "../signals";
+import { productTypeKeywords } from "../../brief/keywords";
+import { signalsOf } from "../signals";
 import type { StageContext, StageDef } from "../stage";
 import { dataRow, type EnrichOut } from "./enrich";
 import type { PrefilterOut } from "./prefilter";
@@ -110,7 +111,7 @@ export const textScreenStage: StageDef<{ ids: string[] }, Record<string, TextScr
   async exec(ctx, input, key) {
     const pf = ctx.output<PrefilterOut>("prefilter");
     const en = ctx.output<EnrichOut>("enrich");
-    const creators = await loadCreators(input.ids);
+    const creators = await loadCreators(ctx.runId, input.ids);
     const items = input.ids
       .filter((id) => creators.has(id))
       .map((id) => ({ ref: pf.refs[id], c: creators.get(id)!, pre: dataRow(en, pf, id)! }));

@@ -242,7 +242,7 @@ Designed around how the app reads / writes, not a 1:1 copy of SQL tables:
 | `runs` | 1 campaign = 1 document: brief, brief-intake conversation (`chat`), config snapshot, status, lease, timestamps, results | Lease is updated atomically with `findOneAndUpdate` |
 | `run_stages` | Per-step checkpoint + output + timing | ≤ 8 documents / campaign; output is preloaded into memory on run / resume |
 | `tasks` | Per-task checkpoint (input, output, attempts, error, `seq` in plan order) | Separate collection: parallel, independent updates, up to hundreds of tasks / step |
-| `creators` | Normalized creators (bio with phone numbers/emails masked), shared across campaigns | |
+| `creators` | Normalized creators (bio with phone numbers/emails masked) **per campaign** (`_id` = `runId:creatorId`): they carry brief-specific data (sources, keyword videos, same-type products), so they are not shared. Cross-campaign reuse lives in `kalo_*` and `ai_cache` | |
 | `ai_cache` / `ai_calls` | AI result cache keyed by content hash; log of every call (tokens, cost, latency, cache hit, ok) | |
 | `kalo_rank_snapshots` | Each Kalodata ranking call | Results embedded; index `paramsHash + fetchedAt` |
 | `kalo_creators` / `kalo_videos` / `kalo_products` | Kalodata entities + embedded detail | Metric columns for querying |

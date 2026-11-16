@@ -25,7 +25,7 @@ export const mediaPrepStage: StageDef<{ creatorId: string }, PreparedMedia[], Me
     return shortlist.map((id) => ({ key: id, input: { creatorId: id } }));
   },
   async exec(ctx, input) {
-    let c = (await loadCreators([input.creatorId])).get(input.creatorId);
+    let c = (await loadCreators(ctx.runId, [input.creatorId])).get(input.creatorId);
     if (!c) throw new Error("creator not found");
     const src = getDataSource(ctx.cfg.dataSource);
     const deep = ctx.brief.deepData ?? {};
@@ -39,7 +39,7 @@ export const mediaPrepStage: StageDef<{ creatorId: string }, PreparedMedia[], Me
       try {
         if (deep.videoDetail && src.videoDetails) c = await src.videoDetails(c, videos.map((v) => v.id), { brief: ctx.brief, runId: ctx.runId });
         if (deep.competitorProducts && src.soldProducts) c = await src.soldProducts(c, { brief: ctx.brief, runId: ctx.runId });
-        await upsertCreators([c]);
+        await upsertCreators(ctx.runId, [c]);
       } catch (err) {
         ctx.log(`@${c.handle}: không lấy được dữ liệu chuyên sâu (${(err as Error).message.slice(0, 120)})`, "warn");
       }

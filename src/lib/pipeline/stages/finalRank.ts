@@ -80,7 +80,7 @@ export const finalRankStage: StageDef<{ ids: string[] }, BatchOut, FinalRankOut>
   },
   async exec(ctx, input, key) {
     const pf = ctx.output<PrefilterOut>("prefilter");
-    const creators = await loadCreators(input.ids);
+    const creators = await loadCreators(ctx.runId, input.ids);
     const items = input.ids
       .filter((id) => creators.has(id))
       .map((id) => {

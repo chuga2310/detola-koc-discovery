@@ -9,7 +9,7 @@
  * - run_stages      : checkpoint từng bước + output (tối đa 8 document / chiến dịch).
  * - tasks           : checkpoint cấp task. Collection riêng vì task cập nhật SONG SONG và độc lập,
  *                     có thể tới hàng trăm task / bước (500 KOC) -> không nhúng vào run.
- * - creators        : creator đã chuẩn hoá, dùng chung giữa các chiến dịch.
+ * - creators        : creator đã chuẩn hoá của TỪNG chiến dịch (dữ liệu phụ thuộc brief, xem pipeline/creators.ts).
  * - ai_cache        : kết quả AI theo content hash -> chạy lại / resume không tốn token.
  * - ai_calls, data_calls, events : log chỉ ghi thêm (token/cost, credit Kalodata, tiến độ cho UI).
  * - kalo_*          : dữ liệu Kalodata lưu thành dữ liệu thật để tái sử dụng (xem sources/kaloStore.ts).
@@ -69,7 +69,9 @@ export interface TaskDoc {
 }
 
 export interface CreatorDoc {
-  _id: string;
+  _id: string; // `${runId}:${creatorId}` (bản cũ trước khi tách theo run: creatorId)
+  runId?: string;
+  creatorId?: string;
   source: string;
   handle: string;
   data: CreatorRecord;

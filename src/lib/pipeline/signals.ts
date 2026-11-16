@@ -37,13 +37,6 @@ export interface CreatorSignals {
   analyzedVideoStats?: { gpm?: number; roas?: number; adDays?: number; cpa?: number; withStats: number };
 }
 
-/**
- * Từ khoá LOẠI sản phẩm của brief (vd "kem chống nắng"): contentKeywords, nếu không có thì tên sản phẩm.
- * Không dùng brief.keywords vì có cả từ chung chung ("skincare", "dưỡng da") -> nhận nhầm sản phẩm khác.
- */
-export const productTypeKeywords = (brief: { product: string; contentKeywords?: string[] }) =>
-  brief.contentKeywords?.length ? brief.contentKeywords : [brief.product];
-
 /** Sản phẩm có tên khớp từ khoá loại sản phẩm = cùng loại (vd "kem chống nắng") */
 export function sameCategory(names: string[], keywords: string[]): string[] {
   const norm = (x: string) => x.toLowerCase().normalize("NFC");

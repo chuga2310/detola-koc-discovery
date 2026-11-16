@@ -12,7 +12,8 @@ import type { StageDef } from "../stage";
 import type { FinalRankOut } from "./finalRank";
 import { dataRow, type EnrichOut } from "./enrich";
 import type { PrefilterOut } from "./prefilter";
-import { productTypeKeywords, signalsOf } from "../signals";
+import { productTypeKeywords } from "../../brief/keywords";
+import { signalsOf } from "../signals";
 import type { TextScreenOut } from "./textScreen";
 import type { VideoOut } from "./videoAnalysis";
 
@@ -71,7 +72,7 @@ export const selectStage: StageDef<never, never, Report> = {
     const fr = ctx.output<FinalRankOut>("final_rank");
     const en = ctx.output<EnrichOut>("enrich");
     const ids = Object.keys(fr.byId);
-    const creators = await loadCreators(ids);
+    const creators = await loadCreators(ctx.runId, ids);
 
     const all: Pick[] = ids.map((id) => {
       const a = fr.byId[id];
@@ -132,7 +133,7 @@ export const selectStage: StageDef<never, never, Report> = {
       ctx.brief.budgetVnd,
     );
     const picks = sel.ids.map((id, i) => ({ ...all.find((p) => p.id === id)!, rank: i + 1 }));
-    const alternates = all
+    const alternates = eligible
       .filter((p) => !sel.ids.includes(p.id))
       .sort((a, b) => b.scores.final - a.scores.final)
       .slice(0, 5)

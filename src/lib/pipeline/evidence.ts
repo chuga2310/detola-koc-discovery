@@ -11,7 +11,8 @@ import type { CampaignBrief, CreatorRecord, Evidence } from "../types";
 import { compactNum, pct, truncate } from "../util";
 import type { TextScreenOutput, VideoAnalysisOutput } from "./schemas";
 import type { PrefilterRow } from "./scoring";
-import { productTypeKeywords, signalsOf } from "./signals";
+import { productTypeKeywords } from "../brief/keywords";
+import { signalsOf } from "./signals";
 
 type TextResult = TextScreenOutput["results"][number];
 

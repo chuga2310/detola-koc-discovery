@@ -5,7 +5,7 @@
 import { z } from "zod";
 import { createRun, markStaleRuns, startInBackground } from "@/lib/pipeline/runner";
 import { aiCallsCol } from "@/lib/db";
-import type { PaidMode } from "@/lib/brief/paid";
+import { parsePaidMode } from "@/lib/brief/paid";
 import { listRuns } from "@/lib/runs";
 
 export const runtime = "nodejs";
@@ -32,7 +32,10 @@ const BriefSchema = z.object({
   deepData: z
     .object({ categoryRevenue: z.boolean().optional(), videoDetail: z.boolean().optional(), competitorProducts: z.boolean().optional() })
     .optional(),
-});
+})
+  // Khoảng ngược (min > max) sẽ gửi sang Kalodata và tốn credit cho các trang rỗng
+  .refine((b) => b.targetAudience.ageMin <= b.targetAudience.ageMax, { message: "ageMin > ageMax", path: ["targetAudience"] })
+  .refine((b) => !b.followerRange || b.followerRange.min <= b.followerRange.max, { message: "followerRange.min > max", path: ["followerRange"] });
 
 /** Body mới: { brief, chat }. Vẫn nhận body cũ (chỉ brief) cho CLI / script. */
 const CreateSchema = z.union([z.object({ brief: BriefSchema, chat: z.array(z.record(z.string(), z.unknown())).max(80).optional() }), BriefSchema]);
@@ -47,7 +50,7 @@ export async function POST(req: Request) {
   if (!parsed.success) return Response.json({ error: "Brief chưa đủ thông tin để bắt đầu." }, { status: 400 });
   const { brief, chat } = "brief" in parsed.data ? parsed.data : { brief: parsed.data, chat: undefined };
   // Dữ liệu chuyên sâu là tính năng trả phí: chỉ cho bật khi chế độ cho phép (bản demo: được bật)
-  const mode = (process.env.PAID_FEATURES?.trim() || "demo") as PaidMode;
+  const mode = parsePaidMode(process.env.PAID_FEATURES);
   const wantsPaid = Object.values(brief.deepData ?? {}).some(Boolean);
   if (wantsPaid && mode === "off") return Response.json({ error: "Tính năng dữ liệu chuyên sâu chưa được mở cho tài khoản này." }, { status: 403 });
   const id = await createRun(brief, chat); // createRun tự nâng trần credit theo deepData

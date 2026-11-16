@@ -133,7 +133,10 @@ export async function aiGenerate<T>(
       if (attempt < maxAttempts) await sleep(backoffMs(attempt));
     }
   }
-  throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
+  // Gateway đã retry có backoff; để runner retry tiếp thì 1 task tốn tới maxAttempts² lời gọi trả phí.
+  // Lỗi tạm thời (API down) vẫn chạy lại được bằng Resume (runner reset lượt retry của task lỗi).
+  const msg = lastErr instanceof Error ? lastErr.message : String(lastErr);
+  throw new NonRetryableError(`AI call failed after ${maxAttempts} attempts: ${msg}`);
 }
 
 async function logCall(

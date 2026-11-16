@@ -128,7 +128,14 @@ export async function prepareVideo(video: CreatorVideo, opts: PrepareOptions = {
   }
 
   let result: PreparedMedia | null = null;
-  if (file) result = await sheetFromVideo(video, dir, file, opts.framesPerVideo ?? 6, via);
+  if (file) {
+    try {
+      result = await sheetFromVideo(video, dir, file, opts.framesPerVideo ?? 6, via);
+    } catch (err) {
+      // File hỏng / ffmpeg lỗi: không bỏ trắng video, xuống dùng thumbnail + transcript (miễn phí)
+      console.warn(`[media] ${video.id} frame extraction failed: ${(err as Error).message.slice(0, 160)}`);
+    }
+  }
   if (!result) result = await sheetFromThumbnail(video, dir);
   if (result) fs.writeFileSync(metaPath, JSON.stringify(result, null, 2));
   return result;
@@ -230,7 +237,6 @@ function findFile(dir: string, re: RegExp): string | null {
   return f ? path.join(dir, f) : null;
 }
 
-/** Đọc file .vtt -> text thuần, bỏ timestamp và dòng lặp (auto-caption hay lặp dòng) */
 /**
  * Thứ tự ưu tiên phụ đề: tiếng Việt gốc -> tiếng Anh -> bất kỳ.
  * TikTok thường trả cả `vie-VN` (lời nói gốc) lẫn `eng-US` (máy dịch). Trước đây lấy file .vtt
@@ -247,6 +253,7 @@ export function pickSubtitleFile(files: string[]): string | null {
   return vtts[0] ?? null;
 }
 
+/** Đọc file .vtt -> text thuần, bỏ timestamp và dòng lặp (auto-caption hay lặp dòng) */
 function readTranscript(dir: string): string | null {
   if (!fs.existsSync(dir)) return null;
   const vtt = pickSubtitleFile(fs.readdirSync(dir));

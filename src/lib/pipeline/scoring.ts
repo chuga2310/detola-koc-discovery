@@ -10,7 +10,8 @@
  */
 import type { CampaignBrief, CreatorRecord } from "../types";
 import { clamp, keywordHits, normalizeVi, percentileRanks } from "../util";
-import { productTypeKeywords, signalsOf } from "./signals";
+import { productTypeKeywords } from "../brief/keywords";
+import { signalsOf } from "./signals";
 
 /** Bảng giá ước tính / 1 video theo tier follower (VND). Giả định — chỉnh theo báo giá thực tế. */
 export const DEFAULT_RATE_CARD: { maxFollowers: number; priceVnd: number; tier: string }[] = [

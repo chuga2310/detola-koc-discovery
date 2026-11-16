@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, ChevronDown, ChevronRight, MessagesSquare, Pause, Plus, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { CREDIT_USD } from "@/lib/brief/paid";
 import { AiMessage, BriefCard, ChatThread } from "./chat/ChatThread";
 import { KocReview } from "./KocReview";
 import { Costs, Log } from "./RunPanels";
@@ -115,7 +116,7 @@ export function RunView({ id }: { id: string }) {
   const b = run.brief;
   const picks = report?.picks ?? [];
   const current = [...picks, ...(report?.alternates ?? [])].find((p) => p.id === sel) ?? picks[0];
-  const totalUsd = usage.total.costUsd + usage.data.credits * 0.1;
+  const totalUsd = usage.total.costUsd + usage.data.credits * CREDIT_USD;
   const busy = act.isPending;
   const finished = run.status === "completed" && !!report && !!current;
 

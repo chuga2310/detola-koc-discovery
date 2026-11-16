@@ -240,7 +240,7 @@ Thiết kế theo cách app đọc / ghi, không chép 1:1 bảng SQL:
 | `runs` | 1 chiến dịch = 1 document: brief, hội thoại lập brief (`chat`), config snapshot, status, lease, thời gian, kết quả | Lease cập nhật atomic bằng `findOneAndUpdate` |
 | `run_stages` | Checkpoint từng bước + output + thời gian | ≤ 8 document / chiến dịch; output nạp sẵn vào bộ nhớ khi chạy / resume |
 | `tasks` | Checkpoint từng task (input, output, attempts, error, `seq` theo thứ tự plan) | Collection riêng: cập nhật song song và độc lập, tới hàng trăm task / bước |
-| `creators` | Creator chuẩn hoá (bio đã che SĐT/email), dùng chung giữa các chiến dịch | |
+| `creators` | Creator chuẩn hoá (bio đã che SĐT/email) **của từng chiến dịch** (`_id` = `runId:creatorId`): mang dữ liệu phụ thuộc brief (nguồn, video khớp keyword, sản phẩm cùng loại) nên không dùng chung. Tái sử dụng giữa chiến dịch nằm ở `kalo_*` và `ai_cache` | |
 | `ai_cache` / `ai_calls` | Cache kết quả AI theo hash nội dung; log từng lần gọi (token, cost, latency, cache hit, ok) | |
 | `kalo_rank_snapshots` | Mỗi lần gọi xếp hạng Kalodata | Kết quả nhúng; index `paramsHash + fetchedAt` |
 | `kalo_creators` / `kalo_videos` / `kalo_products` | Thực thể Kalodata + chi tiết nhúng | Cột số liệu để truy vấn |
