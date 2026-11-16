@@ -48,3 +48,6 @@ next-env.d.ts
 /.impeccable/hook.cache.json
 /.github/hooks/
 /.impeccable/review/
+
+# benchmark: brief cho case D (bật dữ liệu chuyên sâu), sinh lại mỗi lần chạy
+/benchmark/brief-deep.json
