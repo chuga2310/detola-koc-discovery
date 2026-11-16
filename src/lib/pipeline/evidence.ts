@@ -11,6 +11,7 @@ import type { CampaignBrief, CreatorRecord, Evidence } from "../types";
 import { compactNum, pct, truncate } from "../util";
 import type { TextScreenOutput, VideoAnalysisOutput } from "./schemas";
 import type { PrefilterRow } from "./scoring";
+import { signalsOf } from "./signals";
 
 type TextResult = TextScreenOutput["results"][number];
 
@@ -26,11 +27,14 @@ export function buildEvidence(args: {
   const { ref, creator: c, pre, brief, text, media, video } = args;
   const ev: Evidence[] = [];
   const topPct = (p: number) => `top ${Math.max(1, Math.round((1 - p) * 100))}% pool`;
+  const sig = signalsOf(c);
 
   ev.push({
     id: `${ref}.m1`,
     kind: "metric",
-    text: `Followers ${compactNum(c.followers)}; ${compactNum(pre.raw.videoViews30d)} view nội dung / 30 ngày; trung vị ${compactNum(pre.raw.avgViews)} view của các video nổi bật (reach ${topPct(pre.breakdown.reach)})`,
+    text: `Followers ${compactNum(c.followers)}; ${compactNum(pre.raw.videoViews30d)} view nội dung / 30 ngày${
+      pre.raw.paidViewShare !== undefined ? " (đã trừ view quảng cáo)" : ""
+    }; trung vị ${compactNum(pre.raw.avgViews)} view${pre.raw.paidViewShare !== undefined ? " tự nhiên" : ""} của các video nổi bật (reach ${topPct(pre.breakdown.reach)})`,
   });
   if (pre.raw.engagementRate !== undefined)
     ev.push({ id: `${ref}.m2`, kind: "metric", text: `Engagement rate ${pct(pre.raw.engagementRate, 1)} (${topPct(pre.breakdown.engagement)})` });
@@ -46,20 +50,32 @@ export function buildEvidence(args: {
     text: `Chi phí ước tính ${compactNum(pre.estCostVnd)} VND/video (tier ${pre.costTier}); ${compactNum(pre.raw.avgViews && pre.raw.avgViews / (pre.estCostVnd / 1e6))} view kỳ vọng / 1 triệu VND`,
   });
   if (pre.raw.videoFocus !== undefined || c.metrics.productCount !== undefined) {
-    const ads = c.videos.filter((v) => v.adViewRatio !== undefined);
-    const adAvg = ads.length ? ads.reduce((s, v) => s + (v.adViewRatio ?? 0), 0) / ads.length : undefined;
     ev.push({
       id: `${ref}.m6`,
       kind: "metric",
       text: [
         pre.raw.videoFocus !== undefined ? `${pct(pre.raw.videoFocus)} doanh thu từ video, ${pct(1 - pre.raw.videoFocus)} từ livestream` : null,
         c.metrics.productCount !== undefined ? `quảng bá ${c.metrics.productCount} sản phẩm / ${c.metrics.shopCount ?? "?"} shop` : null,
-        adAvg !== undefined ? `trung bình ${adAvg.toFixed(0)}% view video đến từ quảng cáo` : null,
+        sig.paidViewShare !== undefined ? `${pct(sig.paidViewShare)} tổng view video đến từ quảng cáo` : null,
       ]
         .filter(Boolean)
         .join("; "),
     });
   }
+  const s = sig;
+  const conv = [
+    s.videoGpm ? `GPM video ${compactNum(s.videoGpm)} VND / 1.000 view (điểm thương mại ${topPct(pre.breakdown.commerce)})` : null,
+    s.avgUnitPriceVnd ? `giá trung bình sản phẩm khán giả đã mua ${compactNum(s.avgUnitPriceVnd)} VND` : null,
+  ].filter(Boolean);
+  if (conv.length) ev.push({ id: `${ref}.m7`, kind: "metric", text: conv.join("; ") });
+  const mom = [
+    s.followerGrowthPct !== undefined ? `follower +${pct(s.followerGrowthPct, 1)} trong 30 ngày` : null,
+    s.revenueActiveDays !== undefined
+      ? `có doanh thu ${s.revenueActiveDays}/30 ngày, xu hướng ${s.revenueTrend === "up" ? "tăng" : s.revenueTrend === "down" ? "giảm" : "đi ngang"}`
+      : null,
+    s.aiVideoCount ? `${s.aiVideoCount} video bị gắn cờ do AI tạo` : null,
+  ].filter(Boolean);
+  if (mom.length) ev.push({ id: `${ref}.m8`, kind: "metric", text: mom.join("; ") });
   ev.push({
     id: `${ref}.m5`,
     kind: "metric",

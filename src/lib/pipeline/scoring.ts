@@ -10,6 +10,7 @@
  */
 import type { CampaignBrief, CreatorRecord } from "../types";
 import { clamp, keywordHits, normalizeVi, percentileRanks } from "../util";
+import { signalsOf } from "./signals";
 
 /** Bảng giá ước tính / 1 video theo tier follower (VND). Giả định — chỉnh theo báo giá thực tế. */
 export const DEFAULT_RATE_CARD: { maxFollowers: number; priceVnd: number; tier: string }[] = [
@@ -85,7 +86,10 @@ export function engagementRate(c: CreatorRecord): number | undefined {
   return c.videos.reduce((s, x) => s + x.likes + x.comments + x.shares, 0) / v;
 }
 
+/** View điển hình / video. Có video chi tiết -> trung vị view TỰ NHIÊN (đã trừ view quảng cáo). */
 export function avgViews(c: CreatorRecord): number | undefined {
+  const organic = signalsOf(c).organicMedianViews;
+  if (organic) return organic;
   if (c.metrics.avgViewsPerVideo) return c.metrics.avgViewsPerVideo;
   if (c.metrics.videoViews && c.metrics.videoCount) return c.metrics.videoViews / c.metrics.videoCount;
   if (!c.videos.length) return undefined;
@@ -120,7 +124,9 @@ export const PREFILTER_WEIGHTS = {
   keyword: 0.15,
   commerce: 0.1,
   costEfficiency: 0.1,
-  videoFocus: 0.1,
+  videoFocus: 0.05,
+  /** Đà tăng follower 30 ngày (chỉ có sau enrich; thiếu = trung tính) */
+  momentum: 0.05,
 };
 
 /** Tỷ trọng doanh thu đến từ VIDEO (vs livestream). KOC cho campaign video nên làm video là chính. */
@@ -155,6 +161,11 @@ export interface PrefilterRow {
     matchedKeywords: string[];
     videoFocus?: number;
     videoViews30d?: number;
+    /** 0..1 view đến từ quảng cáo */
+    paidViewShare?: number;
+    videoGpm?: number;
+    avgUnitPriceVnd?: number;
+    followerGrowthPct?: number;
   };
 }
 
@@ -184,17 +195,25 @@ export function prefilter(creators: CreatorRecord[], brief: CampaignBrief): Pref
     if (c.creatorStatus === "BELONGED_TO_SELLER") reasons.push("tài khoản thuộc shop/brand, không phải KOC độc lập");
     const vf = videoFocus(c);
     if (vf !== undefined && vf < 0.1) reasons.push("doanh thu gần như toàn bộ từ livestream (không phải KOC video)");
-    return { c, er, av, aud, cat, kw, cost, reasons, vf };
+    const sig = signalsOf(c);
+    return { c, er, av, aud, cat, kw, cost, reasons, vf, sig };
   });
 
   // Percentile trong pool -> các metric khác đơn vị về chung thang 0..1
   const pEr = percentileRanks(base.map((b) => b.er));
   // Reach: tổng view nội dung 30 ngày / follower (độ "lan" của nội dung) + quy mô view tuyệt đối
-  const views30 = (b: (typeof base)[number]) => b.c.metrics.videoViews ?? (b.av && b.c.metrics.videoCount ? b.av * b.c.metrics.videoCount : undefined);
+  // View 30 ngày TỰ NHIÊN: trừ tỷ trọng view quảng cáo (khi biết) — view mua không phải sức hút thật
+  const views30 = (b: (typeof base)[number]) => {
+    const raw = b.c.metrics.videoViews ?? (b.av && b.c.metrics.videoCount ? b.av * b.c.metrics.videoCount : undefined);
+    return raw !== undefined && b.sig.paidViewShare !== undefined ? raw * (1 - b.sig.paidViewShare) : raw;
+  };
   const pReach = percentileRanks(base.map((b) => (views30(b) && b.c.followers ? views30(b)! / b.c.followers : undefined)));
   const pAv = percentileRanks(base.map((b) => views30(b)));
   const pRev = percentileRanks(base.map((b) => b.c.metrics.videoRevenueVnd ?? b.c.metrics.revenueVnd));
   const pCostEff = percentileRanks(base.map((b) => (views30(b) ? views30(b)! / b.cost.priceVnd : undefined)));
+  // Chuyển đổi: GPM video (doanh thu / 1000 view) — chỉ có sau enrich
+  const pGpm = percentileRanks(base.map((b) => b.sig.videoGpm));
+  const pGrowth = percentileRanks(base.map((b) => b.sig.followerGrowthPct));
 
   const rows: PrefilterRow[] = base.map((b, i) => {
     const breakdown = {
@@ -204,9 +223,11 @@ export function prefilter(creators: CreatorRecord[], brief: CampaignBrief): Pref
       // partial = tìm thấy qua nội dung đúng sản phẩm nhưng chưa biết ngành hàng bán -> trung tính
       category: b.c.partial && !b.c.categories.length ? 0.5 : b.cat,
       keyword: b.kw.score,
-      commerce: pRev[i],
+      // Có GPM: ưu tiên chuyển đổi (60%) hơn doanh thu tuyệt đối (40%) để không thiên vị tài khoản lớn
+      commerce: b.sig.videoGpm !== undefined ? 0.6 * pGpm[i] + 0.4 * pRev[i] : pRev[i],
       costEfficiency: pCostEff[i],
       videoFocus: b.vf ?? 0.5,
+      momentum: b.sig.followerGrowthPct !== undefined ? pGrowth[i] : 0.5,
     };
     const dataScore = (Object.keys(PREFILTER_WEIGHTS) as (keyof typeof PREFILTER_WEIGHTS)[]).reduce(
       (s, k) => s + PREFILTER_WEIGHTS[k] * breakdown[k],
@@ -234,6 +255,10 @@ export function prefilter(creators: CreatorRecord[], brief: CampaignBrief): Pref
         matchedKeywords: b.kw.matchedKeywords,
         videoFocus: b.vf,
         videoViews30d: views30(b),
+        paidViewShare: b.sig.paidViewShare,
+        videoGpm: b.sig.videoGpm,
+        avgUnitPriceVnd: b.sig.avgUnitPriceVnd,
+        followerGrowthPct: b.sig.followerGrowthPct,
       },
     };
   });

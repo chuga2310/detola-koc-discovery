@@ -12,6 +12,7 @@ import type { StageDef } from "../stage";
 import type { FinalRankOut } from "./finalRank";
 import { dataRow, type EnrichOut } from "./enrich";
 import type { PrefilterOut } from "./prefilter";
+import { signalsOf } from "../signals";
 import type { TextScreenOut } from "./textScreen";
 import type { VideoOut } from "./videoAnalysis";
 
@@ -35,6 +36,14 @@ export interface Pick {
   evidence: Evidence[];
   invalidEvidence: string[];
   videoAnalyzed: boolean;
+  /** Tín hiệu nhanh cho marketer (từ dữ liệu Kalodata đã có) */
+  signals?: {
+    paidViewShare?: number;
+    videoGpm?: number;
+    avgUnitPriceVnd?: number;
+    followerGrowthPct?: number;
+    contactChannels: string[];
+  };
 }
 
 export interface Report {
@@ -96,6 +105,16 @@ export const selectStage: StageDef<never, never, Report> = {
         evidence: ev,
         invalidEvidence: a.invalidEvidence,
         videoAnalyzed: !!vs.byId[id],
+        signals: (() => {
+          const s = signalsOf(c);
+          return {
+            paidViewShare: s.paidViewShare,
+            videoGpm: s.videoGpm,
+            avgUnitPriceVnd: s.avgUnitPriceVnd,
+            followerGrowthPct: s.followerGrowthPct,
+            contactChannels: s.contactChannels,
+          };
+        })(),
       };
     });
 

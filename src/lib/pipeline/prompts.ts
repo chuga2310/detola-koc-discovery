@@ -12,9 +12,9 @@
 import type { CampaignBrief } from "../types";
 
 export const PROMPT_VERSION = {
-  text_screen: "ts-v3",
+  text_screen: "ts-v4",
   video_analysis: "va-v1",
-  final_rank: "fr-v3",
+  final_rank: "fr-v4",
 } as const;
 
 export function briefBlock(b: CampaignBrief): string {
@@ -57,6 +57,10 @@ HOW TO READ A CARD
 - vids: recent/top video captions with views; "N% ad" = share of views bought with ads (high = reach is paid,
   not organic). Captions are often Vietnamese without diacritics.
 - prods: top products they sold.
+- signals (when present): "paid views" = share of all video views bought with ads (views and reach in the header
+  are already reduced to organic views where known); "GPM" = video revenue per 1,000 views (conversion power,
+  independent of account size); "avg price sold" = price segment their audience buys; "followers +x%/30d" =
+  momentum; "GMV on n/30 days" = steady seller vs one viral spike; "AI-generated videos" = authenticity concern.
 
 SCORING RUBRIC (integers 0-10)
 - brand_fit: would a beauty brand comfortably put this product in this creator's hands? Consider tone, niche
@@ -134,8 +138,11 @@ SCORING RUBRIC for fit_score (0-100)
 - 25 pts Content-product fit: does the creator already make skincare / sun-care / routine content that can naturally
   feature this product? Demonstration style (applies on skin, texture close-ups) matters for a sunscreen.
 - 20 pts Performance & efficiency: views per video relative to followers, engagement rate, estimated cost vs
-  expected reach, sales signals (GMV, items sold) as proof the audience buys on recommendation. Discount reach that
-  is mostly paid ads, and prefer creators whose sales come from videos (this is a video campaign).
+  expected reach, sales signals (GMV, items sold) as proof the audience buys on recommendation. Reach in the
+  evidence is ORGANIC (ad-bought views removed where known); treat a high paid-view share as weaker proof of pull.
+  Use video GPM (revenue per 1,000 views) for conversion, not raw GMV, and check that the average price their
+  audience buys is plausible for this product. Rising follower momentum is a plus. Prefer creators whose sales
+  come from videos (this is a video campaign).
 - 15 pts Content quality & credibility: production quality, hook, on-camera trust, consistency.
 - 10 pts Brand safety & focus: no red flags; not an "everything seller".
 verdict: strong >= 75, good 60-74, weak 40-59, reject < 40.

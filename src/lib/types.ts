@@ -57,7 +57,11 @@ export interface CreatorVideo {
   productTitle?: string;
   /** % view đến từ quảng cáo trả tiền (0..100) -> view "mua" không phản ánh sức hút tự nhiên */
   adViewRatio?: number;
+  /** % doanh thu video đến từ quảng cáo (0..100) */
+  adRevenueRatio?: number;
   isAd?: boolean;
+  /** Kalodata gắn cờ video do AI tạo */
+  isAiVideo?: boolean;
 }
 
 export interface CreatorRecord {
@@ -87,7 +91,19 @@ export interface CreatorRecord {
     /** Số sản phẩm / shop đã hợp tác: quá nhiều = "bán mọi thứ", ít tập trung */
     productCount?: number;
     shopCount?: number;
+    /** Doanh thu video / 1000 view (VND): khả năng chuyển đổi */
+    videoGpm?: number;
+    /** Giá trung bình sản phẩm đã bán (VND): phân khúc giá khán giả quen mua */
+    avgUnitPriceVnd?: number;
+    /** Doanh thu từng ngày trong 30 ngày (VND) */
+    revenueTrend30d?: number[];
+    /** % tăng trưởng doanh thu so với kỳ trước (bảng xếp hạng Kalodata) */
+    revenueGrowthPct?: number;
   };
+  /** TÊN các kênh liên hệ creator công khai (Email, Zalo...) — không lưu giá trị liên hệ */
+  contactChannels?: string[];
+  /** Ngày creator xuất hiện lần đầu trên Kalodata (≈ tuổi tài khoản bán hàng) */
+  debutDate?: string;
   /** Phân bổ khán giả (follower demographics). Có thể thiếu nếu nguồn không có. */
   audience?: {
     femalePct?: number; // 0..1

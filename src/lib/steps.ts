@@ -108,7 +108,7 @@ interface PrefilterRow {
   passed: boolean;
   dropReasons: string[];
   dataScore: number;
-  raw: { engagementRate?: number; avgViews?: number; keywordVideos?: number; keywordTotal?: number };
+  raw: { engagementRate?: number; avgViews?: number; keywordVideos?: number; keywordTotal?: number; paidViewShare?: number; videoGpm?: number };
 }
 
 /** "105k follower · tương tác 3.2%": bỏ số chưa có (0) thay vì in "0 follower" */
@@ -180,10 +180,21 @@ function describeDone(runId: string, stage: string, out: unknown, all: Map<strin
         rowsTitle: "Hồ sơ đã lấy",
         rows: o.rows.map((r) => ({
           handle: r.handle,
-          text: [statLine(r), r.raw.avgViews ? `${k(r.raw.avgViews)} view/video` : null, `ước tính ${trieu(r.estCostVnd)}/video`].filter(Boolean).join(" · "),
-          note: r.passed ? undefined : `Bị loại: ${r.dropReasons.map(dropWord).join(", ")}`,
+          text: [
+            statLine(r),
+            r.raw.avgViews ? `${k(r.raw.avgViews)} view tự nhiên/video` : null,
+            r.raw.videoGpm ? `${k(r.raw.videoGpm)} ₫/1.000 view` : null,
+            `ước tính ${trieu(r.estCostVnd)}/video`,
+          ]
+            .filter(Boolean)
+            .join(" · "),
+          note: !r.passed
+            ? `Bị loại: ${r.dropReasons.map(dropWord).join(", ")}`
+            : r.raw.paidViewShare !== undefined && r.raw.paidViewShare >= 0.3
+              ? `${Math.round(r.raw.paidViewShare * 100)}% view từ quảng cáo (đã trừ khi chấm reach)`
+              : undefined,
           value: pct(r.dataScore),
-          tone: r.passed ? undefined : "risk",
+          tone: r.passed ? (r.raw.paidViewShare !== undefined && r.raw.paidViewShare >= 0.5 ? "caution" : undefined) : "risk",
         })),
       };
       break;

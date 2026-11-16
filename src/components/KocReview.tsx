@@ -43,6 +43,7 @@ export function KocReview({ pick, onRead }: { pick: Pick; onRead: () => void }) 
           <p className="num mt-2 text-meta text-ink-2">
             {pick.nickname} · {compact(pick.followers)} follower · {pick.costTier} · ước tính {millions(pick.estCostVnd)} / video
           </p>
+          <SignalPills pick={pick} />
           <p className="mt-3 max-w-[64ch] text-body font-medium">{pick.headline}</p>
         </div>
         <span className="hidden sm:block">
@@ -312,5 +313,42 @@ function FrameStrip({
         })}
       </div>
     </div>
+  );
+}
+
+/** Tín hiệu nhanh từ dữ liệu Kalodata: view quảng cáo, chuyển đổi, phân khúc giá, đà tăng, kênh liên hệ */
+function SignalPills({ pick }: { pick: Pick }) {
+  const s = pick.signals;
+  if (!s) return null;
+  const pct = (x: number) => `${Math.round(x * 100)}%`;
+  const items: { text: string; title: string; tone?: "caution" }[] = [];
+  if (s.paidViewShare !== undefined)
+    items.push({
+      text: `${pct(s.paidViewShare)} view từ quảng cáo`,
+      title: "Tỷ trọng view video đến từ quảng cáo trả tiền. Reach trong điểm số đã trừ phần này.",
+      tone: s.paidViewShare >= 0.5 ? "caution" : undefined,
+    });
+  if (s.videoGpm) items.push({ text: `${compact(s.videoGpm)} ₫ / 1.000 view`, title: "GPM video: doanh thu trên mỗi 1.000 view (khả năng chuyển đổi)" });
+  if (s.avgUnitPriceVnd) items.push({ text: `Khán giả mua ~${compact(s.avgUnitPriceVnd)} ₫/sp`, title: "Giá trung bình sản phẩm khán giả đã mua qua creator" });
+  if (s.followerGrowthPct !== undefined) items.push({ text: `+${(s.followerGrowthPct * 100).toFixed(1)}% follower / 30 ngày`, title: "Follower mới trong 30 ngày" });
+  items.push(
+    s.contactChannels.length
+      ? { text: `Liên hệ: ${s.contactChannels.join(", ")}`, title: "Kênh liên hệ công khai trên hồ sơ (xem trên TikTok / Kalodata)" }
+      : { text: "Chưa có kênh liên hệ công khai", title: "Liên hệ qua tin nhắn TikTok" },
+  );
+  return (
+    <ul className="mt-3 flex flex-wrap gap-1.5" aria-label="Tín hiệu nhanh">
+      {items.map((it) => (
+        <li
+          key={it.text}
+          title={it.title}
+          className={`num rounded-full px-2.5 py-1 text-[12px] leading-none font-medium ${
+            it.tone === "caution" ? "bg-caution-tint text-caution" : "bg-sunken text-ink-2"
+          }`}
+        >
+          {it.text}
+        </li>
+      ))}
+    </ul>
   );
 }

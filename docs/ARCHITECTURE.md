@@ -161,6 +161,21 @@ Prompt `video_analysis` **không chứa brief**. Output là "hồ sơ nội dung
 
 Benchmark kill cứng process (`process.exit(137)`) giữa `video_analysis`, resume ở process mới, kiểm tra **0 call bị trả tiền 2 lần**.
 
+### 2.12a Tận dụng hết dữ liệu Kalodata đã trả tiền (0 credit thêm)
+
+Response của `creator/detail` và `video/rank` có nhiều trường trước đây bị bỏ qua. Giờ được đưa vào (`src/lib/pipeline/signals.ts`):
+
+| Tín hiệu | Nguồn | Dùng ở đâu |
+|---|---|---|
+| **View tự nhiên** = view × (1 − `ad_view_ratio`) | `video/rank` | Reach, view trung vị, view/1 triệu ₫ đều tính trên view tự nhiên. ~3/4 video trong pool có chạy quảng cáo, 105/614 video có ≥ 50% view mua. |
+| **GPM video** (`video_gpm`, doanh thu / 1000 view) | `creator/detail` | Điểm thương mại = 60% GPM + 40% doanh thu khi có GPM → không thiên vị tài khoản lớn. GPM trong pool chênh ~13 lần. |
+| **Giá TB sản phẩm đã bán** (`unit_price`) | `creator/detail` | Bằng chứng m7 cho AI so phân khúc giá với sản phẩm. |
+| **Đà tăng** (`new_followers`, `revenue_trend` 30 ngày) | `creator/detail` | Thành phần mới `momentum` (5%) trong điểm số liệu; bằng chứng m8 (số ngày có doanh thu, xu hướng). |
+| **Video AI tạo** (`ai_video`), ngày debut | `video/rank` | Đưa vào thẻ đọc nội dung và bằng chứng m8. |
+| **Kênh liên hệ** (`creator_contact_*`) | `creator/detail` | Chỉ lưu TÊN kênh (Email, Zalo…) để marketer biết đường booking; không lưu giá trị liên hệ. |
+
+Các tín hiệu từ `creator/detail` chỉ có sau bước enrich (~20 người), nên chúng vào điểm chấm lại sau enrich, bước đọc nội dung và chấm điểm cuối, không vào lọc thô 234 người (thiếu = trung tính). Trọng số mới: `videoFocus` 0.10 → 0.05, thêm `momentum` 0.05.
+
 ### 2.12 Lập brief bằng hội thoại: code quyết định, AI chỉ hiểu chữ
 
 User có thể điền form hoặc kể bằng lời. Brief được chia thành **slot** (sản phẩm, giới tính, độ tuổi, ngân sách, số KOC; tuỳ chọn: quy mô follower, điểm nổi bật).

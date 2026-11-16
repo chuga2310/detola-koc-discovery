@@ -63,7 +63,26 @@ interface DetailData {
   product_number?: number;
   shop_number?: number;
   creator_followers?: string | number;
+  video_gpm?: number;
+  unit_price?: number;
+  revenue_trend?: number[];
+  creator_contact_email?: string;
+  creator_contact_zalo?: string;
+  creator_contact_facebook?: string;
+  creator_contact_ins?: string;
+  creator_contact_whatsapp?: string;
+  creator_contact_line?: string;
 }
+
+/** Chỉ ghi nhận CÓ kênh liên hệ nào (để marketer biết đường booking), không lưu email/số điện thoại */
+const CONTACT_FIELDS: [keyof DetailData, string][] = [
+  ["creator_contact_email", "Email"],
+  ["creator_contact_zalo", "Zalo"],
+  ["creator_contact_facebook", "Facebook"],
+  ["creator_contact_ins", "Instagram"],
+  ["creator_contact_whatsapp", "WhatsApp"],
+  ["creator_contact_line", "Line"],
+];
 
 interface VideoRow {
   video_id: string;
@@ -75,6 +94,9 @@ interface VideoRow {
   comment_count?: number;
   ad?: number;
   ad_view_ratio?: number;
+  ad_revenue_ratio?: number;
+  ai_video?: number;
+  creator_debut?: string;
   publish_date?: string;
 }
 
@@ -94,6 +116,7 @@ export function mapRankRow(r: RankRow): CreatorRecord {
       videoViews: n(r.content_views),
       videoRevenueVnd: n(r.video_revenue),
       liveRevenueVnd: n(r.live_revenue),
+      revenueGrowthPct: n(r.revenue_growth_rate),
     },
     categories: (r.category_list ?? []).map((name, i) => ({ name, share: weights[i] ?? 0.1 })),
     subCategories: r.ter_category_list ?? [],
@@ -117,7 +140,9 @@ function mapVideo(handle: string, v: VideoRow): CreatorVideo {
     publishedAt: pub && !Number.isNaN(pub.getTime()) ? pub.toISOString() : undefined,
     revenueVnd: n(v.revenue),
     adViewRatio: n(v.ad_view_ratio),
+    adRevenueRatio: n(v.ad_revenue_ratio),
     isAd: v.ad === 1,
+    isAiVideo: v.ai_video === 1,
   };
 }
 
@@ -246,6 +271,8 @@ export const kalodataSource: DataSource = {
       ...c,
       bio: redactContact(detail?.creator_bio),
       creatorStatus: detail?.creator_status,
+      contactChannels: CONTACT_FIELDS.filter(([k]) => typeof detail?.[k] === "string" && (detail[k] as string).trim()).map(([, name]) => name),
+      debutDate: (Array.isArray(videos) ? videos : []).find((v) => v.creator_debut)?.creator_debut ?? c.debutDate,
       followers: n(detail?.creator_followers) ?? c.followers,
       metrics: {
         ...c.metrics,
@@ -259,6 +286,9 @@ export const kalodataSource: DataSource = {
         productCount: n(detail?.product_number),
         shopCount: n(detail?.shop_number),
         followerGrowth: n(detail?.new_followers),
+        videoGpm: n(detail?.video_gpm),
+        avgUnitPriceVnd: n(detail?.unit_price),
+        revenueTrend30d: Array.isArray(detail?.revenue_trend) ? detail.revenue_trend.map((x) => Number(x) || 0) : c.metrics.revenueTrend30d,
         // Trung vị view của các video gần đây: bền hơn trung bình (1 video viral không làm lệch)
         avgViewsPerVideo: median(vids.map((v) => v.views)),
         engagementRate: er,

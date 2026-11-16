@@ -14,6 +14,7 @@ import { loadCreators } from "../creators";
 import { PROMPT_VERSION, textScreenSystem } from "../prompts";
 import { TextScreenSchema, type TextScreenOutput } from "../schemas";
 import type { PrefilterRow } from "../scoring";
+import { signalsOf } from "../signals";
 import type { StageContext, StageDef } from "../stage";
 import { dataRow, type EnrichOut } from "./enrich";
 import type { PrefilterOut } from "./prefilter";
@@ -40,6 +41,15 @@ export function creatorCard(ref: string, c: CreatorRecord, pre: PrefilterRow): s
     .map((v) => `"${truncate(v.caption, 90)}" (${compactNum(v.views)}v${v.adViewRatio ? `, ${Math.round(v.adViewRatio)}% ad` : ""})`)
     .join(" | ");
   const prods = (c.topProducts ?? []).slice(0, 3).map((p) => truncate(p.title, 60)).join("; ");
+  const s = signalsOf(c);
+  const signals = [
+    s.paidViewShare !== undefined ? `paid views ${pct(s.paidViewShare)}` : null,
+    s.videoGpm ? `GPM ${compactNum(s.videoGpm)} VND/1k views` : null,
+    s.avgUnitPriceVnd ? `avg price sold ${compactNum(s.avgUnitPriceVnd)} VND` : null,
+    s.followerGrowthPct !== undefined ? `followers +${pct(s.followerGrowthPct, 1)}/30d` : null,
+    s.revenueActiveDays !== undefined ? `GMV on ${s.revenueActiveDays}/30 days, trend ${s.revenueTrend}` : null,
+    s.aiVideoCount ? `${s.aiVideoCount} AI-generated videos` : null,
+  ].filter(Boolean);
   return [
     `${ref} | @${c.handle} | ${compactNum(c.followers)} fl | ${compactNum(pre.raw.videoViews30d)} views/30d | median ${compactNum(pre.raw.avgViews)} v/top-vid | ER ${pct(pre.raw.engagementRate, 1)} | GMV30 ${compactNum(c.metrics.revenueVnd)} | sold ${compactNum(c.metrics.itemsSold)}`,
     `aud: F ${c.audience?.femalePct !== undefined ? pct(c.audience.femalePct) : "?"} | ${ages}`,
@@ -50,6 +60,7 @@ export function creatorCard(ref: string, c: CreatorRecord, pre: PrefilterRow): s
       ? `sales mix: ${pct(pre.raw.videoFocus)} from videos, ${pct(1 - pre.raw.videoFocus)} from livestream; promotes ${c.metrics.productCount ?? "?"} products / ${c.metrics.shopCount ?? "?"} shops`
       : null,
     c.subCategories?.length ? `sub-cats: ${c.subCategories.slice(0, 3).join(", ")}` : null,
+    signals.length ? `signals: ${signals.join(" | ")}` : null,
     `vids: ${vids || "none"}`,
     prods ? `prods: ${prods}` : null,
   ]
