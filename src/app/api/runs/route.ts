@@ -4,6 +4,7 @@
  */
 import { z } from "zod";
 import { createRun, markStaleRuns, startInBackground } from "@/lib/pipeline/runner";
+import { db } from "@/lib/db";
 import { listRuns } from "@/lib/runs";
 
 export const runtime = "nodejs";
@@ -26,7 +27,11 @@ const BriefSchema = z.object({
   region: z.string().optional(),
   kalodataCategoryIds: z.string().optional(),
   contentKeywords: z.array(z.string()).optional(),
+  budgetInput: z.object({ amount: z.number().positive(), currency: z.enum(["VND", "USD"]) }).optional(),
 });
+
+/** Body mới: { brief, chat }. Vẫn nhận body cũ (chỉ brief) cho CLI / script. */
+const CreateSchema = z.union([z.object({ brief: BriefSchema, chat: z.array(z.record(z.string(), z.unknown())).max(80).optional() }), BriefSchema]);
 
 export async function GET() {
   markStaleRuns();
@@ -34,9 +39,22 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const parsed = BriefSchema.safeParse(await req.json());
-  if (!parsed.success) return Response.json({ error: parsed.error.flatten() }, { status: 400 });
-  const id = createRun(parsed.data);
+  const parsed = CreateSchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) return Response.json({ error: "Brief chưa đủ thông tin để bắt đầu." }, { status: 400 });
+  const { brief, chat } = "brief" in parsed.data ? parsed.data : { brief: parsed.data, chat: undefined };
+  const id = createRun(brief, chat);
+  if (chat?.length) attributeIntakeCost(id, chat);
   startInBackground(id);
   return Response.json({ id }, { status: 201 });
+}
+
+/** Chi phí AI của các lượt hỏi brief (ghi lúc chưa có chiến dịch) -> gắn vào chiến dịch vừa tạo */
+function attributeIntakeCost(runId: string, chat: Record<string, unknown>[]) {
+  const ids = chat.filter((m) => m.role === "user" && typeof m.id === "string").map((m) => m.id as string);
+  if (!ids.length) return;
+  db()
+    .prepare(
+      `UPDATE ai_calls SET run_id = ? WHERE run_id IS NULL AND stage = 'brief_intake' AND task_key IN (${ids.map(() => "?").join(",")})`,
+    )
+    .run(runId, ...ids);
 }

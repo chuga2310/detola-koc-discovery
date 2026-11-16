@@ -1,0 +1,611 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-16T14:22:41.516Z",
+  "title": "Design System: KOC Discovery",
+  "extensions": {
+    "colorMeta": {
+      "ground": {
+        "role": "neutral",
+        "displayName": "Workbench",
+        "canonical": "oklch(0.975 0.002 350)",
+        "tonalRamp": [
+          "oklch(0.15 0.002 350)",
+          "oklch(0.26 0.003 350)",
+          "oklch(0.37 0.003 350)",
+          "oklch(0.48 0.004 350)",
+          "oklch(0.59 0.004 350)",
+          "oklch(0.70 0.003 350)",
+          "oklch(0.82 0.003 350)",
+          "oklch(0.95 0.002 350)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Sheet",
+        "canonical": "oklch(0.995 0.001 350)",
+        "tonalRamp": [
+          "oklch(0.15 0.002 350)",
+          "oklch(0.26 0.003 350)",
+          "oklch(0.37 0.003 350)",
+          "oklch(0.48 0.004 350)",
+          "oklch(0.59 0.004 350)",
+          "oklch(0.70 0.003 350)",
+          "oklch(0.82 0.003 350)",
+          "oklch(0.95 0.002 350)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Plum Ink",
+        "canonical": "oklch(0.21 0.018 345)",
+        "tonalRamp": [
+          "oklch(0.15 0.009 345)",
+          "oklch(0.26 0.011 345)",
+          "oklch(0.37 0.014 345)",
+          "oklch(0.48 0.016 345)",
+          "oklch(0.59 0.017 345)",
+          "oklch(0.70 0.015 345)",
+          "oklch(0.82 0.012 345)",
+          "oklch(0.95 0.009 345)"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Plum Ink 2",
+        "canonical": "oklch(0.43 0.016 345)",
+        "tonalRamp": [
+          "oklch(0.15 0.008 345)",
+          "oklch(0.26 0.010 345)",
+          "oklch(0.37 0.012 345)",
+          "oklch(0.48 0.015 345)",
+          "oklch(0.59 0.015 345)",
+          "oklch(0.70 0.013 345)",
+          "oklch(0.82 0.011 345)",
+          "oklch(0.95 0.008 345)"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Plum Ink 3",
+        "canonical": "oklch(0.55 0.012 345)",
+        "tonalRamp": [
+          "oklch(0.15 0.006 345)",
+          "oklch(0.26 0.008 345)",
+          "oklch(0.37 0.009 345)",
+          "oklch(0.48 0.011 345)",
+          "oklch(0.59 0.011 345)",
+          "oklch(0.70 0.010 345)",
+          "oklch(0.82 0.008 345)",
+          "oklch(0.95 0.006 345)"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "oklch(0.89 0.006 345)",
+        "tonalRamp": [
+          "oklch(0.15 0.003 345)",
+          "oklch(0.26 0.004 345)",
+          "oklch(0.37 0.005 345)",
+          "oklch(0.48 0.005 345)",
+          "oklch(0.59 0.006 345)",
+          "oklch(0.70 0.005 345)",
+          "oklch(0.82 0.004 345)",
+          "oklch(0.95 0.003 345)"
+        ]
+      },
+      "rule-strong": {
+        "role": "neutral",
+        "displayName": "Strong Rule",
+        "canonical": "oklch(0.21 0.018 345)",
+        "tonalRamp": [
+          "oklch(0.15 0.009 345)",
+          "oklch(0.26 0.011 345)",
+          "oklch(0.37 0.014 345)",
+          "oklch(0.48 0.016 345)",
+          "oklch(0.59 0.017 345)",
+          "oklch(0.70 0.015 345)",
+          "oklch(0.82 0.012 345)",
+          "oklch(0.95 0.009 345)"
+        ]
+      },
+      "shell": {
+        "role": "secondary",
+        "displayName": "Black Cherry",
+        "canonical": "oklch(0.29 0.075 5)",
+        "tonalRamp": [
+          "oklch(0.15 0.037 5)",
+          "oklch(0.26 0.047 5)",
+          "oklch(0.37 0.058 5)",
+          "oklch(0.48 0.068 5)",
+          "oklch(0.59 0.071 5)",
+          "oklch(0.70 0.061 5)",
+          "oklch(0.82 0.049 5)",
+          "oklch(0.95 0.037 5)"
+        ]
+      },
+      "shell-ink": {
+        "role": "secondary",
+        "displayName": "Shell Ink",
+        "canonical": "oklch(0.97 0.008 5)",
+        "tonalRamp": [
+          "oklch(0.15 0.004 5)",
+          "oklch(0.26 0.005 5)",
+          "oklch(0.37 0.006 5)",
+          "oklch(0.48 0.007 5)",
+          "oklch(0.59 0.008 5)",
+          "oklch(0.70 0.006 5)",
+          "oklch(0.82 0.005 5)",
+          "oklch(0.95 0.004 5)"
+        ]
+      },
+      "shell-ink-2": {
+        "role": "secondary",
+        "displayName": "Shell Ink Muted",
+        "canonical": "oklch(0.86 0.03 5)",
+        "tonalRamp": [
+          "oklch(0.15 0.015 5)",
+          "oklch(0.26 0.019 5)",
+          "oklch(0.37 0.023 5)",
+          "oklch(0.48 0.027 5)",
+          "oklch(0.59 0.028 5)",
+          "oklch(0.70 0.024 5)",
+          "oklch(0.82 0.020 5)",
+          "oklch(0.95 0.015 5)"
+        ]
+      },
+      "shell-rule": {
+        "role": "secondary",
+        "displayName": "Shell Rule",
+        "canonical": "oklch(0.42 0.07 5)",
+        "tonalRamp": [
+          "oklch(0.15 0.034 5)",
+          "oklch(0.26 0.044 5)",
+          "oklch(0.37 0.054 5)",
+          "oklch(0.48 0.064 5)",
+          "oklch(0.59 0.066 5)",
+          "oklch(0.70 0.057 5)",
+          "oklch(0.82 0.046 5)",
+          "oklch(0.95 0.034 5)"
+        ]
+      },
+      "action": {
+        "role": "primary",
+        "displayName": "Lacquer Crimson",
+        "canonical": "oklch(0.47 0.155 6)",
+        "tonalRamp": [
+          "oklch(0.15 0.076 6)",
+          "oklch(0.26 0.098 6)",
+          "oklch(0.37 0.119 6)",
+          "oklch(0.48 0.141 6)",
+          "oklch(0.59 0.147 6)",
+          "oklch(0.70 0.125 6)",
+          "oklch(0.82 0.102 6)",
+          "oklch(0.95 0.076 6)"
+        ]
+      },
+      "action-hover": {
+        "role": "primary",
+        "displayName": "Deep Lacquer",
+        "canonical": "oklch(0.41 0.145 6)",
+        "tonalRamp": [
+          "oklch(0.15 0.071 6)",
+          "oklch(0.26 0.091 6)",
+          "oklch(0.37 0.112 6)",
+          "oklch(0.48 0.132 6)",
+          "oklch(0.59 0.138 6)",
+          "oklch(0.70 0.117 6)",
+          "oklch(0.82 0.095 6)",
+          "oklch(0.95 0.071 6)"
+        ]
+      },
+      "action-tint": {
+        "role": "primary",
+        "displayName": "Blush Selection",
+        "canonical": "oklch(0.955 0.022 6)",
+        "tonalRamp": [
+          "oklch(0.15 0.011 6)",
+          "oklch(0.26 0.014 6)",
+          "oklch(0.37 0.017 6)",
+          "oklch(0.48 0.020 6)",
+          "oklch(0.59 0.021 6)",
+          "oklch(0.70 0.018 6)",
+          "oklch(0.82 0.014 6)",
+          "oklch(0.95 0.011 6)"
+        ]
+      },
+      "action-ink": {
+        "role": "primary",
+        "displayName": "Lacquer Ink",
+        "canonical": "oklch(0.99 0.005 6)",
+        "tonalRamp": [
+          "oklch(0.15 0.002 6)",
+          "oklch(0.26 0.003 6)",
+          "oklch(0.37 0.004 6)",
+          "oklch(0.48 0.005 6)",
+          "oklch(0.59 0.005 6)",
+          "oklch(0.70 0.004 6)",
+          "oklch(0.82 0.003 6)",
+          "oklch(0.95 0.002 6)"
+        ]
+      },
+      "good": {
+        "role": "tertiary",
+        "displayName": "Tested Green",
+        "canonical": "oklch(0.44 0.095 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.047 158)",
+          "oklch(0.26 0.060 158)",
+          "oklch(0.37 0.073 158)",
+          "oklch(0.48 0.087 158)",
+          "oklch(0.59 0.090 158)",
+          "oklch(0.70 0.077 158)",
+          "oklch(0.82 0.062 158)",
+          "oklch(0.95 0.047 158)"
+        ]
+      },
+      "good-tint": {
+        "role": "tertiary",
+        "displayName": "Tested Green Tint",
+        "canonical": "oklch(0.955 0.025 158)",
+        "tonalRamp": [
+          "oklch(0.15 0.012 158)",
+          "oklch(0.26 0.016 158)",
+          "oklch(0.37 0.019 158)",
+          "oklch(0.48 0.023 158)",
+          "oklch(0.59 0.024 158)",
+          "oklch(0.70 0.020 158)",
+          "oklch(0.82 0.016 158)",
+          "oklch(0.95 0.012 158)"
+        ]
+      },
+      "caution": {
+        "role": "tertiary",
+        "displayName": "Amber Proof",
+        "canonical": "oklch(0.47 0.105 70)",
+        "tonalRamp": [
+          "oklch(0.15 0.052 70)",
+          "oklch(0.26 0.066 70)",
+          "oklch(0.37 0.081 70)",
+          "oklch(0.48 0.096 70)",
+          "oklch(0.59 0.100 70)",
+          "oklch(0.70 0.085 70)",
+          "oklch(0.82 0.069 70)",
+          "oklch(0.95 0.052 70)"
+        ]
+      },
+      "caution-tint": {
+        "role": "tertiary",
+        "displayName": "Amber Proof Tint",
+        "canonical": "oklch(0.96 0.035 80)",
+        "tonalRamp": [
+          "oklch(0.15 0.017 80)",
+          "oklch(0.26 0.022 80)",
+          "oklch(0.37 0.027 80)",
+          "oklch(0.48 0.032 80)",
+          "oklch(0.59 0.033 80)",
+          "oklch(0.70 0.028 80)",
+          "oklch(0.82 0.023 80)",
+          "oklch(0.95 0.017 80)"
+        ]
+      },
+      "risk": {
+        "role": "tertiary",
+        "displayName": "Red Proof",
+        "canonical": "oklch(0.49 0.165 30)",
+        "tonalRamp": [
+          "oklch(0.15 0.081 30)",
+          "oklch(0.26 0.104 30)",
+          "oklch(0.37 0.127 30)",
+          "oklch(0.48 0.150 30)",
+          "oklch(0.59 0.157 30)",
+          "oklch(0.70 0.134 30)",
+          "oklch(0.82 0.108 30)",
+          "oklch(0.95 0.081 30)"
+        ]
+      },
+      "risk-tint": {
+        "role": "tertiary",
+        "displayName": "Red Proof Tint",
+        "canonical": "oklch(0.955 0.025 30)",
+        "tonalRamp": [
+          "oklch(0.15 0.012 30)",
+          "oklch(0.26 0.016 30)",
+          "oklch(0.37 0.019 30)",
+          "oklch(0.48 0.023 30)",
+          "oklch(0.59 0.024 30)",
+          "oklch(0.70 0.020 30)",
+          "oklch(0.82 0.016 30)",
+          "oklch(0.95 0.012 30)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page titles, the ranking heading and the reviewed KOC handle; condensed 72%."
+      },
+      "rank-numeral": {
+        "displayName": "Rank numeral",
+        "purpose": "Zero-padded rank in ranking rows; compressed 64%, crimson when selected."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Wordmark, ledger figures, scores, step facts, Ưu / Lưu ý, card titles, stepper value."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Reading text, AI messages, reasons, table cells, buttons and chips; 62–70ch measure."
+      },
+      "label": {
+        "displayName": "Label / meta",
+        "purpose": "Field labels, column headers, meta lines, statuses, evidence keys, hints."
+      },
+      "seal": {
+        "displayName": "Seal word",
+        "purpose": "Only inside the 60px verdict seal and the 52px \"Đủ brief\" stamp; uppercase."
+      }
+    },
+    "shadows": [
+      {
+        "name": "none",
+        "value": "none",
+        "purpose": "The system is flat; depth comes from tone steps and rules. The cited frame lifts 4px with a 2px crimson outline (offset 3px) instead of a shadow."
+      },
+      {
+        "name": "focus-ring",
+        "value": "outline: 2px solid var(--action); outline-offset: 2px",
+        "purpose": "Global :focus-visible; 0 offset on fields, -2px inset on the stepper input."
+      },
+      {
+        "name": "composer-backdrop",
+        "value": "background: color-mix(in oklch, var(--ground) 95%, transparent); backdrop-filter: blur(2px)",
+        "purpose": "Sticky composer area so text scrolling beneath stays legible."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "The single easing curve for every transition and entrance."
+      },
+      {
+        "name": "state",
+        "value": "160ms cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Color and border changes on buttons, chips, fields, stepper."
+      },
+      {
+        "name": "chevron",
+        "value": "200ms cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Disclosure chevron rotation."
+      },
+      {
+        "name": "frame-lift",
+        "value": "300ms cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Cited frame translates -4px and gains its crimson ring."
+      },
+      {
+        "name": "rise-in",
+        "value": "320ms cubic-bezier(0.22, 1, 0.36, 1) (translateY 6px + fade); late variant 360ms with 700ms delay",
+        "purpose": "Chat messages, hint bubble, edit sheet, opened step panels."
+      },
+      {
+        "name": "evidence-in",
+        "value": "280ms cubic-bezier(0.22, 1, 0.36, 1) (translateY -4px + fade + 2px blur)",
+        "purpose": "The one staged moment: the evidence panel appearing."
+      },
+      {
+        "name": "progress",
+        "value": "700ms cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "scaleX of step progress bars."
+      },
+      {
+        "name": "composer-sweep",
+        "value": "3.6s linear infinite conic crimson arc",
+        "purpose": "Invites the first chat message; stops on focus or text. Reduced motion: static crimson ring."
+      },
+      {
+        "name": "typing",
+        "value": "1.2s ease-in-out infinite, 0.15s stagger",
+        "purpose": "Three-dot AI typing indicator."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "animation/transition 0.01ms, scroll-behavior auto",
+        "purpose": "prefers-reduced-motion: reduce collapses all motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "One primary action per area: \"Gửi brief\", \"Bắt đầu tìm creator\".",
+      "html": "<button class=\"ds-btn ds-btn-primary\">Bắt đầu tìm creator</button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;gap:8px;border-radius:2px;padding:8px 14px;font:600 15px/1.2 var(--font-archivo),system-ui,sans-serif;border:1px solid var(--rule-strong);cursor:pointer;transition:background-color 160ms cubic-bezier(0.22, 1, 0.36, 1),border-color 160ms cubic-bezier(0.22, 1, 0.36, 1)}.ds-btn-primary{background:var(--action);border-color:var(--action);color:var(--action-ink)}.ds-btn-primary:hover{background:var(--action-hover);border-color:var(--action-hover)}.ds-btn-primary:focus-visible{outline:2px solid var(--action);outline-offset:2px}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Outlined companion action: \"Sửa brief\".",
+      "html": "<button class=\"ds-btn2\">Sửa brief</button>",
+      "css": ".ds-btn2{display:inline-flex;align-items:center;gap:8px;border-radius:2px;padding:8px 14px;font:600 15px/1.2 var(--font-archivo),system-ui,sans-serif;border:1px solid var(--rule-strong);background:var(--surface);color:var(--ink);cursor:pointer;transition:background-color 160ms cubic-bezier(0.22, 1, 0.36, 1)}.ds-btn2:hover{background:var(--ground)}.ds-btn2:focus-visible{outline:2px solid var(--action);outline-offset:2px}"
+    },
+    {
+      "name": "Shell Band",
+      "kind": "nav",
+      "refersTo": "shell-band",
+      "description": "Black-cherry band: wordmark, breadcrumb + status, ledger figure, one next action.",
+      "html": "<header class=\"ds-shell\"><a class=\"ds-mark\" href=\"#\">KOC Discovery</a><nav class=\"ds-crumb\"><a href=\"#\">Chiến dịch</a> › <b>Kem chống nắng</b> <span class=\"ds-st\"><i></i>Hoàn tất</span></nav><div class=\"ds-aside\"><div class=\"ds-led\"><div>≈ $0.42</div><small>chi phí · 2 phút 10 giây</small></div><button class=\"ds-onshell\">Brief mới</button></div></header>",
+      "css": ".ds-shell{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px 40px;background:var(--shell);color:var(--shell-ink);padding:20px 40px;font-family:var(--font-archivo),system-ui,sans-serif}.ds-mark{font:800 24px/1 inherit;font-stretch:64%;text-transform:uppercase;color:inherit;text-decoration:none}.ds-crumb{font-size:15px;border-left:1px solid var(--shell-rule);padding-left:24px;flex:1}.ds-crumb a{color:var(--shell-ink-2);text-decoration:none}.ds-crumb a:hover{color:var(--shell-ink);text-decoration:underline}.ds-st{margin-left:12px;font-size:13px;font-weight:600}.ds-st i{display:inline-block;width:8px;height:8px;border-radius:50%;background:oklch(0.8 0.12 158);margin-right:8px}.ds-aside{display:flex;align-items:center;gap:32px}.ds-led{text-align:right}.ds-led div{font:700 24px/1 inherit;font-stretch:72%;font-variant-numeric:tabular-nums}.ds-led small{font-size:13px;color:var(--shell-ink-2)}.ds-onshell{border:1px solid var(--shell-ink-2);background:transparent;color:var(--shell-ink);border-radius:2px;padding:8px 14px;font:600 15px/1.2 inherit;cursor:pointer;transition:background-color 160ms cubic-bezier(0.22, 1, 0.36, 1)}.ds-onshell:hover{background:var(--shell-rule)}.ds-onshell:focus-visible{outline:2px solid var(--action);outline-offset:2px}"
+    },
+    {
+      "name": "Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Standard text input with crimson focus.",
+      "html": "<input class=\"ds-field\" placeholder=\"Ví dụ: Kem chống nắng nâng tông SPF50+\">",
+      "css": ".ds-field{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--rule);border-radius:2px;padding:8px 10px;font:15px/1.5 var(--font-archivo),system-ui,sans-serif;color:var(--ink);transition:border-color 160ms cubic-bezier(0.22, 1, 0.36, 1)}.ds-field::placeholder{color:var(--ink-3)}.ds-field:hover{border-color:var(--ink-3)}.ds-field:focus-visible{outline:2px solid var(--action);outline-offset:0;border-color:var(--action)}"
+    },
+    {
+      "name": "Choice Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Single (radio) or multi (checkbox) quick choice; selected = crimson border + blush.",
+      "html": "<div class=\"ds-chips\" role=\"group\"><button class=\"ds-chip\" role=\"checkbox\" aria-checked=\"false\">Nano <small>1k–10k</small></button><button class=\"ds-chip\" role=\"checkbox\" aria-checked=\"true\"><span class=\"ds-ck\">✓</span>Micro <small>10k–100k</small></button></div>",
+      "css": ".ds-chips{display:flex;flex-wrap:wrap;gap:8px}.ds-chip{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:6px 12px;border:1px solid var(--rule);border-radius:2px;background:var(--surface);color:var(--ink);font:15px/1.2 var(--font-archivo),system-ui,sans-serif;cursor:pointer;transition:border-color 160ms cubic-bezier(0.22, 1, 0.36, 1),background-color 160ms cubic-bezier(0.22, 1, 0.36, 1)}.ds-chip small{font-size:13px;color:var(--ink-2)}.ds-chip:hover{border-color:var(--ink-3)}.ds-chip[aria-checked=\"true\"]{border-color:var(--action);background:var(--action-tint);font-weight:600}.ds-ck{color:var(--action)}.ds-chip:focus-visible{outline:2px solid var(--action);outline-offset:2px}"
+    },
+    {
+      "name": "Verdict Seal",
+      "kind": "custom",
+      "refersTo": "seal",
+      "description": "Printed ink seal: double ring (good), single ring (caution), struck (reject); always with a word.",
+      "html": "<div class=\"ds-seals\"><span class=\"ds-seal ds-good\" role=\"img\" aria-label=\"Verdict: Phù hợp\"><i class=\"ds-ring\"></i><b>Phù hợp</b></span><span class=\"ds-seal ds-caution\" role=\"img\" aria-label=\"Verdict: Cân nhắc\"><b>Cân nhắc</b></span><span class=\"ds-seal ds-risk\" role=\"img\" aria-label=\"Verdict: Loại\"><i class=\"ds-strike\"></i><b>Loại</b></span></div>",
+      "css": ".ds-seals{display:flex;gap:16px}.ds-seal{position:relative;display:inline-grid;place-items:center;width:60px;height:60px;border-radius:50%;border:2px solid currentColor;font:800 12px/1.05 var(--font-archivo),system-ui,sans-serif;font-stretch:64%;text-transform:uppercase;text-align:center}.ds-seal b{max-width:44px}.ds-good{color:var(--good)}.ds-caution{color:var(--caution)}.ds-risk{color:var(--risk)}.ds-ring{position:absolute;inset:4px;border-radius:50%;border:1px solid currentColor}.ds-strike{position:absolute;top:50%;left:8%;width:84%;height:2px;background:currentColor;transform:rotate(-28deg)}"
+    },
+    {
+      "name": "Evidence Key",
+      "kind": "custom",
+      "refersTo": "evidence-key",
+      "description": "Proof key after a claim; pressing it rings the cited frame and reveals the evidence.",
+      "html": "<p class=\"ds-claim\">Đã quay cận texture trên tay. <button class=\"ds-key\" aria-pressed=\"false\">v1.o2</button><button class=\"ds-key\" aria-pressed=\"true\">v1.o1</button></p>",
+      "css": ".ds-claim{font:15px/1.5 var(--font-archivo),system-ui,sans-serif;color:var(--ink)}.ds-key{margin-left:6px;border:1px solid var(--action);border-radius:2px;padding:0 6px;font:600 13px/18px var(--font-archivo),system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--action);background:transparent;cursor:pointer;transition:background-color 160ms cubic-bezier(0.22, 1, 0.36, 1)}.ds-key:hover{background:var(--action-tint)}.ds-key[aria-pressed=\"true\"]{background:var(--action);color:var(--action-ink)}.ds-key:focus-visible{outline:2px solid var(--action);outline-offset:2px}"
+    },
+    {
+      "name": "Ranking Row",
+      "kind": "custom",
+      "refersTo": "ranking-row-selected",
+      "description": "Compressed rank numeral, handle, tabular figures, seal, score; selected = blush + crimson numeral.",
+      "html": "<button class=\"ds-row\" aria-pressed=\"true\"><span class=\"ds-rank\">01</span><span class=\"ds-who\"><b>@luumaianh_</b><small>Luumaianh</small></span><span class=\"ds-n\">183k</span><span class=\"ds-n\">7M ₫</span><span class=\"ds-score\">58.5<small>AI 62</small></span></button>",
+      "css": ".ds-row{display:grid;grid-template-columns:40px minmax(0,1fr) 56px 64px 60px;align-items:center;gap:0 12px;width:100%;max-width:520px;padding:12px 8px;border:0;border-bottom:1px solid var(--rule);background:transparent;text-align:left;font:15px/1.5 var(--font-archivo),system-ui,sans-serif;color:var(--ink);cursor:pointer;transition:background-color 160ms cubic-bezier(0.22, 1, 0.36, 1)}.ds-row:hover{background:var(--surface)}.ds-row[aria-pressed=\"true\"]{background:var(--action-tint)}.ds-rank{font:800 40px/1 inherit;font-stretch:64%;font-variant-numeric:tabular-nums}.ds-row[aria-pressed=\"true\"] .ds-rank{color:var(--action)}.ds-who small,.ds-score small{display:block;font-size:13px;color:var(--ink-2)}.ds-n{text-align:right;font-variant-numeric:tabular-nums}.ds-score{text-align:right;font:700 24px/1 inherit;font-stretch:72%}.ds-row:focus-visible{outline:2px solid var(--action);outline-offset:2px}"
+    },
+    {
+      "name": "Chat Composer",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Sticky composer with crimson send square; crimson sweep around the border until first focus.",
+      "html": "<form class=\"ds-comp\"><textarea rows=\"1\" placeholder=\"Hoặc kể cho AI: sản phẩm, khách hàng, ngân sách…\"></textarea><button type=\"button\" aria-label=\"Gửi\">↑</button></form>",
+      "css": ".ds-comp{display:flex;align-items:flex-end;gap:8px;max-width:640px;border:1px solid var(--rule-strong);border-radius:2px;background:var(--surface);padding:8px 8px 8px 16px}.ds-comp:focus-within{border-color:var(--action);outline:2px solid var(--action);outline-offset:0}.ds-comp textarea{flex:1;min-height:40px;resize:none;border:0;background:transparent;padding:8px 0;font:15px/1.5 var(--font-archivo),system-ui,sans-serif;color:var(--ink);outline:none}.ds-comp textarea::placeholder{color:var(--ink-3)}.ds-comp button{width:40px;height:40px;border:0;border-radius:2px;background:var(--action);color:var(--action-ink);font-size:18px;cursor:pointer;transition:background-color 160ms cubic-bezier(0.22, 1, 0.36, 1)}.ds-comp button:hover{background:var(--action-hover)}"
+    },
+    {
+      "name": "Step Node",
+      "kind": "custom",
+      "refersTo": "step-node",
+      "description": "Process nodes: done = double ink ring + check, running = pulsing dot, pending = numbered hairline ring.",
+      "html": "<div class=\"ds-steps\"><span class=\"ds-node ds-done\"><i></i>✓</span><span class=\"ds-node ds-run\"><em></em></span><span class=\"ds-node ds-pend\">3</span></div>",
+      "css": ".ds-steps{display:flex;gap:16px}.ds-node{position:relative;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--ground);font:700 13px/1 var(--font-archivo),system-ui,sans-serif}.ds-done{border:2px solid var(--ink);color:var(--ink)}.ds-done i{position:absolute;inset:2px;border-radius:50%;border:1px solid currentColor}.ds-run{border:2px solid var(--ink)}.ds-run em{width:8px;height:8px;border-radius:50%;background:var(--ink)}.ds-pend{border:1px solid var(--rule);color:var(--ink-3)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Tested-Product Review",
+    "overview": "Every KOC is presented the way a beauty editor writes up a product they have actually tried: a stamped verdict, a short \"Ưu / Lưu ý\" ledger where every line carries a proof key, and the creator's video frames laid out like a swatch strip. The rest of the app is the editor's workbench around that review: a calm, neutral near-white ground, plum-tinted near-black ink, hairline rules, and one black-cherry shell band at the top of every screen that carries identity, location, status, the run's cost and the single next action.\n\nThe system is quiet so the numbers and the proof can be loud. Hierarchy comes from weight, letter width (Archivo's `wdth` axis) and rules rather than from size, color or depth. Lacquer crimson is scarce on purpose: it marks only what you can press, what is selected, and evidence keys. Verdicts and run states never rely on color alone; they carry words, and verdicts also change shape.\n\nConfirmed anti-references from the product record still bind the system: no dark neon or gradient SaaS look, no cream or beige editorial \"paper\" ground, no washed-out light-gray text with weak hierarchy.",
+    "keyCharacteristics": [
+      "Neutral near-white ground (chroma about 0) with plum-black ink; one black-cherry band per screen.",
+      "Crimson reserved for actions, selection and evidence keys.",
+      "Verdicts as printed ink seals with words: double ring (good), single ring (caution), struck through (reject).",
+      "One variable family, Archivo; rank set by width (64% / 72% / 100%) and weight, on a 4-step size scale.",
+      "Every number tabular; dense numeric columns right-aligned.",
+      "Hairline rules and 2px corners; no decorative shadows.",
+      "One staged motion moment (evidence reveal), everything else is short state easing."
+    ],
+    "rules": [
+      {
+        "name": "The Pressable Crimson Rule",
+        "body": "Crimson appears only on things you can press, things that are selected, and evidence keys. Status, decoration, headings and charts never use it.",
+        "section": "colors"
+      },
+      {
+        "name": "The Quiet Status Rule",
+        "body": "Normal run states (\"Hoàn tất\", \"Đang chạy\", \"Chờ chạy\") are plain ink text with a small dot; only states that need action (\"Bị gián đoạn\", \"Lỗi\") get a tinted box with a colored border.",
+        "section": "colors"
+      },
+      {
+        "name": "The Words With Color Rule",
+        "body": "No color carries meaning alone: verdicts are words inside a seal whose ring shape also changes, statuses are words, step nodes carry an icon plus screen-reader text.",
+        "section": "colors"
+      },
+      {
+        "name": "The Width Not Size Rule",
+        "body": "Rank is carried by weight, letter width and rules. When something needs more presence, condense or embolden it before making it bigger.",
+        "section": "typography"
+      },
+      {
+        "name": "The Four Sizes Rule",
+        "body": "Only 40 / 24 / 15 / 13px. The 12px seal word is the single scoped exception and lives only inside a seal.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Everything Rule",
+        "body": "All figures are tabular; numbers in dense columns are right-aligned; money is formatted (\"30.000.000 ₫\", \"7M ₫\", \"≈ $0.42\").",
+        "section": "typography"
+      },
+      {
+        "name": "The One Next Step Rule",
+        "body": "Each run state shows exactly one obvious action in the band: \"Tạm dừng\" while running, \"Chạy tiếp\" when interrupted or failed, \"Brief mới\" when complete.",
+        "section": "layout"
+      },
+      {
+        "name": "The No Decorative Shadow Rule",
+        "body": "Separate things with a rule or a tone step, never with a shadow.",
+        "section": "elevation & depth"
+      },
+      {
+        "name": "The Lift Is a Ring Rule",
+        "body": "When something must come forward (the cited video frame), it moves up 4px and gains a 2px crimson outline offset by 3px; it does not cast a shadow.",
+        "section": "elevation & depth"
+      },
+      {
+        "name": "The Printed Ring Rule",
+        "body": "Circles that judge or confirm are drawn as ink rings, not filled discs: double ring for positive, single for caution, a diagonal strike for reject, and the same double ring on completed step nodes and the AI avatar.",
+        "section": "shapes"
+      },
+      {
+        "name": "The One Staged Moment Rule",
+        "body": "The evidence reveal (key pressed, frame lifted and ringed, proof appears) is the only choreographed motion. Everything else is state easing.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "Do keep crimson on actions, selection and evidence keys only (The Pressable Crimson Rule).",
+      "Do give every verdict a word and a ring shape, and every status a word (The Words With Color Rule).",
+      "Do raise rank with weight and Archivo width before size, and stay on the 40 / 24 / 15 / 13px scale.",
+      "Do set every number tabular and right-align numbers in dense columns.",
+      "Do separate with 1px hairlines or the strong rule and keep corners at 2px.",
+      "Do put the black-cherry band on every screen with exactly one next action for the current state.",
+      "Do label every estimate, simulation, missing data point and invalid citation in plain Vietnamese.",
+      "Do put a new proof element behind an evidence key that rings its source, never as free-floating claim text.",
+      "Do honor reduced motion in script-driven scrolling as well as in CSS."
+    ],
+    "donts": [
+      "Don't use crimson for status, headings, decoration or charts.",
+      "Don't add box-shadows, gradients (beyond the composer's single crimson sweep) or glass effects.",
+      "Don't tint the ground warm or cream; it stays near-achromatic.",
+      "Don't add a fifth text size or a second typeface.",
+      "Don't use filled colored discs for verdicts; seals are ink rings.",
+      "Don't use light-gray (ink-3) for readable body text.",
+      "Don't show more than one primary action in the band for a given run state.",
+      "Don't add small uppercase kicker labels above headings; titles stand on their own.",
+      "Don't hard-code color literals in components; add or reuse a token."
+    ]
+  }
+}

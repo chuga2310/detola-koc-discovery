@@ -24,6 +24,8 @@ export interface CampaignBrief {
   };
   /** Ngân sách tổng (VND) */
   budgetVnd: number;
+  /** Ngân sách đúng như user nhập (tiền tệ gốc) để hiển thị lại; budgetVnd là số đã quy đổi */
+  budgetInput?: { amount: number; currency: "VND" | "USD" };
   /** Số KOC cần chọn */
   numKocs: number;
   /** Giới hạn follower để đúng "KOC" (micro/mid creator), không phải celeb */
@@ -140,4 +142,6 @@ export interface Evidence {
   image?: string;
   videoUrl?: string;
   frame?: number | null;
+  /** Mốc thời gian (giây) của từng frame trong contact sheet; 1 phần tử = chỉ có ảnh bìa */
+  frameTimes?: number[];
 }

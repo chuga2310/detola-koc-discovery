@@ -114,6 +114,7 @@ export function buildEvidence(args: {
         image: m?.sheet,
         videoUrl: m?.url,
         frame: null,
+        frameTimes: m?.frameTimes,
       });
       v.observations.forEach((o, oi) => {
         ev.push({

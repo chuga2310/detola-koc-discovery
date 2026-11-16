@@ -1,248 +1,395 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import type { Report } from "@/lib/pipeline/stages/select";
-import type { StageUsage } from "@/lib/runs";
-import { KocCard } from "./KocCard";
-import { compact, StatusBadge, vnd } from "./ui";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, Check, ChevronDown, ChevronRight, MessagesSquare, Pause, Plus, RotateCcw } from "lucide-react";
+import Link from "next/link";
+import { useCallback, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { AiMessage, BriefCard, ChatThread } from "./chat/ChatThread";
+import { KocReview } from "./KocReview";
+import { Costs, Log } from "./RunPanels";
+import type { Pick, RunDetail } from "./runTypes";
+import { StepProcess } from "./StepProcess";
+import { compact, LedgerFigure, millions, Seal, Shell, StatusOnShell } from "./ui";
 
-interface Detail {
-  run: {
-    id: string;
-    status: string;
-    currentStage: string | null;
-    error: string | null;
-    activeMs: number;
-    attempts: number;
-    brief: Report["brief"];
-    config: { provider: string; models: Record<string, string>; dataSource: string };
-  };
-  stages: { stage: string; status: string; activeMs: number; tasks: { total: number; done: number; failed: number; running: number } }[];
-  usage: {
-    byStage: StageUsage[];
-    total: Omit<StageUsage, "stage">;
-    costVnd: number;
-    models: { stage: string; model: string; n: number }[];
-    data: { byEndpoint: { endpoint: string; calls: number; cacheHits: number; credits: number; avoided: number }[]; credits: number; avoided: number; coldCredits: number };
-  };
-  events: { ts: number; level: string; stage: string | null; message: string }[];
-  report: Report | null;
+const LIVE = new Set(["queued", "running"]);
+const readKey = (runId: string) => `koc-read:${runId}`;
+
+/**
+ * KOC "đã xem" theo run, lưu trong trình duyệt (tiện ích cá nhân; storage bị chặn thì chỉ mất dấu).
+ * useSyncExternalStore: đọc localStorage an toàn với SSR, không setState trong effect.
+ */
+function useReadMarks(runId: string): [Set<string>, (id: string) => void] {
+  const raw = useSyncExternalStore(
+    (cb) => {
+      window.addEventListener("koc-read", cb);
+      window.addEventListener("storage", cb);
+      return () => {
+        window.removeEventListener("koc-read", cb);
+        window.removeEventListener("storage", cb);
+      };
+    },
+    () => {
+      try {
+        return localStorage.getItem(readKey(runId)) ?? "[]";
+      } catch {
+        return "[]";
+      }
+    },
+    () => "[]",
+  );
+  const set = useMemo(() => {
+    try {
+      return new Set<string>(JSON.parse(raw));
+    } catch {
+      return new Set<string>();
+    }
+  }, [raw]);
+  const mark = useCallback(
+    (id: string) => {
+      if (set.has(id)) return;
+      try {
+        localStorage.setItem(readKey(runId), JSON.stringify([...set, id]));
+        window.dispatchEvent(new Event("koc-read"));
+      } catch {
+        /* storage bị chặn: bỏ qua */
+      }
+    },
+    [runId, set],
+  );
+  return [set, mark];
 }
 
-const STAGE_LABEL: Record<string, string> = {
-  source: "1. Pool từ data source",
-  prefilter: "2. Lọc số liệu (0 token)",
-  enrich: "3. Enrich chi tiết (data API)",
-  text_screen: "4. Text AI (model rẻ)",
-  media_prep: "5. Video → contact sheet",
-  video_analysis: "6. Video AI (vision)",
-  final_rank: "7. Chấm điểm + lý do",
-  select: "8. Tối ưu ngân sách",
-};
-
 export function RunView({ id }: { id: string }) {
-  const [d, setD] = useState<Detail | null>(null);
-  const [busy, setBusy] = useState(false);
+  const qc = useQueryClient();
+  const [sel, setSel] = useState<string | null>(null);
+  const [showChat, setShowChat] = useState(false);
+  const [showSteps, setShowSteps] = useState(false);
+  const [read, markRead] = useReadMarks(id);
+  const reviewRef = useRef<HTMLDivElement>(null);
 
-  const load = useCallback(() => fetch(`/api/runs/${id}`).then((r) => r.json()).then(setD), [id]);
-  useEffect(() => {
-    load();
-    const t = setInterval(load, 1500);
-    return () => clearInterval(t);
-  }, [load]);
+  // TanStack Query: poll 1.5s khi chiến dịch đang chạy, xong thì dừng
+  const q = useQuery({
+    queryKey: ["run", id],
+    queryFn: async () => {
+      const res = await fetch(`/api/runs/${id}`);
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error("load failed");
+      return (await res.json()) as RunDetail;
+    },
+    refetchInterval: (query) => (query.state.data && LIVE.has(query.state.data.run.status) ? 1500 : false),
+  });
+  const act = useMutation({
+    mutationFn: (action: "stop" | "resume") => fetch(`/api/runs/${id}/${action}`, { method: "POST" }),
+    onSettled: () => qc.invalidateQueries({ queryKey: ["run", id] }),
+  });
 
-  if (!d) return <p className="text-muted">Đang tải…</p>;
-  if (!d.run) return <p className="text-bad">Không tìm thấy run.</p>;
-  const { run, report, usage } = d;
-
-  const act = async (action: "stop" | "resume") => {
-    setBusy(true);
-    await fetch(`/api/runs/${id}/${action}`, { method: "POST" });
-    await load();
-    setBusy(false);
+  const select = (pickId: string) => {
+    setSel(pickId);
+    markRead(pickId);
+    if (window.innerWidth < 1024) reviewRef.current?.scrollIntoView({ block: "start" });
   };
 
+  if (q.data === null)
+    return (
+      <>
+        <Shell />
+        <main className="mx-auto max-w-[1200px] px-5 py-16 md:px-10">
+          <h1 className="condensed text-display font-extrabold">Không tìm thấy chiến dịch</h1>
+          <p className="mt-2 text-ink-2">Chiến dịch có thể đã bị xoá. Quay lại danh sách để mở chiến dịch khác.</p>
+          <Link href="/" className="btn mt-6 no-underline">
+            <ArrowLeft aria-hidden size={15} /> Chiến dịch
+          </Link>
+        </main>
+      </>
+    );
+  if (!q.data)
+    return (
+      <>
+        <Shell />
+        <p className="mx-auto max-w-[1200px] px-5 py-16 text-ink-2 md:px-10">{q.isError ? "Không tải được chiến dịch. Thử tải lại trang." : "Đang tải chiến dịch…"}</p>
+      </>
+    );
+
+  const d = q.data;
+  const { run, report, usage } = d;
+  const b = run.brief;
+  const picks = report?.picks ?? [];
+  const current = [...picks, ...(report?.alternates ?? [])].find((p) => p.id === sel) ?? picks[0];
+  const totalUsd = usage.total.costUsd + usage.data.credits * 0.1;
+  const busy = act.isPending;
+  const finished = run.status === "completed" && !!report && !!current;
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="card flex flex-wrap items-start justify-between gap-4 p-5">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-lg font-semibold">
-              {run.brief.product} · {run.brief.numKocs} KOC · {vnd(run.brief.budgetVnd)}
-            </h1>
-            <StatusBadge status={run.status} />
-          </div>
-          <p className="mt-1 text-sm text-muted">
-            {run.brief.targetAudience.gender === "female" ? "Nữ" : run.brief.targetAudience.gender} {run.brief.targetAudience.ageMin}–
-            {run.brief.targetAudience.ageMax} · provider <b className="text-ink">{run.config.provider}</b> · data {run.config.dataSource} · lần chạy #{run.attempts}
-          </p>
-          {run.config.provider === "mock" && <p className="mt-1 text-xs text-warn">MOCK: kết quả giả lập, không phải đánh giá AI thật.</p>}
-          {run.error && <p className="mt-2 text-sm text-bad">{run.error}</p>}
-        </div>
-        <div className="flex gap-2">
-          {run.status === "running" && (
-            <button className="btn" disabled={busy} onClick={() => act("stop")}>
-              Stop (giả lập gián đoạn)
-            </button>
-          )}
-          {(run.status === "interrupted" || run.status === "failed") && (
-            <button className="btn btn-primary" disabled={busy} onClick={() => act("resume")}>
-              Resume từ checkpoint
-            </button>
-          )}
-        </div>
-      </div>
+    <>
+      <Shell
+        aside={
+          <>
+            <LedgerFigure value={`≈ $${totalUsd.toFixed(2)}`} label={`chi phí · ${minutes(run.activeMs)}`} />
+            {run.status === "running" && (
+              <button className="btn btn-on-shell" disabled={busy} onClick={() => act.mutate("stop")}>
+                <Pause aria-hidden size={15} /> Tạm dừng
+              </button>
+            )}
+            {(run.status === "interrupted" || run.status === "failed") && (
+              <button className="btn border-shell-ink bg-shell-ink text-shell hover:bg-shell-ink-2" disabled={busy} onClick={() => act.mutate("resume")}>
+                <RotateCcw aria-hidden size={15} /> Chạy tiếp
+              </button>
+            )}
+            {run.status === "completed" && (
+              <Link href="/new" className="btn btn-on-shell no-underline">
+                <Plus aria-hidden size={15} /> Brief mới
+              </Link>
+            )}
+          </>
+        }
+      >
+        <nav aria-label="Vị trí" className="flex flex-wrap items-center gap-x-2 gap-y-1 text-body">
+          <Link href="/" className="text-shell-ink-2 no-underline hover:text-shell-ink hover:underline">
+            Chiến dịch
+          </Link>
+          <ChevronRight aria-hidden size={14} className="text-shell-ink-2" />
+          <span className="font-semibold text-shell-ink">{b.product}</span>
+          <span className="ml-3">
+            <StatusOnShell status={run.status} />
+          </span>
+        </nav>
+      </Shell>
 
-      {/* Pipeline progress + usage */}
-      <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
-        <div className="card p-5">
-          <h2 className="label mb-3">Tiến độ pipeline</h2>
-          <ol className="space-y-2">
-            {d.stages.map((s) => {
-              const pct = s.status === "done" ? 100 : s.tasks.total ? (s.tasks.done / s.tasks.total) * 100 : 0;
-              return (
-                <li key={s.stage}>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className={run.currentStage === s.stage && run.status === "running" ? "font-semibold" : ""}>{STAGE_LABEL[s.stage]}</span>
-                    <span className="num text-xs text-muted">
-                      {s.tasks.total ? `${s.tasks.done}/${s.tasks.total}` : ""} {s.tasks.failed ? `(${s.tasks.failed} lỗi)` : ""} {(s.activeMs / 1000).toFixed(1)}s
-                    </span>
+      <main className="mx-auto max-w-[1200px] px-5 pt-8 pb-20 md:px-10">
+        <h1 className="sr-only">Chiến dịch {b.product}</h1>
+        {run.config.provider === "mock" && (
+          <p className="mb-6 rounded-[2px] border border-caution bg-caution-tint px-4 py-3 text-meta">
+            Chiến dịch chạy bằng AI giả lập: điểm và lý do chỉ để xem luồng, không phải đánh giá thật.
+          </p>
+        )}
+        {run.error && (
+          <div role="alert" className="mb-6 rounded-[2px] border border-risk bg-risk-tint px-4 py-3 text-meta">
+            <b className="text-risk">Chiến dịch dừng vì lỗi.</b> {friendlyError(run.error)} Các bước đã xong được giữ nguyên, bấm “Chạy tiếp” để thử lại từ chỗ dở.
+          </div>
+        )}
+
+        {/* Phiên làm việc: brief đã chốt -> quy trình từng bước */}
+        <section aria-label="Phiên tìm creator" className="max-w-[860px]">
+          <ol className="space-y-7">
+            {d.chat.length > 0 && (
+              <li>
+                <button
+                  type="button"
+                  aria-expanded={showChat}
+                  onClick={() => setShowChat(!showChat)}
+                  className="inline-flex items-center gap-1.5 text-meta font-semibold text-ink-2 hover:text-ink"
+                >
+                  <MessagesSquare aria-hidden size={15} />
+                  {showChat ? "Ẩn hội thoại lập brief" : `Xem lại hội thoại lập brief (${d.chat.length} tin)`}
+                  <ChevronDown aria-hidden size={15} className={`transition-transform ${showChat ? "rotate-180" : ""}`} />
+                </button>
+                {showChat && (
+                  <div className="mt-6 border-b border-rule pb-8">
+                    <ChatThread messages={d.chat} readOnly />
                   </div>
-                  <div className="mt-1 h-1 rounded bg-line">
-                    <div className={`h-1 rounded ${s.status === "done" ? "bg-good" : "bg-accent"}`} style={{ width: `${pct}%` }} />
+                )}
+              </li>
+            )}
+            {finished ? (
+              // Đã xong: kết quả là thứ cần thấy trước; brief + 8 bước thu vào 1 dòng, mở khi cần
+              <AiMessage>
+                <p>{sessionLine(run.status, d)}</p>
+                <BriefCard brief={b} readOnly collapsible />
+                <button
+                  type="button"
+                  aria-expanded={showSteps}
+                  aria-controls="run-steps"
+                  onClick={() => setShowSteps(!showSteps)}
+                  className="inline-flex items-center gap-1.5 font-semibold text-ink hover:text-action"
+                >
+                  {showSteps ? "Ẩn quy trình" : `Xem ${d.steps.length} bước đã làm`}
+                  <ChevronDown aria-hidden size={16} className={`transition-transform ${showSteps ? "rotate-180" : ""}`} />
+                </button>
+                {showSteps && (
+                  <div id="run-steps">
+                    <StepProcess steps={d.steps} />
                   </div>
-                </li>
-              );
-            })}
+                )}
+              </AiMessage>
+            ) : (
+              <>
+                <AiMessage>
+                  <p>{d.chat.length ? "Brief đã chốt:" : "Brief của chiến dịch:"}</p>
+                  <BriefCard brief={b} readOnly collapsible />
+                </AiMessage>
+                <AiMessage>
+                  <p>{sessionLine(run.status, d)}</p>
+                  <StepProcess steps={d.steps} />
+                </AiMessage>
+              </>
+            )}
           </ol>
-          <p className="mt-3 text-xs text-muted">
-            Thời gian xử lý (active): <span className="num">{(run.activeMs / 1000).toFixed(1)}s</span>
-          </p>
-        </div>
-
-        <div className="card p-5">
-          <h2 className="label mb-3">Token & chi phí AI</h2>
-          <table className="num w-full text-xs">
-            <thead className="text-muted">
-              <tr className="text-left">
-                <th className="py-1 font-normal">stage</th>
-                <th className="font-normal">calls</th>
-                <th className="font-normal">cache</th>
-                <th className="font-normal">in</th>
-                <th className="font-normal">cache-read</th>
-                <th className="font-normal">out</th>
-                <th className="font-normal">img</th>
-                <th className="text-right font-normal">USD</th>
-              </tr>
-            </thead>
-            <tbody>
-              {usage.byStage.map((s) => (
-                <tr key={s.stage} className="border-t border-line">
-                  <td className="py-1">{s.stage}</td>
-                  <td>{s.calls}</td>
-                  <td>{s.cacheHits}</td>
-                  <td>{compact(s.inputTokens)}</td>
-                  <td>{compact(s.cacheReadTokens)}</td>
-                  <td>{compact(s.outputTokens)}</td>
-                  <td>{s.images}</td>
-                  <td className="text-right">{s.costUsd.toFixed(4)}</td>
-                </tr>
-              ))}
-              <tr className="border-t border-ink font-semibold">
-                <td className="py-1">total</td>
-                <td>{usage.total.calls}</td>
-                <td>{usage.total.cacheHits}</td>
-                <td>{compact(usage.total.inputTokens)}</td>
-                <td>{compact(usage.total.cacheReadTokens)}</td>
-                <td>{compact(usage.total.outputTokens)}</td>
-                <td>{usage.total.images}</td>
-                <td className="text-right">${usage.total.costUsd.toFixed(4)}</td>
-              </tr>
-            </tbody>
-          </table>
-          <p className="mt-2 text-xs text-muted">
-            ≈ {vnd(usage.costVnd)} · models: {usage.models.map((m) => `${m.stage}=${m.model}`).join(", ") || "–"}
-          </p>
-          {usage.data && usage.data.byEndpoint.length > 0 && (
-            <div className="mt-3 border-t border-line pt-3">
-              <h3 className="label mb-1">Kalodata API (credit, 1 ≈ $0.1)</h3>
-              <ul className="num space-y-0.5 text-xs">
-                {usage.data.byEndpoint.map((e) => (
-                  <li key={e.endpoint} className="flex justify-between">
-                    <span>
-                      {e.endpoint.replace("/tiktok/", "")} ×{e.calls} <span className="text-muted">({e.cacheHits} cache)</span>
-                    </span>
-                    <span>{e.credits.toFixed(2)}</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-1 text-xs">
-                Trả: <b className="num">{usage.data.credits.toFixed(2)}</b> credit · tiết kiệm nhờ cache:{" "}
-                <span className="num">{usage.data.avoided.toFixed(2)}</span> · chi phí lạnh: <span className="num">{usage.data.coldCredits.toFixed(2)}</span>
-              </p>
-            </div>
-          )}
-          {report && (
-            <div className="mt-4 flex flex-wrap gap-2 text-xs">
-              {[
-                ["Pool", report.funnel.pool],
-                ["Qua lọc số liệu", report.funnel.prefilterPassed],
-                ["Enrich", report.funnel.enriched],
-                ["Text AI", report.funnel.textScreened],
-                ["Video AI", report.funnel.videoAnalyzed],
-                ["Chấm cuối", report.funnel.finalRanked],
-                ["Chọn", report.funnel.selected],
-              ].map(([k, v], i) => (
-                <span key={k} className="rounded border border-line px-2 py-1">
-                  {i > 0 && "→ "}
-                  {k} <b className="num">{v}</b>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Results */}
-      {report && (
-        <section>
-          <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-lg font-semibold">{report.picks.length} KOC đề xuất</h2>
-            <span className="text-sm text-muted">
-              Chi phí ước tính <b className="num text-ink">{vnd(report.totals.estCostVnd)}</b> / {vnd(report.totals.budgetVnd)} ({report.totals.method})
-            </span>
-          </div>
-          <div className="space-y-4">
-            {report.picks.map((p) => (
-              <KocCard key={p.id} pick={p} />
-            ))}
-          </div>
-          {report.alternates.length > 0 && (
-            <details className="mt-6">
-              <summary className="cursor-pointer text-sm font-medium">Dự phòng ({report.alternates.length})</summary>
-              <div className="mt-3 space-y-4">
-                {report.alternates.map((p) => (
-                  <KocCard key={p.id} pick={p} compact />
-                ))}
-              </div>
-            </details>
-          )}
         </section>
-      )}
 
-      {/* Event log */}
-      <details className="card p-5" open={!report}>
-        <summary className="label cursor-pointer">Log</summary>
-        <ul className="num mt-3 max-h-72 space-y-0.5 overflow-auto text-xs">
-          {d.events.map((e, i) => (
-            <li key={i} className={e.level === "error" ? "text-bad" : e.level === "warn" ? "text-warn" : ""}>
-              <span className="text-muted">{new Date(e.ts).toLocaleTimeString("vi-VN")}</span> {e.stage ? `[${e.stage}] ` : ""}
-              {e.message}
-            </li>
-          ))}
-        </ul>
-      </details>
-    </div>
+        {report && current && (
+          <section aria-label="Kết quả" className="mt-10 border-t border-rule-strong pt-10">
+            <div className="grid grid-cols-1 gap-x-12 gap-y-12 lg:grid-cols-[minmax(0,500px)_minmax(0,1fr)]">
+              <Ranking report={report} selected={current.id} read={read} onSelect={select} />
+              <div ref={reviewRef} className="min-w-0 scroll-mt-6 lg:border-l lg:border-rule lg:pl-12">
+                <KocReview key={current.id} pick={current} onRead={() => markRead(current.id)} />
+              </div>
+            </div>
+          </section>
+        )}
+
+        <details className="disclosure mt-16 border-t border-rule pt-5">
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 font-semibold">
+            <ChevronRight aria-hidden size={16} className="chev text-ink-2" />
+            Chi phí và nhật ký kỹ thuật
+            <span className="font-normal text-ink-2">· cho người vận hành</span>
+          </summary>
+          <div className="mt-6 space-y-12">
+            {run.error && (
+              <p className="num rounded-[2px] border border-rule bg-surface px-4 py-3 text-meta">
+                <b>Lỗi:</b> {run.error}
+              </p>
+            )}
+            <Costs d={d} />
+            <div>
+              <h3 className="text-body font-semibold">Nhật ký</h3>
+              <div className="mt-3 border-t border-rule pt-3">
+                <Log d={d} />
+              </div>
+            </div>
+          </div>
+        </details>
+      </main>
+    </>
+  );
+}
+
+/** Lỗi thường gặp -> câu dễ hiểu cho marketer */
+function friendlyError(e: string) {
+  if (/kalodata/i.test(e) && /key/i.test(e)) return "Nguồn dữ liệu creator đang từ chối truy cập, cần người quản trị kiểm tra kết nối.";
+  if (/budget|credit/i.test(e)) return "Đã chạm giới hạn chi phí dữ liệu cho phép.";
+  if (/anthropic|openai|429|overloaded/i.test(e)) return "Dịch vụ AI tạm thời quá tải hoặc từ chối yêu cầu.";
+  return "Một bước xử lý gặp sự cố.";
+}
+
+const minutes = (ms: number) => {
+  const s = Math.round(ms / 1000);
+  return s < 60 ? `${s} giây` : `${Math.floor(s / 60)} phút ${s % 60} giây`;
+};
+
+function sessionLine(status: string, d: RunDetail) {
+  const done = d.steps.filter((s) => s.status === "done").length;
+  if (status === "completed") {
+    const n = d.report?.picks.length ?? 0;
+    const took = d.run.activeMs < 2000 ? "Xong ngay vì dùng lại kết quả đã phân tích trước đó" : `Xong sau ${minutes(d.run.activeMs)}`;
+    return `${took}. Mình đã đi qua ${d.steps.length} bước và chọn ra ${n} KOC, xem bên dưới.`;
+  }
+  if (status === "queued") return "Chiến dịch đang chờ chạy…";
+  if (status === "running") return `Mình đang tìm creator theo ${d.steps.length} bước (xong ${done}/${d.steps.length}). Bạn có thể rời trang, chiến dịch vẫn chạy tiếp.`;
+  if (status === "interrupted") return `Chiến dịch tạm dừng ở bước ${done + 1}/${d.steps.length}. Phần đã xong được giữ lại, bấm “Chạy tiếp” để làm nốt.`;
+  return `Chiến dịch dừng ở bước ${done + 1}/${d.steps.length}.`;
+}
+
+// Cột bảng xếp hạng: mobile gộp follower/booking vào dòng phụ; từ sm có cột số riêng, căn phải
+const ROW_COLS = "grid-cols-[40px_minmax(0,1fr)_60px_52px] sm:grid-cols-[40px_minmax(0,1fr)_56px_64px_60px_52px]";
+
+function Ranking({
+  report,
+  selected,
+  read,
+  onSelect,
+}: {
+  report: NonNullable<RunDetail["report"]>;
+  selected: string;
+  read: Set<string>;
+  onSelect: (id: string) => void;
+}) {
+  const { picks, alternates, totals } = report;
+  const used = Math.min(1, totals.estCostVnd / totals.budgetVnd);
+  return (
+    <section aria-labelledby="rank-title" className="min-w-0 lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:self-start lg:overflow-y-auto lg:pr-1">
+      <h2 id="rank-title" className="condensed text-display font-extrabold">
+        {picks.length} KOC đề xuất
+      </h2>
+      <div aria-hidden className={`mt-4 grid ${ROW_COLS} items-end gap-x-3 border-b border-rule-strong px-2 pb-2 text-meta text-ink-2`}>
+        <span>#</span>
+        <span>Creator</span>
+        <span className="hidden text-right sm:block">Follower</span>
+        <span className="hidden text-right sm:block">Chi phí</span>
+        <span className="text-center">Đánh giá</span>
+        <span className="text-right">Điểm</span>
+      </div>
+      <ol>
+        {picks.map((p) => (
+          <Row key={p.id} p={p} on={p.id === selected} read={read.has(p.id)} onSelect={onSelect} />
+        ))}
+      </ol>
+      <div className="mt-4">
+        <div className="flex items-baseline justify-between text-meta">
+          <span className="text-ink-2">Chi phí booking ước tính</span>
+          <span className="num font-semibold">
+            {millions(totals.estCostVnd)} <span className="font-normal text-ink-2">/ {millions(totals.budgetVnd)}</span>
+          </span>
+        </div>
+        <div className="mt-1.5 h-[3px] bg-rule" aria-hidden>
+          <div className="h-full origin-left bg-ink" style={{ transform: `scaleX(${used})` }} />
+        </div>
+        <p className="mt-1.5 text-meta text-ink-2">Chi phí theo bảng giá ước tính theo tier follower, chưa phải báo giá thật.</p>
+      </div>
+      {alternates.length > 0 && (
+        <details className="disclosure mt-8">
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 border-b border-rule-strong pb-2 text-body font-semibold">
+            <ChevronRight aria-hidden size={16} className="chev text-ink-2" />
+            Dự phòng ({alternates.length})
+          </summary>
+          <ol>
+            {alternates.map((p) => (
+              <Row key={p.id} p={p} on={p.id === selected} read={read.has(p.id)} onSelect={onSelect} />
+            ))}
+          </ol>
+        </details>
+      )}
+    </section>
+  );
+}
+
+function Row({ p, on, read, onSelect }: { p: Pick; on: boolean; read: boolean; onSelect: (id: string) => void }) {
+  return (
+    <li className="border-b border-rule">
+      <button
+        type="button"
+        onClick={() => onSelect(p.id)}
+        aria-pressed={on}
+        className={`grid w-full ${ROW_COLS} items-center gap-x-3 px-2 py-3 text-left transition-colors ${on ? "bg-action-tint" : "hover:bg-surface"}`}
+      >
+        <span className={`compressed num text-display font-extrabold ${on ? "text-action" : "text-ink"}`}>{String(p.rank).padStart(2, "0")}</span>
+        <span className="min-w-0">
+          <span className="flex items-center gap-1.5">
+            <span className="truncate font-semibold">@{p.handle}</span>
+            {read && (
+              <span className={`inline-flex shrink-0 items-center ${on ? "text-action" : "text-ink-3"}`} title="Đã xem">
+                <Check aria-hidden size={14} strokeWidth={2.25} />
+                <span className="sr-only">Đã xem</span>
+              </span>
+            )}
+          </span>
+          <span className="num block text-meta text-ink-2">
+            <span className="sm:hidden">
+              {compact(p.followers)} · {millions(p.estCostVnd)}
+            </span>
+            <span className="hidden sm:inline">{p.nickname}</span>
+            {!p.videoAnalyzed && " · chưa xem video"}
+          </span>
+        </span>
+        <span className="num hidden text-right sm:block">{compact(p.followers)}</span>
+        <span className="num hidden text-right sm:block">{millions(p.estCostVnd)}</span>
+        <span className="flex justify-center">
+          <Seal verdict={p.verdict} />
+        </span>
+        <span className="text-right">
+          <span className="condensed num block text-title leading-none font-bold">{p.scores.final.toFixed(1)}</span>
+          <span className="num mt-1 block text-meta text-ink-2">AI {p.scores.fit}</span>
+        </span>
+      </button>
+    </li>
   );
 }

@@ -49,7 +49,7 @@ flowchart TD
     end
     Pipeline <--> Store
 
-    UI["Next.js UI + API routes<br/>/api/runs · resume · stop"] --> Pipeline
+    UI["Next.js UI + API routes<br/>/api/brief/chat · /api/runs · resume · stop"] --> Pipeline
     CLI["CLI: npm run discover / benchmark"] --> Pipeline
 ```
 
@@ -160,6 +160,15 @@ Prompt `video_analysis` **không chứa brief**. Output là "hồ sơ nội dung
 
 Benchmark kill cứng process (`process.exit(137)`) giữa `video_analysis`, resume ở process mới, kiểm tra **0 call bị trả tiền 2 lần**.
 
+### 2.12 Lập brief bằng hội thoại: code quyết định, AI chỉ hiểu chữ
+
+User có thể điền form hoặc kể bằng lời. Brief được chia thành **slot** (sản phẩm, giới tính, độ tuổi, ngân sách, số KOC; tuỳ chọn: quy mô follower, điểm nổi bật).
+
+- **Code** chọn slot còn thiếu tiếp theo và dựng lựa chọn cho câu hỏi (mức ngân sách, nhóm tuổi, số KOC, tier follower). Trả lời bằng lựa chọn được áp vào brief bằng code, không qua AI → chính xác, 0 token.
+- **AI** (Haiku, effort low, structured output) chỉ làm phần cần hiểu ngôn ngữ: trích thông tin từ câu tự do ("5 bạn review cho nữ sinh viên, tầm 30 củ"), viết câu hỏi tự nhiên theo sản phẩm, gợi ý từ khoá TikTok và điểm nổi bật để user chọn. Câu hỏi AI viết chỉ được dùng khi đúng slot code đã chọn.
+- Tin gửi từ form là nguồn chuẩn: AI không được ghi đè giá trị form.
+- Server không giữ state hội thoại; client gửi lại toàn bộ (vài KB). Khi tạo chiến dịch, hội thoại lưu vào `runs.chat_json` và chi phí các lượt hỏi gắn vào chiến dịch (`ai_calls.stage = brief_intake`).
+
 ## 3. Scalability: 50–500 KOC
 
 | N | Pool | Enrich + text AI | Video AI | AI | Kalodata | Tổng ≈ |
@@ -180,7 +189,7 @@ Benchmark kill cứng process (`process.exit(137)`) giữa `video_analysis`, res
 
 | Bảng | Vai trò |
 |---|---|
-| `runs` | 1 lần discovery: brief, config snapshot, status, lease, active time, result |
+| `runs` | 1 chiến dịch: brief, hội thoại lập brief (`chat_json`), config snapshot, status, lease, active time, result |
 | `run_stages` | checkpoint cấp stage + output + active time |
 | `tasks` | checkpoint cấp task (input, output, attempts, error) |
 | `creators` | creator chuẩn hoá (bio đã che SĐT/email), dùng chung giữa các run |
@@ -209,6 +218,10 @@ src/lib/
     optimizer.ts       knapsack chọn N KOC trong ngân sách
     prompts.ts         system prompts (versioned)
     schemas.ts         Zod schemas cho structured outputs
-src/app/               Next.js UI + API routes
+  brief/slots.ts       slot của brief (dùng chung form + chat): preset, parse tiền/tuổi, áp câu trả lời, draft -> brief
+  brief/intake.ts      AI hỏi brief: code chọn slot còn thiếu + dựng lựa chọn, AI hiểu câu chữ tự do + gợi ý từ khoá/USP
+  steps.ts             tóm tắt từng bước nghiên cứu cho UI (mô tả, kết quả 1 dòng, danh sách chi tiết)
+src/app/               Next.js UI + API routes (/, /new, /runs/[id]; /api/brief/chat, /api/runs)
+src/components/        brief/ (form RHF + zod, control), chat/ (thread, composer, avatar), StepProcess, KocReview
 scripts/               CLI discover, benchmark, gen-fixtures
 ```

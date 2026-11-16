@@ -4,6 +4,8 @@ import type { Report } from "./pipeline/stages/select";
 import { getConfig } from "./config";
 import type { CampaignBrief, RunStatus } from "./types";
 import { STAGES } from "./types";
+import type { ChatMessage } from "./brief/slots";
+import { runSteps } from "./steps";
 
 export interface StageUsage {
   stage: string;
@@ -30,7 +32,8 @@ export function runUsage(runId: string) {
   const models = db()
     .prepare("SELECT stage, model, COUNT(*) n FROM ai_calls WHERE run_id = ? AND cache_hit = 0 GROUP BY stage, model")
     .all(runId) as { stage: string; model: string; n: number }[];
-  const byStage = STAGES.map((s) => rows.find((r) => r.stage === s)).filter(Boolean) as StageUsage[];
+  // brief_intake = các lượt AI hỏi brief trước khi chạy (gắn vào chiến dịch lúc tạo)
+  const byStage = ["brief_intake", ...STAGES].map((s) => rows.find((r) => r.stage === s)).filter(Boolean) as StageUsage[];
   const total = byStage.reduce(
     (t, r) => ({
       calls: t.calls + r.calls,
@@ -88,6 +91,7 @@ type RunRow = {
   active_ms: number;
   attempts: number;
   result_json: string | null;
+  chat_json: string | null;
 };
 
 const toSummary = (r: RunRow): RunSummary => ({
@@ -139,9 +143,12 @@ export function runDetail(runId: string) {
     };
   });
 
+  const run = toSummary(r);
   return {
-    run: toSummary(r),
+    run,
     stages: stageView,
+    steps: runSteps(runId, run.status, run.currentStage, stageView),
+    chat: parseJson<ChatMessage[]>(r.chat_json) ?? [],
     usage: runUsage(runId),
     events: events.reverse(),
     report: parseJson<Report>(r.result_json),

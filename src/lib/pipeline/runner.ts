@@ -30,15 +30,15 @@ export function isRunActiveHere(runId: string) {
   return activeRuns.has(runId);
 }
 
-export function createRun(brief: CampaignBrief): string {
+export function createRun(brief: CampaignBrief, chat?: unknown[]): string {
   const id = newId();
   const cfg = getConfig();
   const snapshot = { provider: cfg.provider, models: cfg.models, effort: cfg.effort, dataSource: cfg.dataSource, funnel: funnelFor(brief.numKocs) };
   db()
     .prepare(
-      `INSERT INTO runs (id, brief_json, config_json, status, created_at, updated_at) VALUES (?, ?, ?, 'queued', ?, ?)`,
+      `INSERT INTO runs (id, brief_json, config_json, chat_json, status, created_at, updated_at) VALUES (?, ?, ?, ?, 'queued', ?, ?)`,
     )
-    .run(id, JSON.stringify(brief), JSON.stringify(snapshot), now(), now());
+    .run(id, JSON.stringify(brief), JSON.stringify(snapshot), chat?.length ? JSON.stringify(chat) : null, now(), now());
   logEvent(id, `Run created (provider=${cfg.provider}, source=${cfg.dataSource})`);
   return id;
 }
@@ -210,8 +210,8 @@ async function runStage(ctx: StageContext, def: StageDef, signal: AbortSignal, o
 
   // 3) Reduce
   const rows = db()
-    .prepare("SELECT task_key, status, output_json FROM tasks WHERE run_id = ? AND stage = ?")
-    .all(runId, stage) as { task_key: string; status: string; output_json: string | null }[];
+    .prepare("SELECT task_key, status, output_json, error FROM tasks WHERE run_id = ? AND stage = ?")
+    .all(runId, stage) as { task_key: string; status: string; output_json: string | null; error: string | null }[];
   const outputs = new Map<string, unknown>();
   const failed: string[] = [];
   for (const r of rows) {
@@ -219,7 +219,9 @@ async function runStage(ctx: StageContext, def: StageDef, signal: AbortSignal, o
     else failed.push(r.task_key);
   }
   if (failed.length && !def.tolerateFailures) {
-    throw new Error(`Stage ${stage}: ${failed.length} task(s) failed: ${failed.slice(0, 5).join(", ")}`);
+    // Kèm lỗi gốc của task đầu tiên để UI nói được nguyên nhân (vd. key bị từ chối), không chỉ "task failed"
+    const cause = rows.find((r) => r.status === "failed" && r.error)?.error;
+    throw new Error(`Stage ${stage}: ${failed.length} task(s) failed: ${failed.slice(0, 5).join(", ")}${cause ? ` — ${cause}` : ""}`);
   }
   if (failed.length) ctx.log(`${failed.length} task(s) failed but tolerated: ${failed.slice(0, 5).join(", ")}`, "warn");
 

@@ -43,3 +43,8 @@ next-env.d.ts
 
 # local data
 /.data
+
+# impeccable: local hook cache + editor hook config (not part of the deliverable)
+/.impeccable/hook.cache.json
+/.github/hooks/
+/.impeccable/review/

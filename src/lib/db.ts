@@ -159,6 +159,9 @@ function migrate(d: Database.Database) {
   // ok = 0: call AI đã tính tiền nhưng output hỏng (sai schema / bị cắt) -> vẫn tính vào chi phí
   const aiCols = d.prepare("PRAGMA table_info(ai_calls)").all() as { name: string }[];
   if (!aiCols.some((c) => c.name === "ok")) d.exec("ALTER TABLE ai_calls ADD COLUMN ok INTEGER NOT NULL DEFAULT 1");
+  // chat_json: hội thoại lập brief (user <-> AI) lưu kèm chiến dịch để xem lại trên trang kết quả
+  const runCols = d.prepare("PRAGMA table_info(runs)").all() as { name: string }[];
+  if (!runCols.some((c) => c.name === "chat_json")) d.exec("ALTER TABLE runs ADD COLUMN chat_json TEXT");
 }
 
 export const now = () => Date.now();

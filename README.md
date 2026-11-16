@@ -30,7 +30,7 @@ cp .env.example .env.local      # điền ANTHROPIC_API_KEY, KALODATA_API_KEY
 ```
 
 ```bash
-npm run dev                                                   # http://localhost:3000 — tạo brief, xem tiến độ, Stop / Resume
+npm run dev                                                   # http://localhost:3000 — danh sách chiến dịch, Brief mới, xem từng bước
 npm run discover -- --brief briefs/sunscreen.json             # hoặc chạy bằng CLI
 npm run benchmark -- --fresh                                  # đo end-to-end, ghi docs/BENCHMARK.md
 ```
@@ -52,7 +52,17 @@ npm run discover -- --list                                                      
 npm run discover -- --resume <runId>                                               # chạy tiếp từ checkpoint
 ```
 
-Trên UI: bấm **Stop** khi run đang chạy, sau đó bấm **Resume từ checkpoint**.
+Trên UI: bấm **Tạm dừng** khi chiến dịch đang chạy, sau đó bấm **Chạy tiếp** (chạy từ checkpoint).
+
+### Giao diện
+
+| Màn hình | Nội dung |
+|---|---|
+| `/` **Chiến dịch** | Danh sách mọi lần tìm KOC (TanStack Table: sắp xếp, tự làm mới khi có chiến dịch đang chạy) + nút **Brief mới** |
+| `/new` **Brief mới** | Trên: form điền nhanh (react-hook-form + zod; chip chọn khách hàng/độ tuổi/quy mô, ngân sách chọn tiền tệ VND/USD + mức có sẵn hoặc tự nhập có định dạng, stepper số KOC). Dưới: ô chat có gợi ý, kể bằng lời thì **AI hỏi thêm từng câu kèm lựa chọn** (chọn 1 hoặc nhiều, có "Khác"). Đủ thông tin → thẻ brief để xác nhận → **Bắt đầu tìm creator** |
+| `/runs/:id` **Chiến dịch** | Phiên làm việc: hội thoại lập brief → **8 bước nghiên cứu** (mỗi bước có mô tả, kết quả 1 dòng, mở ra xem chi tiết từng creator) → 5 KOC đề xuất kèm bằng chứng. Chi phí và nhật ký kỹ thuật nằm trong mục thu gọn |
+
+Hỏi brief bằng AI dùng model rẻ (Haiku, effort low), ~$0.001 mỗi lượt; câu trả lời dạng lựa chọn được áp vào brief bằng code (chính xác, không cần AI hiểu). Chi phí các lượt hỏi được gắn vào chiến dịch khi tạo.
 
 ## 2. Pipeline
 
@@ -112,6 +122,6 @@ docs/                   ARCHITECTURE.md, BENCHMARK.md
 benchmark/results.json  số liệu thô của benchmark
 scripts/                discover (CLI), benchmark, gen-fixtures
 src/lib/                lõi hệ thống (xem docs/ARCHITECTURE.md §5)
-src/app, src/components Next.js UI + API routes
+src/app, src/components Next.js UI + API routes (brief/ = form, chat/ = hội thoại AI)
 .data/                  SQLite + media cache (gitignored)
 ```
