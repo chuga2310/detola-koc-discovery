@@ -1,5 +1,6 @@
 import type { StageName } from "../../types";
 import type { StageDef } from "../stage";
+import { enrichStage } from "./enrich";
 import { finalRankStage } from "./finalRank";
 import { mediaPrepStage } from "./mediaPrep";
 import { prefilterStage } from "./prefilter";
@@ -13,6 +14,7 @@ import { videoAnalysisStage } from "./videoAnalysis";
 export const STAGE_DEFS: Record<StageName, StageDef<any, any, any>> = {
   source: sourceStage,
   prefilter: prefilterStage,
+  enrich: enrichStage,
   text_screen: textScreenStage,
   media_prep: mediaPrepStage,
   video_analysis: videoAnalysisStage,

@@ -45,7 +45,22 @@ export function runUsage(runId: string) {
     }),
     { calls: 0, cacheHits: 0, inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, images: 0, costUsd: 0, latencyMs: 0 },
   );
-  return { byStage, total, models, costVnd: Math.round(total.costUsd * getConfig().usdToVnd) };
+  const data = db()
+    .prepare(
+      `SELECT endpoint, COUNT(*) calls, SUM(cache_hit) cacheHits, SUM(credits) credits, SUM(credits_avoided) avoided
+       FROM data_calls WHERE run_id = ? GROUP BY endpoint ORDER BY credits + avoided DESC`,
+    )
+    .all(runId) as { endpoint: string; calls: number; cacheHits: number; credits: number; avoided: number }[];
+  const credits = data.reduce((s, r) => s + r.credits, 0);
+  const avoided = data.reduce((s, r) => s + r.avoided, 0);
+  return {
+    byStage,
+    total,
+    models,
+    costVnd: Math.round(total.costUsd * getConfig().usdToVnd),
+    /** Chi phí dữ liệu Kalodata: 1 credit ~ 0.1 USD. coldCredits = chi phí nếu không có cache */
+    data: { byEndpoint: data, credits, avoided, coldCredits: credits + avoided, approxUsd: credits * 0.1 },
+  };
 }
 
 export interface RunSummary {
@@ -88,10 +103,15 @@ const toSummary = (r: RunRow): RunSummary => ({
   attempts: r.attempts,
 });
 
-export function listRuns(limit = 30): (RunSummary & { costUsd: number })[] {
+export function listRuns(limit = 30): (RunSummary & { costUsd: number; credits: number })[] {
   const rows = db().prepare("SELECT * FROM runs ORDER BY created_at DESC LIMIT ?").all(limit) as RunRow[];
   const cost = db().prepare("SELECT COALESCE(SUM(cost_usd),0) c FROM ai_calls WHERE run_id = ?");
-  return rows.map((r) => ({ ...toSummary(r), costUsd: (cost.get(r.id) as { c: number }).c }));
+  const cred = db().prepare("SELECT COALESCE(SUM(credits),0) c FROM data_calls WHERE run_id = ?");
+  return rows.map((r) => ({
+    ...toSummary(r),
+    costUsd: (cost.get(r.id) as { c: number }).c,
+    credits: (cred.get(r.id) as { c: number }).c,
+  }));
 }
 
 export function runDetail(runId: string) {

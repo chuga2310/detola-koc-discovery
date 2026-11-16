@@ -21,7 +21,8 @@ async function main() {
   const cfg = getConfig();
   if (process.argv.includes("--list")) {
     markStaleRuns();
-    for (const r of listRuns()) console.log(`${r.id}  ${r.status.padEnd(11)} ${r.currentStage ?? "-"}  $${r.costUsd.toFixed(4)}  ${new Date(r.createdAt).toISOString()}`);
+    for (const r of listRuns())
+      console.log(`${r.id}  ${r.status.padEnd(11)} ${r.currentStage ?? "-"}  AI $${r.costUsd.toFixed(4)}  Kalodata ${r.credits.toFixed(2)}cr  ${new Date(r.createdAt).toISOString()}`);
     return;
   }
 
@@ -45,6 +46,11 @@ async function main() {
 
   console.log(`\nStatus: ${status}   wall (this process): ${(wall / 1000).toFixed(1)}s   active total: ${(d.run.activeMs / 1000).toFixed(1)}s`);
   console.log(`AI: ${d.usage.total.calls} calls (${d.usage.total.cacheHits} cache hits), in ${d.usage.total.inputTokens} / out ${d.usage.total.outputTokens} / cache-read ${d.usage.total.cacheReadTokens} tokens, ${d.usage.total.images} images, $${d.usage.total.costUsd.toFixed(4)} (~${d.usage.costVnd.toLocaleString("vi-VN")} VND)`);
+  const dc = d.usage.data;
+  console.log(
+    `Kalodata: ${dc.credits.toFixed(2)} credits (~$${dc.approxUsd.toFixed(2)}) — ` +
+      (dc.byEndpoint.map((e) => `${e.endpoint} x${e.calls} (${e.cacheHits} cached) ${e.credits.toFixed(2)}cr`).join(", ") || "no calls"),
+  );
   for (const s of d.usage.byStage)
     console.log(`  ${s.stage.padEnd(15)} calls=${s.calls} hits=${s.cacheHits} in=${s.inputTokens} out=${s.outputTokens} cr=${s.cacheReadTokens} img=${s.images} $${s.costUsd.toFixed(4)}`);
 

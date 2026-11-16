@@ -24,6 +24,8 @@ const BriefSchema = z.object({
   numKocs: z.number().int().min(1).max(500),
   followerRange: z.object({ min: z.number().int(), max: z.number().int() }).optional(),
   region: z.string().optional(),
+  kalodataCategoryIds: z.string().optional(),
+  contentKeywords: z.array(z.string()).optional(),
 });
 
 export async function GET() {

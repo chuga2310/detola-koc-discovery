@@ -17,7 +17,7 @@ export const sourceStage: StageDef<{ limit: number }, SourceOut, SourceOut> = {
   plan: (ctx) => [{ key: "search", input: { limit: ctx.funnel.poolSize } }],
   async exec(ctx, input) {
     const src = getDataSource(ctx.cfg.dataSource);
-    const list = await src.search({ brief: ctx.brief, limit: input.limit });
+    const list = await src.search({ brief: ctx.brief, limit: input.limit, runId: ctx.runId });
     if (!list.length) throw new Error(`Data source "${src.name}" returned 0 creators`);
     upsertCreators(list);
     ctx.log(`Fetched ${list.length} creators from ${src.name}`);

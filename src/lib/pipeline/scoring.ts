@@ -96,27 +96,41 @@ export function keywordCoverage(c: CreatorRecord, keywords: string[]) {
   const texts = [
     ...c.videos.map((v) => `${v.caption} ${v.hashtags.join(" ")} ${v.productTitle ?? ""}`),
     ...(c.topProducts ?? []).map((p) => p.title),
+    ...(c.subCategories ?? []), // ví dụ ngành cấp 3 "Kem chống nắng"
   ];
   const hitsPerText = texts.map((t) => keywordHits(t, keywords));
   const matched = new Set(hitsPerText.flat());
   const videoHits = c.videos.filter((_, i) => hitsPerText[i].length > 0).length;
+  const catHits = (c.subCategories ?? []).filter((x) => keywordHits(x, keywords).length > 0).length;
   return {
     matchedKeywords: [...matched],
     videosWithHits: videoHits,
     totalVideos: c.videos.length,
-    score: c.videos.length ? clamp(videoHits / Math.min(c.videos.length, 6)) : matched.size ? 0.3 : 0,
+    score: c.videos.length
+      ? clamp(videoHits / Math.min(c.videos.length, 6) + 0.15 * catHits)
+      : clamp(0.3 * Math.min(1, matched.size) + 0.15 * catHits),
   };
 }
 
 export const PREFILTER_WEIGHTS = {
-  audience: 0.25,
+  audience: 0.15,
   engagement: 0.15,
   reach: 0.15,
-  category: 0.15,
-  keyword: 0.1,
+  category: 0.1,
+  keyword: 0.15,
   commerce: 0.1,
   costEfficiency: 0.1,
+  videoFocus: 0.1,
 };
+
+/** Tỷ trọng doanh thu đến từ VIDEO (vs livestream). KOC cho campaign video nên làm video là chính. */
+export function videoFocus(c: CreatorRecord): number | undefined {
+  const v = c.metrics.videoRevenueVnd;
+  const l = c.metrics.liveRevenueVnd;
+  if (v === undefined && l === undefined) return undefined;
+  const total = (v ?? 0) + (l ?? 0);
+  return total > 0 ? (v ?? 0) / total : 0.5;
+}
 
 export interface PrefilterRow {
   id: string;
@@ -139,6 +153,8 @@ export interface PrefilterRow {
     keywordVideos: number;
     keywordTotal: number;
     matchedKeywords: string[];
+    videoFocus?: number;
+    videoViews30d?: number;
   };
 }
 
@@ -152,35 +168,45 @@ export function prefilter(creators: CreatorRecord[], brief: CampaignBrief): Pref
     const aud = audienceMatch(c, brief);
     const cat = categoryRelevance(c, brief);
     const kw = keywordCoverage(c, brief.keywords);
-    const cost = estimateCost(c.followers);
+    // Creator "partial" (mới biết qua nội dung): follower đã được API lọc trong khoảng mục tiêu
+    // nhưng chưa biết số cụ thể -> ước tính chi phí theo mức giữa khoảng, kiểm tra lại sau enrich.
+    const cost = estimateCost(c.partial ? Math.sqrt(range.min * range.max) : c.followers);
     const reasons: string[] = [];
-    if (c.followers < range.min || c.followers > range.max)
+    if (!c.partial && (c.followers < range.min || c.followers > range.max))
       reasons.push(`followers ${c.followers} ngoài khoảng ${range.min}-${range.max}`);
     if (cost.priceVnd > maxCostPerKoc) reasons.push(`chi phí ước tính ${cost.priceVnd} > 50% ngân sách`);
     if (aud.gender !== null && brief.targetAudience.gender !== "any" && aud.gender < 0.5)
       reasons.push(`khán giả đúng giới tính chỉ ${(aud.gender * 100).toFixed(0)}%`);
     if (cat < 0.15 && kw.matchedKeywords.length === 0) reasons.push("không có tín hiệu ngành hàng/keyword liên quan");
-    const recentVideos = c.metrics.videoCount ?? c.videos.length;
-    if (recentVideos < 2) reasons.push("ít hoạt động (< 2 video / 30 ngày)");
-    return { c, er, av, aud, cat, kw, cost, reasons };
+    // Chỉ áp khi có dữ liệu (list-level của Kalodata chưa có số video)
+    const recentVideos = c.metrics.videoCount ?? (c.videos.length || undefined);
+    if (recentVideos !== undefined && recentVideos < 1 && !c.videos.length) reasons.push("không đăng video trong 30 ngày");
+    if (c.creatorStatus === "BELONGED_TO_SELLER") reasons.push("tài khoản thuộc shop/brand, không phải KOC độc lập");
+    const vf = videoFocus(c);
+    if (vf !== undefined && vf < 0.1) reasons.push("doanh thu gần như toàn bộ từ livestream (không phải KOC video)");
+    return { c, er, av, aud, cat, kw, cost, reasons, vf };
   });
 
   // Percentile trong pool -> các metric khác đơn vị về chung thang 0..1
   const pEr = percentileRanks(base.map((b) => b.er));
-  const pReach = percentileRanks(base.map((b) => (b.av && b.c.followers ? b.av / b.c.followers : undefined)));
-  const pAv = percentileRanks(base.map((b) => b.av));
-  const pRev = percentileRanks(base.map((b) => b.c.metrics.revenueVnd));
-  const pCostEff = percentileRanks(base.map((b) => (b.av ? b.av / b.cost.priceVnd : undefined)));
+  // Reach: tổng view nội dung 30 ngày / follower (độ "lan" của nội dung) + quy mô view tuyệt đối
+  const views30 = (b: (typeof base)[number]) => b.c.metrics.videoViews ?? (b.av && b.c.metrics.videoCount ? b.av * b.c.metrics.videoCount : undefined);
+  const pReach = percentileRanks(base.map((b) => (views30(b) && b.c.followers ? views30(b)! / b.c.followers : undefined)));
+  const pAv = percentileRanks(base.map((b) => views30(b)));
+  const pRev = percentileRanks(base.map((b) => b.c.metrics.videoRevenueVnd ?? b.c.metrics.revenueVnd));
+  const pCostEff = percentileRanks(base.map((b) => (views30(b) ? views30(b)! / b.cost.priceVnd : undefined)));
 
   const rows: PrefilterRow[] = base.map((b, i) => {
     const breakdown = {
       audience: b.aud.score ?? 0.45, // không có data -> hơi dưới trung bình (ưu tiên creator có data minh bạch)
       engagement: pEr[i],
       reach: pReach[i] * 0.5 + pAv[i] * 0.5,
-      category: b.cat,
+      // partial = tìm thấy qua nội dung đúng sản phẩm nhưng chưa biết ngành hàng bán -> trung tính
+      category: b.c.partial && !b.c.categories.length ? 0.5 : b.cat,
       keyword: b.kw.score,
       commerce: pRev[i],
       costEfficiency: pCostEff[i],
+      videoFocus: b.vf ?? 0.5,
     };
     const dataScore = (Object.keys(PREFILTER_WEIGHTS) as (keyof typeof PREFILTER_WEIGHTS)[]).reduce(
       (s, k) => s + PREFILTER_WEIGHTS[k] * breakdown[k],
@@ -206,6 +232,8 @@ export function prefilter(creators: CreatorRecord[], brief: CampaignBrief): Pref
         keywordVideos: b.kw.videosWithHits,
         keywordTotal: b.kw.totalVideos,
         matchedKeywords: b.kw.matchedKeywords,
+        videoFocus: b.vf,
+        videoViews30d: views30(b),
       },
     };
   });

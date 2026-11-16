@@ -19,6 +19,7 @@ import { openaiProvider } from "./openai";
 import { costUsd, type Usage } from "./pricing";
 import {
   NonRetryableError,
+  SchemaMismatchError,
   TruncatedError,
   type GenerateRequest,
   type LLMProvider,
@@ -33,6 +34,26 @@ export function getProvider(): LLMProvider {
 
 let _limiter: ReturnType<typeof createLimiter> | null = null;
 const limiter = () => (_limiter ??= createLimiter(getConfig().aiConcurrency));
+
+/**
+ * Cache priming: nếu N call cùng system prompt bắn song song ngay từ đầu, cả N đều GHI cache
+ * (trả 1.25x) và không call nào ĐỌC được. Nên call đầu tiên của mỗi (model, system) chạy trước;
+ * các call sau chờ nó xong rồi mới chạy song song -> tất cả đọc cache (~0.05-0.1x giá input).
+ */
+const primed = new Map<string, { p: Promise<unknown>; at: number }>();
+const PRIME_TTL_MS = 4 * 60_000; // cache Anthropic sống 5 phút (mỗi lần đọc được gia hạn)
+async function withCachePriming<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  const first = primed.get(key);
+  if (first && now() - first.at < PRIME_TTL_MS) {
+    await first.p.catch(() => undefined);
+    first.at = now(); // call sau đọc cache -> cache được gia hạn
+    return fn();
+  }
+  const p = fn();
+  primed.set(key, { p, at: now() });
+  p.catch(() => primed.delete(key)); // call đầu lỗi -> call sau tự làm "người mồi" mới
+  return p;
+}
 
 export interface AiContext {
   runId: string | null;
@@ -91,7 +112,8 @@ export async function aiGenerate<T>(
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     const started = now();
     try {
-      const res = await limiter()(() => provider.generate({ ...req, maxTokens }));
+      const primeKey = `${provider.name}:${req.model}:${stableHash(req.system)}`;
+      const res = await withCachePriming(primeKey, () => limiter()(() => provider.generate({ ...req, maxTokens })));
       const cost = costUsd(res.model, res.usage);
       db()
         .prepare(
@@ -102,6 +124,11 @@ export async function aiGenerate<T>(
       return { data: res.data, cacheHit: false, costUsd: cost, usage: res.usage, model: res.model };
     } catch (err) {
       lastErr = err;
+      // Call đã chạy xong ở phía provider nhưng output hỏng -> vẫn tốn tiền -> ghi log (ok = 0)
+      if ((err instanceof SchemaMismatchError || err instanceof TruncatedError) && err.usage) {
+        const m = err.model ?? req.model;
+        logCall(ctx, provider.name, m, false, err.usage, images, costUsd(m, err.usage), now() - started, false);
+      }
       if (err instanceof NonRetryableError) throw err;
       if (err instanceof TruncatedError) maxTokens = Math.min(maxTokens * 2, 32000);
       if (attempt < maxAttempts) await sleep(backoffMs(attempt));
@@ -119,12 +146,13 @@ function logCall(
   images: number,
   cost: number,
   latencyMs: number,
+  ok = true,
 ) {
   db()
     .prepare(
       `INSERT INTO ai_calls (run_id, stage, task_key, provider, model, cache_hit, input_tokens, output_tokens,
-        cache_read_tokens, cache_write_tokens, images, cost_usd, latency_ms, created_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        cache_read_tokens, cache_write_tokens, images, cost_usd, latency_ms, created_at, ok)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .run(
       ctx.runId,
@@ -141,5 +169,6 @@ function logCall(
       cost,
       latencyMs,
       now(),
+      ok ? 1 : 0,
     );
 }

@@ -29,9 +29,12 @@ export const mediaPrepStage: StageDef<{ creatorId: string }, PreparedMedia[], Me
     const videos = pickVideos(c.videos, ctx.funnel.videosPerCreator, (v) =>
       keywordHits(`${v.caption} ${v.hashtags.join(" ")} ${v.productTitle ?? ""}`, ctx.brief.keywords).length > 0,
     );
+    // Nguồn video trả phí (Kalodata 0.5 credit/video): mặc định chỉ cho video CHÍNH của mỗi creator
+    const paidMode = process.env.KALODATA_VIDEO_URL_FALLBACK ?? "primary"; // primary | all | off
     const prepared: PreparedMedia[] = [];
-    for (const v of videos) {
-      const m = await prepareVideo(v, ctx.funnel.framesPerVideo);
+    for (const [i, v] of videos.entries()) {
+      const allowPaid = paidMode === "all" || (paidMode === "primary" && i === 0);
+      const m = await prepareVideo(v, { framesPerVideo: ctx.funnel.framesPerVideo, allowPaid, runId: ctx.runId });
       if (m) prepared.push(m);
     }
     if (videos.length && !prepared.length) ctx.log(`@${c.handle}: no media could be prepared`, "warn");

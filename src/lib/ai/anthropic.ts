@@ -10,10 +10,11 @@
  */
 import Anthropic from "@anthropic-ai/sdk";
 import { getConfig } from "../config";
+import type { Usage } from "./pricing";
 import { toStrictJsonSchema } from "./schema";
 import {
-  extractJson,
   NonRetryableError,
+  parseOrThrow,
   TruncatedError,
   type GenerateRequest,
   type GenerateResult,
@@ -69,28 +70,25 @@ export const anthropicProvider: LLMProvider = {
       throw err; // 429/5xx/network: SDK đã retry, gateway sẽ retry tiếp ở cấp task
     }
 
+    // Đọc usage TRƯỚC khi validate: call hỏng vẫn bị tính tiền -> phải ghi nhận
+    const usage: Usage = {
+      inputTokens: res.usage.input_tokens,
+      outputTokens: res.usage.output_tokens,
+      cacheReadTokens: res.usage.cache_read_input_tokens ?? 0,
+      cacheWriteTokens: res.usage.cache_creation_input_tokens ?? 0,
+    };
+
     if (res.stop_reason === "refusal") {
       throw new NonRetryableError(
         `Model refused (${res.stop_details?.category ?? "unknown"}): ${res.stop_details?.explanation ?? ""}`,
       );
     }
-    if (res.stop_reason === "max_tokens") throw new TruncatedError();
+    if (res.stop_reason === "max_tokens") throw new TruncatedError(undefined, usage, res.model);
 
     const text = res.content
       .filter((b): b is Anthropic.Beta.BetaTextBlock => b.type === "text")
       .map((b) => b.text)
       .join("");
-    const data = req.schema.parse(extractJson(text));
-
-    return {
-      data,
-      model: res.model,
-      usage: {
-        inputTokens: res.usage.input_tokens,
-        outputTokens: res.usage.output_tokens,
-        cacheReadTokens: res.usage.cache_read_input_tokens ?? 0,
-        cacheWriteTokens: res.usage.cache_creation_input_tokens ?? 0,
-      },
-    };
+    return { data: parseOrThrow(req.schema, text, usage, res.model), model: res.model, usage };
   },
 };

@@ -15,6 +15,7 @@ import { FinalRankSchema, type FinalRankOutput } from "../schemas";
 import type { PrefilterRow } from "../scoring";
 import type { StageContext, StageDef } from "../stage";
 import type { MediaPrepOut } from "./mediaPrep";
+import { dataRow, type EnrichOut } from "./enrich";
 import type { PrefilterOut } from "./prefilter";
 import type { TextScreenOut } from "./textScreen";
 import type { VideoOut } from "./videoAnalysis";
@@ -33,7 +34,7 @@ interface BatchOut {
 
 function evidenceFor(ctx: StageContext, id: string, c: CreatorRecord) {
   const pf = ctx.output<PrefilterOut>("prefilter");
-  const pre = pf.rows.find((r) => r.id === id) as PrefilterRow;
+  const pre = dataRow(ctx.output<EnrichOut>("enrich"), pf, id) as PrefilterRow;
   const text = ctx.output<TextScreenOut>("text_screen").byId[id];
   const media = ctx.output<MediaPrepOut>("media_prep").byId[id];
   const video = ctx.output<VideoOut>("video_analysis").byId[id]?.analysis;
@@ -46,7 +47,7 @@ function mockFinal(ctx: StageContext, items: { ref: string; id: string; ev: Evid
   const vs = ctx.output<VideoOut>("video_analysis").byId;
   return {
     assessments: items.map(({ ref, id, ev }) => {
-      const data = pf.rows.find((r) => r.id === id)?.dataScore ?? 0.5;
+      const data = dataRow(ctx.output<EnrichOut>("enrich"), pf, id)?.dataScore ?? 0.5;
       const score = Math.round(100 * (0.45 * data + 0.35 * (ts[id]?.textScore ?? 0.5) + 0.2 * (vs[id]?.videoScore ?? 0.4)));
       const vid = ev.find((e) => e.kind === "video");
       return {

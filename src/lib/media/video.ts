@@ -1,22 +1,27 @@
 /**
- * Chuẩn bị media cho phân tích video bằng AI — phần tối ưu token quan trọng nhất.
+ * Chuẩn bị media cho phân tích video bằng AI — phần tối ưu token (và credit) quan trọng nhất.
  *
- * Gửi cả video cho model là rất đắt (và Claude không nhận video trực tiếp). Thay vào đó:
- *   1. Tải video độ phân giải thấp (yt-dlp, <=720p).
- *   2. Lấy 6 frame tại các mốc cố định: ~1s (hook) rồi 20/40/60/80/95% thời lượng.
- *   3. Ghép 6 frame thành 1 "contact sheet" 3x2, mỗi frame 240x426 -> ảnh 720x852.
- *      Claude tính token ảnh ~ (w*h)/750 => ~820 token / video.
- *      So với gửi 6 ảnh 1080x1920 riêng lẻ (bị resize về ~1568px cạnh dài, ~1.6k token/ảnh)
- *      => ~9.6k token. Tiết kiệm ~90% token hình ảnh mà vẫn thấy rõ hook, demo, bối cảnh.
- *   4. Lấy auto-caption (phụ đề tự động của TikTok) làm transcript -> miễn phí, không cần ASR.
+ * Nguồn media theo thứ tự rẻ -> đắt:
+ *   1. yt-dlp (MIỄN PHÍ): auto-caption tiếng Việt của TikTok (transcript) + thumbnail.
+ *      Luôn chạy cho mọi video.
+ *   2. yt-dlp tải video (MIỄN PHÍ): TikTok hiện thường chặn format video với client không phải app
+ *      (chỉ trả audio), nên bước này hay thất bại -> không phụ thuộc vào nó.
+ *   3. Kalodata `video/url` (0.5 CREDIT): link mp4 chính thức. Chỉ dùng cho video CHÍNH của mỗi
+ *      creator (KALODATA_VIDEO_URL_FALLBACK=primary) -> 1 contact sheet đầy đủ / creator.
+ *   4. Không có video: dùng thumbnail làm "sheet" 1 khung (kind = "cover") + transcript.
  *
- * Mọi thứ cache trên đĩa theo video id -> idempotent, chạy lại không tải lại.
+ * Từ video: lấy 6 frame tại mốc cố định (~1s cho hook, rồi 20/40/60/80/95%), resize 240x426,
+ * ghép contact sheet 3x2 (720x852). Claude tính token ảnh ~ (w*h)/750 => ~820 token / video,
+ * so với ~9.6k token nếu gửi 6 frame full-res riêng lẻ => tiết kiệm ~90% token hình ảnh.
+ *
+ * Mọi thứ cache trên đĩa theo video id (meta.json) -> idempotent, chạy lại không tải / trả phí lại.
  */
 import { execFile } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
 import { getConfig } from "../config";
+import { kaloVideoUrl, logAvoidedCredit } from "../sources/kalodataApi";
 import type { CreatorVideo } from "../types";
 
 const run = promisify(execFile);
@@ -34,64 +39,91 @@ export interface PreparedMedia {
   frameTimes: number[];
   durationSec: number | null;
   transcript: string | null;
-  /** "video" = contact sheet từ video thật; "cover" = chỉ có ảnh bìa (fallback) */
+  /** "video" = contact sheet từ video thật; "cover" = chỉ có thumbnail */
   kind: "video" | "cover";
+  /** Video lấy từ đâu (để minh bạch chi phí) */
+  via: "yt-dlp" | "kalodata" | "thumbnail";
+}
+
+export interface PrepareOptions {
+  framesPerVideo?: number;
+  /** Cho phép dùng nguồn trả phí (Kalodata video/url) cho video này */
+  allowPaid?: boolean;
+  runId?: string | null;
 }
 
 const mediaDir = (videoId: string) => path.join(getConfig().paths.mediaCache, videoId.replace(/[^\w-]/g, ""));
 
-export async function prepareVideo(video: CreatorVideo, framesPerVideo = 6): Promise<PreparedMedia | null> {
+export async function prepareVideo(video: CreatorVideo, opts: PrepareOptions = {}): Promise<PreparedMedia | null> {
   const dir = mediaDir(video.id);
   const metaPath = path.join(dir, "meta.json");
-  if (fs.existsSync(metaPath)) return JSON.parse(fs.readFileSync(metaPath, "utf8")) as PreparedMedia; // cache hit
-  fs.mkdirSync(dir, { recursive: true });
-
-  let result: PreparedMedia | null = null;
-  try {
-    result = await fromVideo(video, dir, framesPerVideo);
-  } catch (err) {
-    console.warn(`[media] video ${video.id} failed: ${(err as Error).message.slice(0, 200)}`);
-  }
-  if (!result && video.coverUrl) {
-    try {
-      result = await fromCover(video, dir);
-    } catch (err) {
-      console.warn(`[media] cover ${video.id} failed: ${(err as Error).message.slice(0, 200)}`);
+  if (fs.existsSync(metaPath)) {
+    const cached = JSON.parse(fs.readFileSync(metaPath, "utf8")) as PreparedMedia;
+    // Đã có contact sheet đầy đủ, hoặc lần này cũng không được phép trả phí -> dùng lại
+    if (cached.kind === "video" || !opts.allowPaid) {
+      if (cached.via === "kalodata") logAvoidedCredit(opts.runId, "/tiktok/video/url", 0.5); // để benchmark thấy chi phí lạnh
+      return cached;
     }
   }
+  fs.mkdirSync(dir, { recursive: true });
+  const cfg = getConfig();
+
+  // 1) Miễn phí: transcript + thumbnail
+  if (video.url) {
+    try {
+      await run(
+        cfg.ytDlpBin,
+        ["--skip-download", "--write-subs", "--write-auto-subs", "--sub-langs", "vie.*,vi.*,en.*", "--sub-format", "vtt",
+          "--write-thumbnail", "--convert-thumbnails", "jpg", "-o", path.join(dir, "meta"), "--no-playlist", "--quiet", "--no-warnings", video.url],
+        { timeout: 120_000 },
+      );
+    } catch (err) {
+      console.warn(`[media] ${video.id} metadata failed: ${(err as Error).message.slice(0, 160)}`);
+    }
+  }
+
+  // 2) Miễn phí: thử tải video (chỉ nhận format có hình)
+  let file = findFile(dir, /^video\.(mp4|webm|mkv|mov)$/);
+  let via: PreparedMedia["via"] = "yt-dlp";
+  if (!file && video.url) {
+    try {
+      await run(
+        cfg.ytDlpBin,
+        ["-f", "b[vcodec!=none][height<=720]/bv*[height<=720]+ba/b[vcodec!=none]", "-o", path.join(dir, "video.%(ext)s"),
+          "--no-playlist", "--quiet", "--no-warnings", video.url],
+        { timeout: 180_000 },
+      );
+      file = findFile(dir, /^video\.(mp4|webm|mkv|mov)$/);
+    } catch {
+      /* TikTok chặn format video -> xuống bước 3 */
+    }
+  }
+
+  // 3) Trả phí (0.5 credit): link mp4 chính thức từ Kalodata, chỉ khi được phép
+  if (!file && opts.allowPaid && process.env.KALODATA_API_KEY) {
+    try {
+      const link = await kaloVideoUrl(video.id, opts.runId);
+      if (link) {
+        const res = await fetch(link, { signal: AbortSignal.timeout(120_000) });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        fs.writeFileSync(path.join(dir, "video.mp4"), Buffer.from(await res.arrayBuffer()));
+        file = path.join(dir, "video.mp4");
+        via = "kalodata";
+      }
+    } catch (err) {
+      console.warn(`[media] ${video.id} kalodata video url failed: ${(err as Error).message.slice(0, 160)}`);
+    }
+  }
+
+  let result: PreparedMedia | null = null;
+  if (file) result = await sheetFromVideo(video, dir, file, opts.framesPerVideo ?? 6, via);
+  if (!result) result = await sheetFromThumbnail(video, dir);
   if (result) fs.writeFileSync(metaPath, JSON.stringify(result, null, 2));
   return result;
 }
 
-async function fromVideo(video: CreatorVideo, dir: string, framesPerVideo: number): Promise<PreparedMedia> {
+async function sheetFromVideo(video: CreatorVideo, dir: string, file: string, framesPerVideo: number, via: PreparedMedia["via"]): Promise<PreparedMedia> {
   const cfg = getConfig();
-  let file = findFile(dir, /^video\.(mp4|webm|mkv|mov)$/);
-  if (!file) {
-    await run(
-      cfg.ytDlpBin,
-      [
-        "-f",
-        "mp4[height<=720]/best[height<=720]/worst",
-        "-o",
-        path.join(dir, "video.%(ext)s"),
-        "--write-subs",
-        "--write-auto-subs",
-        "--sub-langs",
-        "vie.*,vi.*,en.*",
-        "--sub-format",
-        "vtt",
-        "--no-playlist",
-        "--no-progress",
-        "--quiet",
-        "--no-warnings",
-        video.url,
-      ],
-      { timeout: 180_000 },
-    );
-    file = findFile(dir, /^video\.(mp4|webm|mkv|mov)$/);
-    if (!file) throw new Error("yt-dlp finished but no video file");
-  }
-
   const duration = await probeDuration(file);
   const d = duration ?? video.durationSec ?? 15;
   // Mốc frame: frame 1 ~1s (hook), còn lại rải đều thân video
@@ -118,44 +150,57 @@ async function fromVideo(video: CreatorVideo, dir: string, framesPerVideo: numbe
       "-vf", `tile=${cols}x${rows}`, "-frames:v", "1", "-q:v", "5", path.join(dir, "sheet.jpg")],
     { timeout: 60_000 },
   );
-
-  // Xoá video gốc sau khi cắt frame -> tiết kiệm đĩa khi scale 500+ creator
-  if (process.env.KEEP_VIDEOS !== "1") fs.rmSync(file, { force: true });
-
+  // Xoá video gốc + frame lẻ sau khi ghép -> chỉ giữ sheet ~60KB (quan trọng khi scale 500+ creator)
+  if (process.env.KEEP_VIDEOS !== "1") {
+    fs.rmSync(file, { force: true });
+    for (let i = 1; i <= times.length; i++) fs.rmSync(path.join(dir, `frame_${i}.jpg`), { force: true });
+  }
   return {
     videoId: video.id,
     url: video.url,
-    sheet: path.relative(getConfig().paths.mediaCache, path.join(dir, "sheet.jpg")),
+    sheet: rel(dir, "sheet.jpg"),
     sheetWidth: FRAME_W * cols,
     sheetHeight: FRAME_H * rows,
     frameTimes: times,
     durationSec: duration,
     transcript: readTranscript(dir),
     kind: "video",
+    via,
   };
 }
 
-async function fromCover(video: CreatorVideo, dir: string): Promise<PreparedMedia> {
-  const res = await fetch(video.coverUrl!, { signal: AbortSignal.timeout(30_000) });
-  if (!res.ok) throw new Error(`cover HTTP ${res.status}`);
-  const raw = path.join(dir, "cover_raw");
-  fs.writeFileSync(raw, Buffer.from(await res.arrayBuffer()));
-  await run(getConfig().ffmpegBin, ["-y", "-loglevel", "error", "-i", raw, "-vf", "scale=360:-2", path.join(dir, "sheet.jpg")], {
+async function sheetFromThumbnail(video: CreatorVideo, dir: string): Promise<PreparedMedia | null> {
+  let src = findFile(dir, /^meta\.jpg$/);
+  if (!src && video.coverUrl) {
+    try {
+      const res = await fetch(video.coverUrl, { signal: AbortSignal.timeout(30_000) });
+      if (res.ok) {
+        src = path.join(dir, "cover_raw");
+        fs.writeFileSync(src, Buffer.from(await res.arrayBuffer()));
+      }
+    } catch {
+      /* bỏ qua */
+    }
+  }
+  if (!src) return null;
+  await run(getConfig().ffmpegBin, ["-y", "-loglevel", "error", "-i", src, "-vf", "scale=360:-2", path.join(dir, "sheet.jpg")], {
     timeout: 60_000,
   });
-  fs.rmSync(raw, { force: true });
   return {
     videoId: video.id,
     url: video.url,
-    sheet: path.relative(getConfig().paths.mediaCache, path.join(dir, "sheet.jpg")),
+    sheet: rel(dir, "sheet.jpg"),
     sheetWidth: 360,
     sheetHeight: 640,
     frameTimes: [0],
     durationSec: video.durationSec ?? null,
-    transcript: null,
+    transcript: readTranscript(dir),
     kind: "cover",
+    via: "thumbnail",
   };
 }
+
+const rel = (dir: string, f: string) => path.relative(getConfig().paths.mediaCache, path.join(dir, f));
 
 async function probeDuration(file: string): Promise<number | null> {
   try {
@@ -168,6 +213,7 @@ async function probeDuration(file: string): Promise<number | null> {
 }
 
 function findFile(dir: string, re: RegExp): string | null {
+  if (!fs.existsSync(dir)) return null;
   const f = fs.readdirSync(dir).find((x) => re.test(x));
   return f ? path.join(dir, f) : null;
 }
@@ -184,7 +230,7 @@ function readTranscript(dir: string): string | null {
     .filter(Boolean);
   const dedup = lines.filter((l, i) => l !== lines[i - 1]);
   const text = dedup.join(" ").replace(/\s+/g, " ").trim();
-  return text ? text.slice(0, 1200) : null;
+  return text ? text.slice(0, 1500) : null;
 }
 
 export function readSheetBase64(sheet: string): string {

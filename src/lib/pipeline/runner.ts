@@ -197,7 +197,7 @@ async function runStage(ctx: StageContext, def: StageDef, signal: AbortSignal, o
               .prepare("UPDATE tasks SET status = 'failed', error = ?, updated_at = ? WHERE run_id = ? AND stage = ? AND task_key = ?")
               .run(msg.slice(0, 1000), now(), runId, stage, t.task_key);
             ctx.log(`Task ${t.task_key} failed (attempt ${attempt}/${maxAttempts}): ${msg.slice(0, 200)}`, "warn");
-            if (err instanceof Error && err.name === "NonRetryableError") return;
+            if (err instanceof Error && (err.name === "NonRetryableError" || (err as { nonRetryable?: boolean }).nonRetryable)) return;
             if (signal.aborted) return;
           }
         }

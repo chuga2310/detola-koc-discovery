@@ -10,6 +10,7 @@ interface RunRow {
   currentStage: string | null;
   createdAt: number;
   costUsd: number;
+  credits: number;
   activeMs: number;
   brief: { product: string; numKocs: number };
   config: { provider?: string };
@@ -47,7 +48,9 @@ export function RunsList() {
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-3">
-              <span className="num text-xs text-muted">${r.costUsd.toFixed(4)}</span>
+              <span className="num text-xs text-muted">
+                AI ${r.costUsd.toFixed(3)} · {r.credits.toFixed(1)} cr
+              </span>
               <StatusBadge status={r.status} />
             </div>
           </Link>

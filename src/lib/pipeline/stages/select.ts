@@ -10,6 +10,7 @@ import { loadCreators, tiktokProfileUrl } from "../creators";
 import { selectWithinBudget } from "../optimizer";
 import type { StageDef } from "../stage";
 import type { FinalRankOut } from "./finalRank";
+import { dataRow, type EnrichOut } from "./enrich";
 import type { PrefilterOut } from "./prefilter";
 import type { TextScreenOut } from "./textScreen";
 import type { VideoOut } from "./videoAnalysis";
@@ -41,7 +42,7 @@ export interface Report {
   picks: Pick[];
   alternates: Pick[];
   totals: { estCostVnd: number; budgetVnd: number; method: string };
-  funnel: { pool: number; prefilterPassed: number; textScreened: number; videoAnalyzed: number; finalRanked: number; selected: number };
+  funnel: { pool: number; prefilterPassed: number; enriched: number; textScreened: number; videoAnalyzed: number; finalRanked: number; selected: number };
 }
 
 export const selectStage: StageDef<never, never, Report> = {
@@ -56,13 +57,13 @@ export const selectStage: StageDef<never, never, Report> = {
     const ts = ctx.output<TextScreenOut>("text_screen");
     const vs = ctx.output<VideoOut>("video_analysis");
     const fr = ctx.output<FinalRankOut>("final_rank");
-    const rowById = new Map(pf.rows.map((r) => [r.id, r]));
+    const en = ctx.output<EnrichOut>("enrich");
     const ids = Object.keys(fr.byId);
     const creators = loadCreators(ids);
 
     const all: Pick[] = ids.map((id) => {
       const a = fr.byId[id];
-      const pre = rowById.get(id)!;
+      const pre = dataRow(en, pf, id)!;
       const c = creators.get(id)!;
       const ev = fr.evidence[id] ?? [];
       const evMap = new Map(ev.map((e) => [e.id, e]));
@@ -124,6 +125,7 @@ export const selectStage: StageDef<never, never, Report> = {
       funnel: {
         pool: pf.stats.pool,
         prefilterPassed: pf.stats.passed,
+        enriched: en.rows.length,
         textScreened: Object.keys(ts.byId).length,
         videoAnalyzed: Object.keys(vs.byId).length,
         finalRanked: ids.length,

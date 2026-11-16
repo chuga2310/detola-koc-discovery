@@ -18,7 +18,13 @@ interface Detail {
     config: { provider: string; models: Record<string, string>; dataSource: string };
   };
   stages: { stage: string; status: string; activeMs: number; tasks: { total: number; done: number; failed: number; running: number } }[];
-  usage: { byStage: StageUsage[]; total: Omit<StageUsage, "stage">; costVnd: number; models: { stage: string; model: string; n: number }[] };
+  usage: {
+    byStage: StageUsage[];
+    total: Omit<StageUsage, "stage">;
+    costVnd: number;
+    models: { stage: string; model: string; n: number }[];
+    data: { byEndpoint: { endpoint: string; calls: number; cacheHits: number; credits: number; avoided: number }[]; credits: number; avoided: number; coldCredits: number };
+  };
   events: { ts: number; level: string; stage: string | null; message: string }[];
   report: Report | null;
 }
@@ -26,11 +32,12 @@ interface Detail {
 const STAGE_LABEL: Record<string, string> = {
   source: "1. Pool từ data source",
   prefilter: "2. Lọc số liệu (0 token)",
-  text_screen: "3. Text AI (model rẻ)",
-  media_prep: "4. Video → contact sheet",
-  video_analysis: "5. Video AI (vision)",
-  final_rank: "6. Chấm điểm + lý do",
-  select: "7. Tối ưu ngân sách",
+  enrich: "3. Enrich chi tiết (data API)",
+  text_screen: "4. Text AI (model rẻ)",
+  media_prep: "5. Video → contact sheet",
+  video_analysis: "6. Video AI (vision)",
+  final_rank: "7. Chấm điểm + lý do",
+  select: "8. Tối ưu ngân sách",
 };
 
 export function RunView({ id }: { id: string }) {
@@ -157,11 +164,31 @@ export function RunView({ id }: { id: string }) {
           <p className="mt-2 text-xs text-muted">
             ≈ {vnd(usage.costVnd)} · models: {usage.models.map((m) => `${m.stage}=${m.model}`).join(", ") || "–"}
           </p>
+          {usage.data && usage.data.byEndpoint.length > 0 && (
+            <div className="mt-3 border-t border-line pt-3">
+              <h3 className="label mb-1">Kalodata API (credit, 1 ≈ $0.1)</h3>
+              <ul className="num space-y-0.5 text-xs">
+                {usage.data.byEndpoint.map((e) => (
+                  <li key={e.endpoint} className="flex justify-between">
+                    <span>
+                      {e.endpoint.replace("/tiktok/", "")} ×{e.calls} <span className="text-muted">({e.cacheHits} cache)</span>
+                    </span>
+                    <span>{e.credits.toFixed(2)}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-1 text-xs">
+                Trả: <b className="num">{usage.data.credits.toFixed(2)}</b> credit · tiết kiệm nhờ cache:{" "}
+                <span className="num">{usage.data.avoided.toFixed(2)}</span> · chi phí lạnh: <span className="num">{usage.data.coldCredits.toFixed(2)}</span>
+              </p>
+            </div>
+          )}
           {report && (
             <div className="mt-4 flex flex-wrap gap-2 text-xs">
               {[
                 ["Pool", report.funnel.pool],
                 ["Qua lọc số liệu", report.funnel.prefilterPassed],
+                ["Enrich", report.funnel.enriched],
                 ["Text AI", report.funnel.textScreened],
                 ["Video AI", report.funnel.videoAnalyzed],
                 ["Chấm cuối", report.funnel.finalRanked],

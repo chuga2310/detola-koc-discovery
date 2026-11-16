@@ -13,6 +13,8 @@
  * - ai_cache    : cache kết quả AI theo content hash -> chạy lại/resume không tốn token.
  * - ai_calls    : log từng lần gọi AI (token, cost, latency) -> phục vụ benchmark.
  * - events      : log tiến độ cho UI.
+ * - kalo_cache  : cache response Kalodata API (tính phí theo credit).
+ * - data_calls  : log credit Kalodata từng call.
  *
  * Lên production: đổi sang Postgres, tasks dùng `SELECT ... FOR UPDATE SKIP LOCKED`
  * để nhiều worker cùng kéo task. Schema giữ nguyên.
@@ -126,7 +128,37 @@ function migrate(d: Database.Database) {
       message TEXT NOT NULL
     );
     CREATE INDEX IF NOT EXISTS idx_events_run ON events(run_id, id);
+
+    -- Cache response của data provider (Kalodata tính phí theo credit) -> chạy lại = 0 credit
+    CREATE TABLE IF NOT EXISTS kalo_cache (
+      cache_key TEXT PRIMARY KEY,
+      path TEXT NOT NULL,
+      body_json TEXT NOT NULL,
+      data_json TEXT NOT NULL,
+      fetched_at INTEGER NOT NULL
+    );
+
+    -- Log từng call data provider: credit tiêu, cache hit, latency
+    CREATE TABLE IF NOT EXISTS data_calls (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      run_id TEXT,
+      provider TEXT NOT NULL,
+      endpoint TEXT NOT NULL,
+      credits REAL NOT NULL,
+      credits_avoided REAL NOT NULL DEFAULT 0,
+      cache_hit INTEGER NOT NULL,
+      latency_ms INTEGER NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_data_calls_run ON data_calls(run_id);
   `);
+  // Migration nhẹ cho DB tạo từ phiên bản trước
+  const cols = d.prepare("PRAGMA table_info(data_calls)").all() as { name: string }[];
+  if (!cols.some((c) => c.name === "credits_avoided"))
+    d.exec("ALTER TABLE data_calls ADD COLUMN credits_avoided REAL NOT NULL DEFAULT 0");
+  // ok = 0: call AI đã tính tiền nhưng output hỏng (sai schema / bị cắt) -> vẫn tính vào chi phí
+  const aiCols = d.prepare("PRAGMA table_info(ai_calls)").all() as { name: string }[];
+  if (!aiCols.some((c) => c.name === "ok")) d.exec("ALTER TABLE ai_calls ADD COLUMN ok INTEGER NOT NULL DEFAULT 1");
 }
 
 export const now = () => Date.now();

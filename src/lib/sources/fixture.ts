@@ -20,4 +20,6 @@ export const fixtureSource: DataSource = {
       .sort((a, b) => (b.metrics.videoViews ?? 0) - (a.metrics.videoViews ?? 0))
       .slice(0, limit);
   },
+  // Fixture đã đầy đủ dữ liệu -> enrich không làm gì
+  enrich: async (c) => ({ ...c, enriched: true }),
 };

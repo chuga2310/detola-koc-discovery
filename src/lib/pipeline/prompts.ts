@@ -12,9 +12,9 @@
 import type { CampaignBrief } from "../types";
 
 export const PROMPT_VERSION = {
-  text_screen: "ts-v1",
+  text_screen: "ts-v3",
   video_analysis: "va-v1",
-  final_rank: "fr-v1",
+  final_rank: "fr-v3",
 } as const;
 
 export function briefBlock(b: CampaignBrief): string {
@@ -46,11 +46,16 @@ CAMPAIGN BRIEF
 ${briefBlock(brief)}
 
 HOW TO READ A CARD
-- Header: ref | @handle | followers | avg views per video | engagement rate | 30-day GMV | items sold
-- aud: follower demographics (F = female share; age buckets). "?" means unknown, do not penalise heavily.
-- cats: product categories this creator sells/promotes with share.
+- Header: ref | @handle | followers | total content views in 30 days | median views of their top recent videos
+  (biased upward: these are their best videos) | engagement rate | 30-day GMV | items sold
+- aud: follower demographics (F = female share; age buckets). "?" means unknown (our data provider does not
+  expose demographics) — infer the likely audience from content instead, do not penalise.
+- sales mix: share of GMV from short videos vs livestream, and how many products/shops they promote. A creator who
+  promotes hundreds of products across hundreds of shops is a deal-poster, not a trusted voice.
+- cats / sub-cats: product categories this creator sells/promotes (top first); sub-cats are fine-grained.
 - kw: campaign keywords found in their captions/products (already computed, trust it).
-- vids: recent/top video captions with views. Captions are often Vietnamese without diacritics.
+- vids: recent/top video captions with views; "N% ad" = share of views bought with ads (high = reach is paid,
+  not organic). Captions are often Vietnamese without diacritics.
 - prods: top products they sold.
 
 SCORING RUBRIC (integers 0-10)
@@ -129,7 +134,8 @@ SCORING RUBRIC for fit_score (0-100)
 - 25 pts Content-product fit: does the creator already make skincare / sun-care / routine content that can naturally
   feature this product? Demonstration style (applies on skin, texture close-ups) matters for a sunscreen.
 - 20 pts Performance & efficiency: views per video relative to followers, engagement rate, estimated cost vs
-  expected reach, sales signals (GMV, items sold) as proof the audience buys on recommendation.
+  expected reach, sales signals (GMV, items sold) as proof the audience buys on recommendation. Discount reach that
+  is mostly paid ads, and prefer creators whose sales come from videos (this is a video campaign).
 - 15 pts Content quality & credibility: production quality, hook, on-camera trust, consistency.
 - 10 pts Brand safety & focus: no red flags; not an "everything seller".
 verdict: strong >= 75, good 60-74, weak 40-59, reject < 40.

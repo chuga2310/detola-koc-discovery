@@ -17,9 +17,21 @@
     "da mụn",
     "nâng tông"
   ],
-  "targetAudience": { "gender": "female", "ageMin": 18, "ageMax": 30 },
+  "targetAudience": {
+    "gender": "female",
+    "ageMin": 18,
+    "ageMax": 30
+  },
   "budgetVnd": 30000000,
   "numKocs": 5,
-  "followerRange": { "min": 10000, "max": 500000 },
-  "region": "VN"
+  "followerRange": {
+    "min": 10000,
+    "max": 500000
+  },
+  "region": "VN",
+  "kalodataCategoryIds": "848648,848776",
+  "contentKeywords": [
+    "kem chống nắng",
+    "chống nắng"
+  ]
 }

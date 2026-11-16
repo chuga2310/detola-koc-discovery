@@ -44,9 +44,37 @@ export class NonRetryableError extends Error {
   }
 }
 
+/**
+ * Model trả về JSON không khớp schema. Call này VẪN TỐN TIỀN -> mang theo usage để gateway
+ * ghi vào ai_calls (chi phí phải trung thực, kể cả call hỏng).
+ */
+export class SchemaMismatchError extends Error {
+  constructor(
+    message: string,
+    public usage: Usage,
+    public model: string,
+  ) {
+    super(message);
+    this.name = "SchemaMismatchError";
+  }
+}
+
+/** Parse + validate, gói lỗi kèm usage */
+export function parseOrThrow<T>(schema: z.ZodType<T>, text: string, usage: Usage, model: string): T {
+  try {
+    return schema.parse(extractJson(text));
+  } catch (err) {
+    throw new SchemaMismatchError(`Schema mismatch: ${(err as Error).message.slice(0, 400)}`, usage, model);
+  }
+}
+
 /** Output bị cắt vì chạm max_tokens -> gateway sẽ retry với max_tokens lớn hơn */
 export class TruncatedError extends Error {
-  constructor(message = "Output truncated at max_tokens") {
+  constructor(
+    message = "Output truncated at max_tokens",
+    public usage?: Usage,
+    public model?: string,
+  ) {
     super(message);
     this.name = "TruncatedError";
   }

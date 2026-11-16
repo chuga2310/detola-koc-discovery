@@ -6,10 +6,11 @@
  * OpenAI tự cache prefix >= 1024 token nên system prompt luôn đặt đầu.
  */
 import OpenAI from "openai";
+import type { Usage } from "./pricing";
 import { toStrictJsonSchema } from "./schema";
 import {
-  extractJson,
   NonRetryableError,
+  parseOrThrow,
   TruncatedError,
   type GenerateRequest,
   type GenerateResult,
@@ -52,21 +53,17 @@ export const openaiProvider: LLMProvider = {
       throw err;
     }
 
+    const cached = res.usage?.prompt_tokens_details?.cached_tokens ?? 0;
+    const usage: Usage = {
+      inputTokens: (res.usage?.prompt_tokens ?? 0) - cached,
+      outputTokens: res.usage?.completion_tokens ?? 0,
+      cacheReadTokens: cached,
+      cacheWriteTokens: 0,
+    };
     const choice = res.choices[0];
-    if (choice?.finish_reason === "length") throw new TruncatedError();
+    if (choice?.finish_reason === "length") throw new TruncatedError(undefined, usage, res.model);
     if (choice?.message.refusal) throw new NonRetryableError(`Refused: ${choice.message.refusal}`);
 
-    const data = req.schema.parse(extractJson(choice?.message.content ?? ""));
-    const cached = res.usage?.prompt_tokens_details?.cached_tokens ?? 0;
-    return {
-      data,
-      model: res.model,
-      usage: {
-        inputTokens: (res.usage?.prompt_tokens ?? 0) - cached,
-        outputTokens: res.usage?.completion_tokens ?? 0,
-        cacheReadTokens: cached,
-        cacheWriteTokens: 0,
-      },
-    };
+    return { data: parseOrThrow(req.schema, choice?.message.content ?? "", usage, res.model), model: res.model, usage };
   },
 };

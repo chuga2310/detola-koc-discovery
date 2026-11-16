@@ -30,7 +30,7 @@ export function buildEvidence(args: {
   ev.push({
     id: `${ref}.m1`,
     kind: "metric",
-    text: `Followers ${compactNum(c.followers)}; trung bình ${compactNum(pre.raw.avgViews)} view/video (reach ${topPct(pre.breakdown.reach)})`,
+    text: `Followers ${compactNum(c.followers)}; ${compactNum(pre.raw.videoViews30d)} view nội dung / 30 ngày; trung vị ${compactNum(pre.raw.avgViews)} view của các video nổi bật (reach ${topPct(pre.breakdown.reach)})`,
   });
   if (pre.raw.engagementRate !== undefined)
     ev.push({ id: `${ref}.m2`, kind: "metric", text: `Engagement rate ${pct(pre.raw.engagementRate, 1)} (${topPct(pre.breakdown.engagement)})` });
@@ -45,6 +45,21 @@ export function buildEvidence(args: {
     kind: "metric",
     text: `Chi phí ước tính ${compactNum(pre.estCostVnd)} VND/video (tier ${pre.costTier}); ${compactNum(pre.raw.avgViews && pre.raw.avgViews / (pre.estCostVnd / 1e6))} view kỳ vọng / 1 triệu VND`,
   });
+  if (pre.raw.videoFocus !== undefined || c.metrics.productCount !== undefined) {
+    const ads = c.videos.filter((v) => v.adViewRatio !== undefined);
+    const adAvg = ads.length ? ads.reduce((s, v) => s + (v.adViewRatio ?? 0), 0) / ads.length : undefined;
+    ev.push({
+      id: `${ref}.m6`,
+      kind: "metric",
+      text: [
+        pre.raw.videoFocus !== undefined ? `${pct(pre.raw.videoFocus)} doanh thu từ video, ${pct(1 - pre.raw.videoFocus)} từ livestream` : null,
+        c.metrics.productCount !== undefined ? `quảng bá ${c.metrics.productCount} sản phẩm / ${c.metrics.shopCount ?? "?"} shop` : null,
+        adAvg !== undefined ? `trung bình ${adAvg.toFixed(0)}% view video đến từ quảng cáo` : null,
+      ]
+        .filter(Boolean)
+        .join("; "),
+    });
+  }
   ev.push({
     id: `${ref}.m5`,
     kind: "metric",
@@ -60,7 +75,7 @@ export function buildEvidence(args: {
     kind: "audience",
     text:
       g === null && a === null
-        ? "Chưa có dữ liệu nhân khẩu học follower"
+        ? "Nguồn dữ liệu không cung cấp nhân khẩu học follower (cần suy từ nội dung)"
         : `Khán giả: ${g === null ? "?" : pct(g)} đúng giới tính mục tiêu; ${a === null ? "?" : pct(a)} trong độ tuổi ${brief.targetAudience.ageMin}-${brief.targetAudience.ageMax}`,
   });
   if (c.categories.length)

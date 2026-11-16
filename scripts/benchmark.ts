@@ -36,7 +36,7 @@ function paidDuplicates(runId: string) {
   // Cùng task bị gọi AI (không cache) > 1 lần = trả tiền 2 lần -> lỗi reliability
   return (
     db()
-      .prepare("SELECT stage, task_key, COUNT(*) n FROM ai_calls WHERE run_id = ? AND cache_hit = 0 GROUP BY stage, task_key HAVING n > 1")
+      .prepare("SELECT stage, task_key, COUNT(*) n FROM ai_calls WHERE run_id = ? AND cache_hit = 0 AND ok = 1 GROUP BY stage, task_key HAVING n > 1")
       .all(runId) as { stage: string; task_key: string; n: number }[]
   ).length;
 }
@@ -82,10 +82,25 @@ function collect() {
   const perVideo = (st("video_analysis")?.costUsd ?? 0) / Math.max(1, r.funnel.videoAnalyzed);
   const perFinal = (st("final_rank")?.costUsd ?? 0) / Math.max(1, r.funnel.finalRanked);
   const avgVideoIn = (st("video_analysis")?.inputTokens ?? 0) / Math.max(1, st("video_analysis")?.calls ?? 1);
+  // Credit Kalodata theo bảng giá: rank 0.1/100 dòng (2 nguồn + mỗi keyword), detail+video list 0.2/creator enrich,
+  // video url 0.5/creator (chỉ video chính)
+  const kw = brief.contentKeywords?.length ?? 0;
+  const dataCredits = (fn: ReturnType<typeof funnelFor>) =>
+    (2 + kw) * Math.ceil(fn.poolSize / 100) * 0.1 + fn.prefilterKeep * 0.2 + fn.videoKeep * 0.5;
   const projection = [brief.numKocs, 50, 500].map((n) => {
     const fn = funnelFor(n);
     const cost = fn.prefilterKeep * perText + fn.videoKeep * perVideo + fn.videoKeep * perFinal;
-    return { kocs: n, pool: fn.poolSize, textScreened: fn.prefilterKeep, videoAnalyzed: fn.videoKeep, estCostUsd: cost, estCostWithBatchApi: cost * 0.5 };
+    const credits = dataCredits(fn);
+    return {
+      kocs: n,
+      pool: fn.poolSize,
+      textScreened: fn.prefilterKeep,
+      videoAnalyzed: fn.videoKeep,
+      estCostUsd: cost,
+      estCostWithBatchApi: cost * 0.5,
+      dataCredits: credits,
+      totalUsd: cost + credits * 0.1,
+    };
   });
   // Baseline "naive": phân tích video MỌI creator trong pool bằng model final, mỗi video 1 call, 6 frame full-res (~1.6k token/frame)
   const naivePerVideoTokens = 6 * 1600 + 1500;
@@ -154,7 +169,19 @@ function renderMarkdown(r: Results): string {
   }
   const t = A.usage.total;
   lines.push(`| **Total** | **${t.calls}** | ${t.cacheHits} | ${t.inputTokens} | ${t.cacheReadTokens} | ${t.cacheWriteTokens} | ${t.outputTokens} | ${t.images} | **${usd(t.costUsd)}** (${vnd(t.costUsd)}) | **${(A.activeMs / 1000).toFixed(1)}s** |`, ``);
-  lines.push(`Funnel: pool ${A.report?.funnel.pool} → qua lọc số liệu ${A.report?.funnel.prefilterPassed} → text AI ${A.report?.funnel.textScreened} → video AI ${A.report?.funnel.videoAnalyzed} → chấm cuối ${A.report?.funnel.finalRanked} → chọn ${A.report?.funnel.selected}.`, ``);
+  lines.push(`Funnel: pool ${A.report?.funnel.pool} → qua lọc số liệu ${A.report?.funnel.prefilterPassed} → enrich (data API) ${A.report?.funnel.enriched} → text AI ${A.report?.funnel.textScreened} → video AI ${A.report?.funnel.videoAnalyzed} → chấm cuối ${A.report?.funnel.finalRanked} → chọn ${A.report?.funnel.selected}.`, ``);
+
+  const dc = A.usage.data;
+  lines.push(`### Chi phí dữ liệu Kalodata (credit, 1 credit ≈ $0.1)`, ``);
+  lines.push(`| Endpoint | Calls | Cache hits | Credit trả trong run | Credit tiết kiệm nhờ cache |`, `|---|---|---|---|---|`);
+  for (const e of dc.byEndpoint) lines.push(`| ${e.endpoint} | ${e.calls} | ${e.cacheHits} | ${e.credits.toFixed(2)} | ${e.avoided.toFixed(2)} |`);
+  lines.push(
+    `| **Total** | | | **${dc.credits.toFixed(2)}** | ${dc.avoided.toFixed(2)} |`,
+    ``,
+    `Chi phí dữ liệu khi chạy lạnh (không cache) = **${dc.coldCredits.toFixed(2)} credit ≈ $${(dc.coldCredits * 0.1).toFixed(2)}**. ` +
+      `Tổng chi phí 1 run lạnh ≈ AI $${t.costUsd.toFixed(3)} + data $${(dc.coldCredits * 0.1).toFixed(2)} = **$${(t.costUsd + dc.coldCredits * 0.1).toFixed(2)}**.`,
+    ``,
+  );
 
   lines.push(`## 3. Khả năng phục hồi`, ``);
   lines.push(`- Run bị kill cứng (\`process.exit\`) tại stage **${A.crashedAt}** sau khi đã trả tiền ${A.callsBeforeResume} AI call.`);
@@ -167,9 +194,14 @@ function renderMarkdown(r: Results): string {
 
   lines.push(`## 5. Projection 50–500 KOC`, ``);
   lines.push(`Chi phí đơn vị đo được: text screen ${usd(r.unitCost.perTextCreator)}/creator · video ${usd(r.unitCost.perVideoCreator)}/creator (~${Math.round(r.unitCost.avgVideoInputTokens)} input token/call) · final ${usd(r.unitCost.perFinalCreator)}/creator.`, ``);
-  lines.push(`| KOC cần tìm | Pool | Text AI | Video AI | Ước tính USD | Với Batch API (-50%) | Naive (video AI toàn pool bằng model mạnh) |`, `|---|---|---|---|---|---|---|`);
+  lines.push(
+    `| KOC cần tìm | Pool | Enrich + text AI | Video AI | AI (USD) | AI với Batch API (-50%) | Kalodata (credit) | Tổng ≈ USD | Naive AI (video toàn pool, model mạnh) |`,
+    `|---|---|---|---|---|---|---|---|---|`,
+  );
   r.projection.forEach((p, i) =>
-    lines.push(`| ${p.kocs} | ${p.pool} | ${p.textScreened} | ${p.videoAnalyzed} | ${usd(p.estCostUsd)} | ${usd(p.estCostWithBatchApi)} | ${usd(r.naive[i].estCostUsd)} |`),
+    lines.push(
+      `| ${p.kocs} | ${p.pool} | ${p.textScreened} | ${p.videoAnalyzed} | ${usd(p.estCostUsd)} | ${usd(p.estCostWithBatchApi)} | ${p.dataCredits.toFixed(1)} | ${usd(p.totalUsd)} | ${usd(r.naive[i].estCostUsd)} |`,
+    ),
   );
   lines.push(``, `Naive = gửi 6 frame full-res cho mỗi video (2 video/creator) của MỌI creator trong pool tới model mạnh nhất, mỗi video 1 call.`);
   return lines.join("\n") + "\n";

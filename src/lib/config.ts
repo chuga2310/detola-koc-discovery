@@ -78,10 +78,9 @@ export function getConfig() {
       root,
       db: env("DB_PATH", path.join(root, ".data", "koc.db")),
       mediaCache: env("MEDIA_CACHE_DIR", path.join(root, ".data", "media")),
-      kalodataSnapshots: env("KALODATA_SNAPSHOT_DIR", path.join(root, "data", "kalodata")),
       fixtures: path.join(root, "data", "fixtures"),
     },
-    /** Nguồn data: "kalodata" (snapshot thật) hoặc "fixture" (data mẫu offline) */
+    /** Nguồn data: "kalodata" (Open API) hoặc "fixture" (data mẫu offline) */
     dataSource: env("DATA_SOURCE", "kalodata") as "kalodata" | "fixture",
     /** Công cụ tải video TikTok */
     ytDlpBin: env("YT_DLP_BIN", "yt-dlp"),

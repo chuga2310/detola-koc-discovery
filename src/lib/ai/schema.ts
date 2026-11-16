@@ -32,12 +32,22 @@ export function toStrictJsonSchema(schema: z.ZodType): Record<string, unknown> {
   return strictify(raw) as Record<string, unknown>;
 }
 
+/** Các key mà value là MAP tên -> schema (không phải 1 schema): không được xoá key bên trong */
+const SCHEMA_MAPS = new Set(["properties", "$defs", "definitions", "patternProperties"]);
+
 function strictify(node: unknown): unknown {
   if (Array.isArray(node)) return node.map(strictify);
   if (!node || typeof node !== "object") return node;
   const obj: Record<string, unknown> = { ...(node as Record<string, unknown>) };
   for (const k of UNSUPPORTED_KEYS) delete obj[k];
-  for (const [k, v] of Object.entries(obj)) obj[k] = strictify(v);
+  for (const [k, v] of Object.entries(obj)) {
+    // Bug từng gặp: property tên "format" bị xoá vì trùng keyword JSON Schema "format".
+    // -> với map properties, chỉ strictify từng schema con, giữ nguyên tên property.
+    obj[k] =
+      SCHEMA_MAPS.has(k) && v && typeof v === "object"
+        ? Object.fromEntries(Object.entries(v as Record<string, unknown>).map(([pk, pv]) => [pk, strictify(pv)]))
+        : strictify(v);
+  }
   if (obj.type === "object" && obj.properties && typeof obj.properties === "object") {
     obj.additionalProperties = false;
     obj.required = Object.keys(obj.properties as object);
