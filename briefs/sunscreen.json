@@ -1,0 +1,25 @@
+{
+  "brand": "Thương hiệu mỹ phẩm Việt (đề bài DETOLA)",
+  "product": "Kem chống nắng",
+  "productNotes": "Kem chống nắng phổ rộng cho da châu Á, kết cấu mỏng nhẹ, không vệt trắng, phù hợp đi học/đi làm và hoạt động ngoài trời.",
+  "category": "Beauty & Personal Care",
+  "keywords": [
+    "kem chống nắng",
+    "chống nắng",
+    "sunscreen",
+    "sunblock",
+    "spf",
+    "uv",
+    "skincare",
+    "dưỡng da",
+    "routine",
+    "da dầu",
+    "da mụn",
+    "nâng tông"
+  ],
+  "targetAudience": { "gender": "female", "ageMin": 18, "ageMax": 30 },
+  "budgetVnd": 30000000,
+  "numKocs": 5,
+  "followerRange": { "min": 10000, "max": 500000 },
+  "region": "VN"
+}
