@@ -77,12 +77,15 @@ export async function creditsSpent(runId: string): Promise<number> {
 }
 
 /** Trần credit 1 run: mức cơ bản + phần cộng thêm cho tính năng trả phí người dùng đã bật (lưu trong run) */
+const capCache = new Map<string, number>();
 export async function maxCreditsPerRun(runId?: string | null): Promise<number> {
+  if (runId && capCache.has(runId)) return capCache.get(runId)!;
   // Ước tính 1 run N=5: rank ~0.9 + enrich 20 x 0.2 + video chính 10 x 0.5 ≈ 10 credit
   const base = Number(process.env.KALODATA_MAX_CREDITS_PER_RUN ?? 12);
   if (!runId) return base;
   const run = await (await runsCol()).findOne({ _id: runId }, { projection: { config: 1 } });
   const extra = Number((run?.config as { paidCreditsBudget?: number } | undefined)?.paidCreditsBudget ?? 0);
+  if (run) capCache.set(runId, base + extra); // trần cố định suốt 1 run
   return base + extra;
 }
 

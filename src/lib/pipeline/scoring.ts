@@ -10,7 +10,7 @@
  */
 import type { CampaignBrief, CreatorRecord } from "../types";
 import { clamp, keywordHits, normalizeVi, percentileRanks } from "../util";
-import { signalsOf } from "./signals";
+import { productTypeKeywords, signalsOf } from "./signals";
 
 /** Bảng giá ước tính / 1 video theo tier follower (VND). Giả định — chỉnh theo báo giá thực tế. */
 export const DEFAULT_RATE_CARD: { maxFollowers: number; priceVnd: number; tier: string }[] = [
@@ -196,7 +196,7 @@ export function prefilter(creators: CreatorRecord[], brief: CampaignBrief): Pref
     if (c.creatorStatus === "BELONGED_TO_SELLER") reasons.push("tài khoản thuộc shop/brand, không phải KOC độc lập");
     const vf = videoFocus(c);
     if (vf !== undefined && vf < 0.1) reasons.push("doanh thu gần như toàn bộ từ livestream (không phải KOC video)");
-    const sig = signalsOf(c, brief.keywords);
+    const sig = signalsOf(c, productTypeKeywords(brief));
     return { c, er, av, aud, cat, kw, cost, reasons, vf, sig };
   });
 

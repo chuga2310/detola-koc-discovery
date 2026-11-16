@@ -12,7 +12,7 @@ import type { StageDef } from "../stage";
 import type { FinalRankOut } from "./finalRank";
 import { dataRow, type EnrichOut } from "./enrich";
 import type { PrefilterOut } from "./prefilter";
-import { signalsOf } from "../signals";
+import { productTypeKeywords, signalsOf } from "../signals";
 import type { TextScreenOut } from "./textScreen";
 import type { VideoOut } from "./videoAnalysis";
 
@@ -109,7 +109,7 @@ export const selectStage: StageDef<never, never, Report> = {
         invalidEvidence: a.invalidEvidence,
         videoAnalyzed: !!vs.byId[id],
         signals: (() => {
-          const s = signalsOf(c, ctx.brief.keywords);
+          const s = signalsOf(c, productTypeKeywords(ctx.brief));
           return {
             paidViewShare: s.paidViewShare,
             videoGpm: s.videoGpm,

@@ -13,7 +13,7 @@
 import type { CampaignBrief, CreatorRecord, CreatorVideo } from "../types";
 import type { DataSource, SourceQuery } from "./index";
 import { logEvent } from "../db";
-import { redactContact } from "../util";
+import { median, redactContact } from "../util";
 import { creatorCategoryDetail, detailQuery, rankQuery } from "./kaloStore";
 
 /** Mặc định: Makeup (848648) + Skincare (848776) — category cấp 2 của Kalodata, ngành Beauty & Personal Care */
@@ -175,11 +175,6 @@ function mapVideo(handle: string, v: VideoRow): CreatorVideo {
   };
 }
 
-const median = (xs: number[]) => {
-  if (!xs.length) return undefined;
-  const s = [...xs].sort((a, b) => a - b);
-  return s[Math.floor(s.length / 2)];
-};
 
 export function baseParams() {
   return { region: "VN", language: "vi-VN", currency: "VND", date_range: "last30Day" };

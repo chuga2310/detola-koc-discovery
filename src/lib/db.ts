@@ -132,7 +132,8 @@ const g = globalThis as unknown as { __kocMongo?: { client: MongoClient; db: Pro
 function connect() {
   const uri = process.env.MONGODB_URI?.trim() || "mongodb://127.0.0.1:27017";
   const name = process.env.MONGODB_DB?.trim() || "koc_discovery";
-  const client = new MongoClient(uri, { serverSelectionTimeoutMS: 5000 });
+  // ignoreUndefined: field undefined không bị lưu thành null (code dùng `!== undefined` để biết "chưa có dữ liệu")
+  const client = new MongoClient(uri, { serverSelectionTimeoutMS: 5000, ignoreUndefined: true });
   const dbp = client.connect().then(async (c) => {
     const d = c.db(name);
     await ensureIndexes(d);

@@ -15,6 +15,7 @@ import { funnelFor, getConfig } from "../config";
 import { flushEvents, logEvent, now, runsCol, runStagesCol, tasksCol, type TaskDoc } from "../db";
 import type { CampaignBrief, RunStatus, StageName } from "../types";
 import { STAGES } from "../types";
+import { paidCredits } from "../brief/paid";
 import { createLimiter, newId } from "../util";
 import type { StageContext, StageDef } from "./stage";
 import { STAGE_DEFS } from "./stages";
@@ -33,7 +34,15 @@ export function isRunActiveHere(runId: string) {
 export async function createRun(brief: CampaignBrief, chat?: unknown[]): Promise<string> {
   const id = newId();
   const cfg = getConfig();
-  const snapshot = { provider: cfg.provider, models: cfg.models, effort: cfg.effort, dataSource: cfg.dataSource, funnel: funnelFor(brief.numKocs) };
+  const snapshot = {
+    provider: cfg.provider,
+    models: cfg.models,
+    effort: cfg.effort,
+    dataSource: cfg.dataSource,
+    funnel: funnelFor(brief.numKocs),
+    // Dữ liệu chuyên sâu (trả phí) đã bật -> nâng trần credit của chiến dịch đúng bằng phần đó
+    paidCreditsBudget: paidCredits(brief.deepData, brief.numKocs),
+  };
   await (await runsCol()).insertOne({
     _id: id,
     brief,
@@ -299,7 +308,11 @@ async function renewLease(runId: string, owner: string) {
  * Run bị "kẹt" (status running nhưng lease hết hạn) = worker đã chết. Đánh dấu interrupted
  * để UI hiện nút Resume. Gọi khi list runs.
  */
+let lastStaleCheck = 0;
 export async function markStaleRuns() {
+  // Gọi từ mọi lần poll của UI; phát hiện worker chết không cần dày hơn 10 giây
+  if (now() - lastStaleCheck < 10_000) return;
+  lastStaleCheck = now();
   await (await runsCol()).updateMany(
     { status: "running", $or: [{ leaseUntil: null }, { leaseUntil: { $lt: now() } }] },
     { $set: { status: "interrupted", leaseOwner: null } },

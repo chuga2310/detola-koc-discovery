@@ -14,7 +14,7 @@ import { loadCreators } from "../creators";
 import { PROMPT_VERSION, textScreenSystem } from "../prompts";
 import { TextScreenSchema, type TextScreenOutput } from "../schemas";
 import type { PrefilterRow } from "../scoring";
-import { signalsOf } from "../signals";
+import { productTypeKeywords, signalsOf } from "../signals";
 import type { StageContext, StageDef } from "../stage";
 import { dataRow, type EnrichOut } from "./enrich";
 import type { PrefilterOut } from "./prefilter";
@@ -27,7 +27,7 @@ export interface TextScreenOut {
   shortlist: string[];
 }
 
-export function creatorCard(ref: string, c: CreatorRecord, pre: PrefilterRow): string {
+export function creatorCard(ref: string, c: CreatorRecord, pre: PrefilterRow, typeKeywords: string[] = []): string {
   const ages = c.audience?.ageBuckets
     ? Object.entries(c.audience.ageBuckets)
         .sort((a, b) => b[1] - a[1])
@@ -41,7 +41,7 @@ export function creatorCard(ref: string, c: CreatorRecord, pre: PrefilterRow): s
     .map((v) => `"${truncate(v.caption, 90)}" (${compactNum(v.views)}v${v.adViewRatio ? `, ${Math.round(v.adViewRatio)}% ad` : ""})`)
     .join(" | ");
   const prods = (c.topProducts ?? []).slice(0, 3).map((p) => truncate(p.title, 60)).join("; ");
-  const s = signalsOf(c, pre.raw.matchedKeywords.length ? pre.raw.matchedKeywords : []);
+  const s = signalsOf(c, typeKeywords);
   const signals = [
     s.paidViewShare !== undefined ? `paid views ${pct(s.paidViewShare)}` : null,
     s.videoGpm ? `GPM ${compactNum(s.videoGpm)} VND/1k views` : null,
@@ -122,7 +122,7 @@ export const textScreenStage: StageDef<{ ids: string[] }, Record<string, TextScr
         model: ctx.cfg.models.screen,
         effort: ctx.cfg.effort.screen,
         system: textScreenSystem(ctx.brief),
-        content: [{ type: "text", text: `Screen these ${items.length} creators:\n\n${items.map((x) => creatorCard(x.ref, x.c, x.pre)).join("\n\n")}` }],
+        content: [{ type: "text", text: `Screen these ${items.length} creators:\n\n${items.map((x) => creatorCard(x.ref, x.c, x.pre, productTypeKeywords(ctx.brief))).join("\n\n")}` }],
         schema: TextScreenSchema,
         schemaName: "text_screen",
         maxTokens: 6000,

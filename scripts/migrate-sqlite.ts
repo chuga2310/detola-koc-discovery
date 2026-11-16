@@ -145,7 +145,8 @@ async function main() {
 
   // ---- log chỉ ghi thêm: chép 1 lần
   if (!done || force) {
-    if (force && done) for (const c of ["ai_calls", "events", "data_calls"]) await db.collection(c).deleteMany({});
+    // Chép lại: xoá log + snapshot đã chép (thực thể upsert nên không nhân bản)
+    if (force && done) for (const c of ["ai_calls", "events", "data_calls", "kalo_rank_snapshots"]) await db.collection(c).deleteMany({});
     if (has("ai_calls")) {
       const docs = all("SELECT * FROM ai_calls ORDER BY id").map((r) => ({
         runId: r.run_id ?? null,

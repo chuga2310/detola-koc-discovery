@@ -4,8 +4,8 @@
  */
 import { z } from "zod";
 import { createRun, markStaleRuns, startInBackground } from "@/lib/pipeline/runner";
-import { aiCallsCol, runsCol } from "@/lib/db";
-import { paidCredits, type PaidMode } from "@/lib/brief/paid";
+import { aiCallsCol } from "@/lib/db";
+import type { PaidMode } from "@/lib/brief/paid";
 import { listRuns } from "@/lib/runs";
 
 export const runtime = "nodejs";
@@ -50,11 +50,7 @@ export async function POST(req: Request) {
   const mode = (process.env.PAID_FEATURES?.trim() || "demo") as PaidMode;
   const wantsPaid = Object.values(brief.deepData ?? {}).some(Boolean);
   if (wantsPaid && mode === "off") return Response.json({ error: "Tính năng dữ liệu chuyên sâu chưa được mở cho tài khoản này." }, { status: 403 });
-  const id = await createRun(brief, chat);
-  if (wantsPaid) {
-    // Nâng trần credit của chiến dịch đúng bằng phần người dùng đã đồng ý trả thêm
-    await (await runsCol()).updateOne({ _id: id }, { $set: { "config.paidCreditsBudget": paidCredits(brief.deepData, brief.numKocs), "config.paidMode": mode } });
-  }
+  const id = await createRun(brief, chat); // createRun tự nâng trần credit theo deepData
   if (chat?.length) await attributeIntakeCost(id, chat);
   startInBackground(id);
   return Response.json({ id }, { status: 201 });

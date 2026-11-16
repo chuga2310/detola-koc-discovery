@@ -11,7 +11,7 @@ import type { CampaignBrief, CreatorRecord, Evidence } from "../types";
 import { compactNum, pct, truncate } from "../util";
 import type { TextScreenOutput, VideoAnalysisOutput } from "./schemas";
 import type { PrefilterRow } from "./scoring";
-import { signalsOf } from "./signals";
+import { productTypeKeywords, signalsOf } from "./signals";
 
 type TextResult = TextScreenOutput["results"][number];
 
@@ -27,7 +27,7 @@ export function buildEvidence(args: {
   const { ref, creator: c, pre, brief, text, media, video } = args;
   const ev: Evidence[] = [];
   const topPct = (p: number) => `top ${Math.max(1, Math.round((1 - p) * 100))}% pool`;
-  const sig = signalsOf(c, brief.keywords);
+  const sig = signalsOf(c, productTypeKeywords(brief));
 
   ev.push({
     id: `${ref}.m1`,

@@ -105,7 +105,7 @@ const canFallBack = (e: unknown) => e instanceof KalodataError && e.kind !== "pa
 function warnStale(runId: string | null | undefined, what: string, fetchedAt: number, err: unknown) {
   const age = Math.round((now() - fetchedAt) / 3600_000);
   const msg = `Kalodata ${what}: API lỗi (${(err as Error).message.slice(0, 120)}) -> dùng dữ liệu đã lưu ${age} giờ trước`;
-  if (runId) logEvent(runId, msg, { level: "warn", stage: "source" });
+  if (runId) logEvent(runId, msg, { level: "warn" });
   else console.warn(msg);
 }
 

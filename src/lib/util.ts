@@ -120,3 +120,10 @@ export function redactContact(s: string | undefined): string | undefined {
     .replace(/https?:\/\/\S+/g, "[link]");
 }
 
+/** Trung vị (danh sách chẵn: trung bình 2 phần tử giữa) */
+export function median(xs: number[]): number | undefined {
+  if (!xs.length) return undefined;
+  const s = [...xs].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}

@@ -9,6 +9,7 @@
  * - Độ thật: số video gắn cờ AI tạo; kênh liên hệ (chỉ lưu TÊN kênh, không lưu giá trị).
  */
 import type { CreatorRecord, CreatorVideo } from "../types";
+import { median } from "../util";
 
 export interface CreatorSignals {
   /** 0..1: tỷ trọng view đến từ quảng cáo, có trọng số theo view, trên các video có số liệu */
@@ -36,19 +37,20 @@ export interface CreatorSignals {
   analyzedVideoStats?: { gpm?: number; roas?: number; adDays?: number; cpa?: number; withStats: number };
 }
 
-/** Sản phẩm có tên khớp từ khoá của brief = cùng loại (vd "kem chống nắng") */
+/**
+ * Từ khoá LOẠI sản phẩm của brief (vd "kem chống nắng"): contentKeywords, nếu không có thì tên sản phẩm.
+ * Không dùng brief.keywords vì có cả từ chung chung ("skincare", "dưỡng da") -> nhận nhầm sản phẩm khác.
+ */
+export const productTypeKeywords = (brief: { product: string; contentKeywords?: string[] }) =>
+  brief.contentKeywords?.length ? brief.contentKeywords : [brief.product];
+
+/** Sản phẩm có tên khớp từ khoá loại sản phẩm = cùng loại (vd "kem chống nắng") */
 export function sameCategory(names: string[], keywords: string[]): string[] {
   const norm = (x: string) => x.toLowerCase().normalize("NFC");
   const kws = keywords.map(norm).filter((k) => k.length >= 4);
   return names.filter((n) => kws.some((k) => norm(n).includes(k)));
 }
 
-const median = (xs: number[]) => {
-  if (!xs.length) return undefined;
-  const s = [...xs].sort((a, b) => a - b);
-  const m = Math.floor(s.length / 2);
-  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
-};
 
 export const organicViews = (v: CreatorVideo) =>
   v.adViewRatio !== undefined ? v.views * (1 - Math.min(100, Math.max(0, v.adViewRatio)) / 100) : v.views;

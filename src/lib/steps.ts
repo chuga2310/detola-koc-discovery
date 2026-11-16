@@ -313,7 +313,11 @@ export async function runSteps(
   currentStage: string | null,
   stages: { stage: string; status: string; activeMs: number; tasks: { total: number; done: number; failed: number } }[],
 ): Promise<StepSummary[]> {
-  const rows = await (await runStagesCol()).find({ runId, status: "done" }, { projection: { stage: 1, output: 1 } }).toArray();
+  // Bước đã xong và đã có tóm tắt trong memo thì không cần đọc lại output (vài trăm KB) mỗi lần poll
+  const needLoad = stages.some((s) => s.status === "done" && !memo.has(`${runId}:${s.stage}`));
+  const rows = needLoad
+    ? await (await runStagesCol()).find({ runId, status: "done" }, { projection: { stage: 1, output: 1 } }).toArray()
+    : [];
   const outputs = new Map<string, unknown>(rows.map((r) => [r.stage, r.output]));
   const src = outputs.get("source") as { ids?: string[] } | undefined;
   if (src?.ids?.length && !memo.has(`${runId}:source`)) {
@@ -329,7 +333,7 @@ export async function runSteps(
     const status: StepStatus =
       s.status === "done" ? "done" : live ? "running" : currentStage === stage && runStatus === "failed" ? "failed" : "pending";
     const progress = { done: s.tasks.done, total: s.tasks.total, failed: s.tasks.failed };
-    if (status === "done" && outputs.get(stage)) {
+    if (status === "done" && (memo.has(`${runId}:${stage}`) || outputs.get(stage))) {
       return { ...describeDone(runId, stage, outputs.get(stage), outputs), status, activeMs: s.activeMs, progress };
     }
     return { stage, title: t.title, description: t.description, usesAi: t.usesAi, status, activeMs: s.activeMs, progress, result: null, facts: [], rows: [] };
