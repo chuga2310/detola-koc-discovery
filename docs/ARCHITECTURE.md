@@ -104,7 +104,7 @@ Prompt `video_analysis` **không chứa brief**. Output là "hồ sơ nội dung
 
 ### 2.6 Media: miễn phí trước, trả phí có kiểm soát, contact sheet
 
-- **yt-dlp (miễn phí)** lấy **auto-caption tiếng Việt** của TikTok (transcript đầy đủ lời nói, không cần chạy ASR) + thumbnail cho mọi video.
+- **yt-dlp (miễn phí)** lấy **auto-caption tiếng Việt** của TikTok (transcript đầy đủ lời nói, không cần chạy ASR) + thumbnail cho mọi video. TikTok thường trả kèm bản máy dịch tiếng Anh; code luôn ưu tiên phụ đề `vie`/`vi`, chỉ dùng `en` khi không có tiếng Việt, và đọc lại phụ đề mỗi lần dùng media đã cache (bản cũ từng lấy nhầm bản dịch tiếng Anh cho 25/55 video).
 - TikTok hiện chặn format video với client không phải app (yt-dlp chỉ nhận được audio, kể cả khi impersonate), nên **video chính** của mỗi creator lấy mp4 qua Kalodata `video/url` (0.5 credit). Video thứ 2 chỉ dùng thumbnail + transcript (miễn phí). Cấu hình qua `KALODATA_VIDEO_URL_FALLBACK = primary | all | off`.
 - `video/url` là API async: lỗi `1054 "Video is being fetched"` không bị tính credit → client chờ 5s rồi gọi lại.
 - 6 frame tại mốc cố định (~1s cho hook, rồi 20/40/60/80/95%) → resize 240×426 → **contact sheet 3×2 (720×852)**. Token ảnh Claude ≈ (w×h)/750 ≈ **~820 token / video**, so với ~9.6k nếu gửi 6 frame full-res → **giảm ~90%**. Video gốc bị xoá sau khi cắt frame, chỉ giữ sheet ~60KB.

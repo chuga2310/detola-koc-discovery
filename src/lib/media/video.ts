@@ -62,6 +62,12 @@ export async function prepareVideo(video: CreatorVideo, opts: PrepareOptions = {
     // Đã có contact sheet đầy đủ, hoặc lần này cũng không được phép trả phí -> dùng lại
     if (cached.kind === "video" || !opts.allowPaid) {
       if (cached.via === "kalodata") logAvoidedCredit(opts.runId, "/tiktok/video/url", 0.5); // để benchmark thấy chi phí lạnh
+      // Đọc lại transcript từ file phụ đề đã lưu (rẻ, 0 mạng): cache cũ có thể giữ bản dịch tiếng Anh
+      const transcript = readTranscript(dir) ?? cached.transcript;
+      if (transcript !== cached.transcript) {
+        cached.transcript = transcript;
+        fs.writeFileSync(metaPath, JSON.stringify(cached, null, 2));
+      }
       return cached;
     }
   }
@@ -219,8 +225,25 @@ function findFile(dir: string, re: RegExp): string | null {
 }
 
 /** Đọc file .vtt -> text thuần, bỏ timestamp và dòng lặp (auto-caption hay lặp dòng) */
+/**
+ * Thứ tự ưu tiên phụ đề: tiếng Việt gốc -> tiếng Anh -> bất kỳ.
+ * TikTok thường trả cả `vie-VN` (lời nói gốc) lẫn `eng-US` (máy dịch). Trước đây lấy file .vtt
+ * đầu tiên theo bảng chữ cái nên `eng-US` thắng -> AI đọc bản dịch máy, trích dẫn sai sắc thái.
+ */
+const SUB_LANG_PRIORITY = [/\.vie?[-.]/i, /\.vi\./i, /\.en(g)?[-.]/i];
+
+export function pickSubtitleFile(files: string[]): string | null {
+  const vtts = files.filter((f) => f.endsWith(".vtt")).sort();
+  for (const re of SUB_LANG_PRIORITY) {
+    const hit = vtts.find((f) => re.test(f));
+    if (hit) return hit;
+  }
+  return vtts[0] ?? null;
+}
+
 function readTranscript(dir: string): string | null {
-  const vtt = fs.readdirSync(dir).find((f) => f.endsWith(".vtt"));
+  if (!fs.existsSync(dir)) return null;
+  const vtt = pickSubtitleFile(fs.readdirSync(dir));
   if (!vtt) return null;
   const lines = fs
     .readFileSync(path.join(dir, vtt), "utf8")
